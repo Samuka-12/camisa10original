@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { useCart } from '../contexts/CartContext';
 import { User, Mail, CreditCard, MapPin, Phone, Calendar, Hash, Lock, ShieldCheck, QrCode, Copy, CheckCheck } from 'lucide-react';
 
 // =====================================================
@@ -25,10 +26,11 @@ export default function Checkout() {
   const [pixErro, setPixErro] = useState('');
   const [copiado, setCopiado] = useState(false);
 
+  const { items: cartItems, totalPrice: cartTotal } = useCart();
   const [produto, setProduto] = useState({
     nome: 'Buscando camisa...',
     preco: 0,
-    imagem: 'https://via.placeholder.com/150'
+    imagens: [] as string[]
   });
 
   const [formData, setFormData] = useState({
@@ -55,7 +57,7 @@ export default function Checkout() {
             setProduto({
               nome: overrideNome || data.nome,
               preco: (overridePreco ? parseFloat(overridePreco) : data.preco) * qty,
-              imagem: overrideImg || data.imagem_url || data.image || 'https://via.placeholder.com/150'
+              imagens: [overrideImg || data.imagem_url || data.image || 'https://via.placeholder.com/150']
             });
           }
         });
@@ -63,10 +65,19 @@ export default function Checkout() {
       setProduto({
         nome: overrideNome,
         preco: parseFloat(overridePreco) * qty,
-        imagem: overrideImg || 'https://via.placeholder.com/150'
+        imagens: [overrideImg || 'https://via.placeholder.com/150']
+      });
+    } else if (cartItems.length > 0) {
+      // Se não houver ID na URL, mas houver itens no carrinho, usa o carrinho
+      const nomes = cartItems.map(i => i.product.name).join(' + ');
+      const imagens = cartItems.map(i => i.product.image);
+      setProduto({
+        nome: nomes,
+        preco: cartTotal,
+        imagens: imagens
       });
     }
-  }, [searchParams]);
+  }, [searchParams, cartItems, cartTotal]);
 
   // Gera QR Code ao entrar na aba PIX
   useEffect(() => {
@@ -244,9 +255,24 @@ export default function Checkout() {
         <div style={{ padding: '20px' }}>
           {/* RESUMO DO PRODUTO */}
           <div style={productBox}>
-            <img src={produto.imagem} style={imgStyle} alt="produto" />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: '900', fontSize: '14px', color: '#000' }}>{produto.nome}</div>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              {produto.imagens.map((img, idx) => (
+                <img 
+                  key={idx} 
+                  src={img} 
+                  style={{ 
+                    ...imgStyle, 
+                    marginLeft: idx > 0 ? '-30px' : '0', 
+                    zIndex: 10 - idx,
+                    border: '2px solid #fff',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                  }} 
+                  alt={`produto-${idx}`} 
+                />
+              ))}
+            </div>
+            <div style={{ flex: 1, marginLeft: '10px' }}>
+              <div style={{ fontWeight: '900', fontSize: '14px', color: '#000', lineHeight: '1.2' }}>{produto.nome}</div>
               <div style={{ fontSize: '20px', fontWeight: '900', color: '#000', marginTop: '5px' }}>
                 R$ {produto.preco.toFixed(2).replace('.', ',')}
               </div>
