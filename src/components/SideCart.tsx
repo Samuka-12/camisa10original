@@ -71,7 +71,7 @@ const SideCart = () => {
                     <div className="flex items-center justify-between mt-2">
                       <p className="text-sm font-bold text-primary">
                         {/* Garante que o preço está formatado como moeda */}
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.product.price)}
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(item.product.priceNum) || 0)}
                       </p>
 
                       <div className="flex items-center gap-2">
