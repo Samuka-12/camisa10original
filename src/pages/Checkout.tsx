@@ -242,7 +242,6 @@ export default function Checkout() {
         <div style={{ padding: '20px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '900', color: '#000' }}>CHECKOUT SEGURO</h2>
-            <div style={{ fontSize: '10px', color: '#666' }}>v2.0 - SISTEMA ATUALIZADO</div>
             <div style={{ fontSize: '12px', color: '#1da154', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
               <ShieldCheck size={14} /> Dados criptografados (SSL)
             </div>
