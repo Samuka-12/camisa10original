@@ -8,10 +8,15 @@ const SideCart = () => {
   const getCleanCheckoutUrl = () => {
     if (items.length === 1) {
       const item = items[0];
-      // Se for apenas um item, passa o ID e a quantidade
+      // Se o produto tiver um link de checkout externo definido, usa ele
+      if (item.product.externalCheckoutUrl) {
+        window.location.href = item.product.externalCheckoutUrl;
+        return;
+      }
+      // Caso contrário, usa a rota de checkout padrão do sistema
       window.location.href = `/checkout?id=${item.product.id}&qty=${item.quantity}`;
     } else {
-      // Se forem vários itens, passa o total e uma descrição geral
+      // Para múltiplos itens, usa o total do carrinho
       window.location.href = `/checkout?nome=Carrinho (${totalItems} itens)&preco=${totalPrice}`;
     }
   };

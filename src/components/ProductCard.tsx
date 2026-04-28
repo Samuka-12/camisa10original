@@ -10,11 +10,9 @@ interface ProductCardProps {
   externalCheckoutUrl?: string;
 }
 
-const ProductCard = ({ id, image, name, team, price, oldPrice, externalCheckoutUrl }: ProductCardProps) => {
-  const targetUrl = externalCheckoutUrl ? externalCheckoutUrl : (id ? `/produto/${id}` : "#");
-
+const ProductCard = ({ id, image, name, team, price, oldPrice }: ProductCardProps) => {
   return (
-    <Link to={targetUrl} className="block">
+    <Link to={id ? `/produto/${id}` : "#"} className="block">
       <div className="group bg-card rounded-xl border border-border overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
         <div className="aspect-square overflow-hidden bg-secondary flex items-center justify-center p-2">
           <img
