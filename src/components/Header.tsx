@@ -14,7 +14,7 @@ const Header = () => {
         {/* Logo */}
         <Link to="/" className="flex-shrink-0">
           <h1 className="text-2xl font-extrabold tracking-tight text-primary">
-            CAMISA<span className="text-accent">10</span>
+            CAMISA<span className="text-accent">10</span> <span className="text-[10px] opacity-50 ml-1">v1.1</span>
           </h1>
         </Link>
 
