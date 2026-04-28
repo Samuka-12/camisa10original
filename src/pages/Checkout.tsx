@@ -65,19 +65,17 @@ export default function Checkout() {
       setProduto({
         nome: overrideNome,
         preco: parseFloat(overridePreco) * qty,
-        imagens: [overrideImg || 'https://via.placeholder.com/150']
+        imagens: overrideImg ? [overrideImg] : []
       });
     } else if (cartItems.length > 0) {
       // Se não houver ID na URL, mas houver itens no carrinho, usa o carrinho
-      const nomes = cartItems.map(i => i.product.name).join(' + ');
-      const imagens = cartItems.map(i => i.product.image);
       setProduto({
-        nome: nomes,
+        nome: `CARRINHO (${totalItems} ITENS)`,
         preco: cartTotal,
-        imagens: imagens
+        imagens: [] // Não mostra imagens para múltiplos itens do carrinho
       });
     }
-  }, [searchParams, cartItems, cartTotal]);
+  }, [searchParams, cartItems, cartTotal, totalItems]);
 
   // Gera QR Code ao entrar na aba PIX
   useEffect(() => {
@@ -413,7 +411,7 @@ const overlayStyle: React.CSSProperties = { position: 'fixed', inset: 0, backgro
 const spinnerStyle = { border: '4px solid #f3f3f3', borderTop: '4px solid #1da154', borderRadius: '50%', width: '40px', height: '40px', animation: 'spin 1s linear infinite' };
 const spinnerStylePix = { border: '3px solid #d1fae5', borderTop: '3px solid #1da154', borderRadius: '50%', width: '32px', height: '32px', animation: 'spin 1s linear infinite' };
 const productBox = { display: 'flex', gap: '15px', padding: '15px', background: '#f8f9fa', borderRadius: '12px', border: '1px solid #ddd', marginBottom: '20px' };
-const imgStyle = { width: '70px', height: '70px', borderRadius: '8px', objectFit: 'cover' as 'cover' };
+const imgStyle = { width: '100px', height: '100px', borderRadius: '12px', objectFit: 'cover' as 'cover', border: '1px solid #eee' };
 const tabContainer = { display: 'flex', gap: '8px', marginBottom: '20px', background: '#f1f5f9', padding: '5px', borderRadius: '12px' };
 const tabActive = { flex: 1, padding: '12px', border: 'none', borderRadius: '8px', background: '#fff', fontWeight: '900', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', cursor: 'pointer' };
 const tabInactive = { flex: 1, padding: '12px', border: 'none', background: 'transparent', color: '#666', fontWeight: '900', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' };
