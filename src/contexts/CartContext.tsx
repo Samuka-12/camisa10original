@@ -72,8 +72,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [removeItem]);
 
   const totalItems = items.reduce((s, i) => s + i.quantity, 0);
-  const subtotal = items.reduce((s, i) => s + i.product.priceNum * i.quantity, 0);
-  const totalPrice = subtotal * (1 - discount);
+  const subtotal = items.reduce((s, i) => s + (Number(i.product.priceNum) || 0) * i.quantity, 0);
+  const totalPrice = Number(subtotal * (1 - discount)) || 0;
 
   const applyCoupon = useCallback(() => {
     if (coupon.toUpperCase() === "CAMISA10") {

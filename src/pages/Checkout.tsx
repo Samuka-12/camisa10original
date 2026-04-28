@@ -64,15 +64,14 @@ export default function Checkout() {
     } else if (overrideNome && overridePreco) {
       setProduto({
         nome: overrideNome,
-        preco: parseFloat(overridePreco) * qty,
+        preco: Number(overridePreco) || 0,
         imagens: overrideImg ? [overrideImg] : []
       });
     } else if (cartItems.length > 0) {
-      // Se não houver ID na URL, mas houver itens no carrinho, usa o carrinho
       setProduto({
         nome: `CARRINHO (${totalItems} ITENS)`,
-        preco: cartTotal,
-        imagens: [] // Não mostra imagens para múltiplos itens do carrinho
+        preco: Number(cartTotal) || 0,
+        imagens: []
       });
     }
   }, [searchParams, cartItems, cartTotal, totalItems]);

@@ -25,8 +25,7 @@ const SideCart = () => {
       const target = `${origin}/checkout?id=${item.product.id}&qty=${item.quantity}`;
       console.log("Redirecionando para checkout simples:", target);
       window.location.href = target;
-    } else {
-      const target = `${origin}/checkout?nome=Carrinho (${totalItems} itens)&preco=${totalPrice}`;
+      const target = `${origin}/checkout?nome=Carrinho (${totalItems} itens)&preco=${Number(totalPrice).toFixed(2)}`;
       console.log("Redirecionando para checkout de múltiplos itens:", target);
       window.location.href = target;
     }
