@@ -17,12 +17,10 @@ export default function Admin() {
     const [produtos, setProdutos] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
-    // Estados para o formulário de novo produto
     const [nomeProd, setNomeProd] = useState('');
     const [precoProd, setPrecoProd] = useState('');
     const [imgProd, setImgProd] = useState('');
 
-    // Função para procurar os pedidos capturados
     const buscarPedidos = async () => {
         setLoading(true);
         const { data } = await supabase
@@ -33,13 +31,14 @@ export default function Admin() {
         setLoading(false);
     };
 
-    // Função para procurar as camisas do catálogo
     const buscarProdutos = async () => {
         setLoading(true);
-        const { data } = await supabase
+        const { data, error } = await supabase
             .from('produtos')
             .select('*')
             .order('created_at', { ascending: false });
+        console.log('produtos:', data);
+        console.log('erro:', error);
         if (data) setProdutos(data);
         setLoading(false);
     };
@@ -70,16 +69,26 @@ export default function Admin() {
     };
 
     const deletarProduto = async (id: string) => {
-        if (confirm("Tens a certeza que queres eliminar esta camisa?")) {
-            const { error } = await supabase.from('produtos').delete().eq('id', id);
-            if (!error) buscarProdutos();
+        if (confirm("Tem certeza que deseja excluir este produto do catálogo?")) {
+            setLoading(true);
+            const { error } = await supabase
+                .from('produtos')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                alert("Erro ao excluir produto: " + error.message);
+            } else {
+                alert("Produto excluído com sucesso!");
+                buscarProdutos();
+            }
+            setLoading(false);
         }
     };
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc', color: '#000', fontFamily: 'sans-serif' }}>
 
-            {/* SIDEBAR */}
             <aside style={{ width: '280px', background: '#fff', borderRight: '2px solid #000', padding: '20px', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ fontWeight: 900, fontSize: '20px', marginBottom: '40px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{ background: '#2563eb', color: '#fff', padding: '8px', borderRadius: '8px' }}>👕</div>
@@ -103,7 +112,6 @@ export default function Admin() {
                 </button>
             </aside>
 
-            {/* CONTEÚDO PRINCIPAL */}
             <main style={{ flex: 1, padding: '40px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
                     <h1 style={{ fontSize: '32px', fontWeight: 900 }}>
@@ -116,7 +124,6 @@ export default function Admin() {
                     </button>
                 </div>
 
-                {/* ABA PEDIDOS */}
                 {aba === 'pedidos' && (
                     <div style={tabCard}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -170,7 +177,6 @@ export default function Admin() {
                     </div>
                 )}
 
-                {/* ABA CATÁLOGO */}
                 {aba === 'catalogo' && (
                     <div style={tabCard}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -186,7 +192,6 @@ export default function Admin() {
                                 {produtos.map(prod => (
                                     <tr key={prod.id} style={{ borderBottom: '1px solid #ddd' }}>
                                         <td style={td}>
-                                            {/* CONTAINER PARA PADRONIZAR O TAMANHO DAS IMAGENS CLONADAS */}
                                             <div style={{ width: '60px', height: '60px', background: '#f8f9fa', borderRadius: '8px', overflow: 'hidden', border: '1px solid #eee' }}>
                                                 <img
                                                     src={prod.imagem_url}
@@ -195,7 +200,12 @@ export default function Admin() {
                                                 />
                                             </div>
                                         </td>
-                                        <td style={td}><strong>{prod.nome}</strong></td>
+                                        <td style={td}>
+                                            <strong>{prod.nome}</strong><br />
+                                            <a href={`/checkout?id=${prod.id}`} target="_blank" style={{ fontSize: '12px', color: '#2563eb' }}>
+                                                🔗 Link checkout
+                                            </a>
+                                        </td>
                                         <td style={td}>R$ {prod.preco}</td>
                                         <td style={td}>
                                             <button onClick={() => deletarProduto(prod.id)} style={{ ...btnV, background: '#ef4444' }}>
@@ -210,7 +220,6 @@ export default function Admin() {
                     </div>
                 )}
 
-                {/* ABA NOVO PRODUTO */}
                 {aba === 'novo' && (
                     <form onSubmit={cadastrarProduto} style={formStyle}>
                         <label style={label}>Nome da Camisa</label>
@@ -230,7 +239,6 @@ export default function Admin() {
     );
 }
 
-// ESTILOS DE ALTO CONTRASTE (PRETO NO BRANCO)
 const bIn: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '15px', border: 'none', background: 'none', color: '#000', cursor: 'pointer', borderRadius: '12px', fontWeight: 900, textAlign: 'left' };
 const bAt: React.CSSProperties = { ...bIn, background: '#f1f5f9', color: '#2563eb', border: '1px solid #ddd' };
 const th: React.CSSProperties = { padding: '15px 20px', textAlign: 'left', fontSize: '12px', fontWeight: 900 };
