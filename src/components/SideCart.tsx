@@ -6,18 +6,29 @@ const SideCart = () => {
   const { items, isOpen, closeCart, removeItem, updateQuantity, totalPrice, coupon, setCoupon, applyCoupon, discount, totalItems } = useCart();
 
   const getCleanCheckoutUrl = () => {
+    console.log("Iniciando checkout com itens:", items);
+    const origin = window.location.origin;
+
     if (items.length === 1) {
       const item = items[0];
-      // Se o produto tiver um link de checkout externo definido, usa ele
       if (item.product.externalCheckoutUrl) {
-        window.location.href = item.product.externalCheckoutUrl;
+        // Se o link já for completo (http...), usa ele. Se não, adiciona o origin.
+        const target = item.product.externalCheckoutUrl.startsWith('http') 
+          ? item.product.externalCheckoutUrl 
+          : origin + item.product.externalCheckoutUrl;
+        
+        console.log("Redirecionando para link externo:", target);
+        window.location.href = target;
         return;
       }
-      // Caso contrário, usa a rota de checkout padrão do sistema
-      window.location.href = `/checkout?id=${item.product.id}&qty=${item.quantity}`;
+      
+      const target = `${origin}/checkout?id=${item.product.id}&qty=${item.quantity}`;
+      console.log("Redirecionando para checkout simples:", target);
+      window.location.href = target;
     } else {
-      // Para múltiplos itens, usa o total do carrinho
-      window.location.href = `/checkout?nome=Carrinho (${totalItems} itens)&preco=${totalPrice}`;
+      const target = `${origin}/checkout?nome=Carrinho (${totalItems} itens)&preco=${totalPrice}`;
+      console.log("Redirecionando para checkout de múltiplos itens:", target);
+      window.location.href = target;
     }
   };
 
