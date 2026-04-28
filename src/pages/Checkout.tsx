@@ -243,6 +243,7 @@ export default function Checkout() {
         <div style={{ padding: '20px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '900', color: '#000' }}>CHECKOUT SEGURO</h2>
+            <div style={{ fontSize: '10px', color: '#666' }}>v2.0 - SISTEMA ATUALIZADO</div>
             <div style={{ fontSize: '12px', color: '#1da154', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
               <ShieldCheck size={14} /> Dados criptografados (SSL)
             </div>
@@ -253,14 +254,14 @@ export default function Checkout() {
         <div style={{ padding: '20px' }}>
           {/* RESUMO DO PRODUTO */}
           <div style={productBox}>
-            {produto.imagens.length === 1 && (
+            {produto.imagens.length === 1 && produto.imagens[0] && !produto.imagens[0].includes('placeholder') ? (
               <img 
                 src={produto.imagens[0]} 
                 style={imgStyle} 
                 alt="produto" 
               />
-            )}
-            <div style={{ flex: 1, marginLeft: produto.imagens.length === 1 ? '10px' : '0' }}>
+            ) : null}
+            <div style={{ flex: 1, marginLeft: (produto.imagens.length === 1 && produto.imagens[0]) ? '10px' : '0' }}>
               <div style={{ fontWeight: '900', fontSize: '14px', color: '#000', lineHeight: '1.2' }}>
                 {produto.imagens.length > 1 ? `CARRINHO (${produto.imagens.length} ITENS)` : produto.nome}
               </div>
