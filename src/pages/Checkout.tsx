@@ -56,8 +56,8 @@ export default function Checkout() {
           if (data) {
             setProduto({
               nome: overrideNome || data.nome,
-              preco: (overridePreco ? parseFloat(overridePreco) : data.preco) * qty,
-              imagens: [overrideImg || data.imagem_url || data.image || 'https://via.placeholder.com/150']
+              preco: Number(overridePreco || data.preco) * qty || 0,
+              imagens: [overrideImg || data.imagem_url || data.image].filter(img => img && !img.includes('placeholder')) as string[]
             });
           }
         });
@@ -260,12 +260,12 @@ export default function Checkout() {
                 alt="produto" 
               />
             ) : null}
-            <div style={{ flex: 1, marginLeft: (produto.imagens.length === 1 && produto.imagens[0]) ? '10px' : '0' }}>
+            <div style={{ flex: 1, marginLeft: (produto.imagens.length === 1 && produto.imagens[0] && !produto.imagens[0].includes('placeholder')) ? '10px' : '0' }}>
               <div style={{ fontWeight: '900', fontSize: '14px', color: '#000', lineHeight: '1.2' }}>
                 {produto.imagens.length > 1 ? `CARRINHO (${produto.imagens.length} ITENS)` : produto.nome}
               </div>
               <div style={{ fontSize: '20px', fontWeight: '900', color: '#000', marginTop: '5px' }}>
-                R$ {produto.preco.toFixed(2).replace('.', ',')}
+                R$ {(Number(produto.preco) || 0).toFixed(2).replace('.', ',')}
               </div>
             </div>
           </div>

@@ -22,7 +22,8 @@ const SideCart = () => {
       
       window.location.href = `${origin}/checkout?id=${item.product.id}&qty=${item.quantity}`;
     } else {
-      window.location.href = `${origin}/checkout?nome=Carrinho (${totalItems} itens)&preco=${Number(totalPrice).toFixed(2)}`;
+      const precoLimpo = Number(totalPrice) || 0;
+      window.location.href = `${origin}/checkout?nome=Carrinho (${totalItems} itens)&preco=${precoLimpo.toFixed(2)}`;
     }
   };
 
@@ -124,7 +125,7 @@ const SideCart = () => {
               <div className="flex justify-between items-center">
                 <span className="text-base font-semibold text-foreground">Total</span>
                 <span className="text-xl font-bold text-primary">
-                  R$ {totalPrice.toFixed(2).replace(".", ",")}
+                  R$ {(Number(totalPrice) || 0).toFixed(2).replace(".", ",")}
                 </span>
               </div>
 
