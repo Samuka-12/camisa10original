@@ -26,7 +26,7 @@ export default function Checkout() {
   const [pixErro, setPixErro] = useState('');
   const [copiado, setCopiado] = useState(false);
 
-  const { items: cartItems, totalPrice: cartTotal } = useCart();
+  const { items: cartItems, totalPrice: cartTotal, totalItems } = useCart();
   const [produto, setProduto] = useState({
     nome: 'Buscando camisa...',
     preco: 0,
