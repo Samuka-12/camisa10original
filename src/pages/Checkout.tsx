@@ -255,24 +255,17 @@ export default function Checkout() {
         <div style={{ padding: '20px' }}>
           {/* RESUMO DO PRODUTO */}
           <div style={productBox}>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              {produto.imagens.map((img, idx) => (
-                <img 
-                  key={idx} 
-                  src={img} 
-                  style={{ 
-                    ...imgStyle, 
-                    marginLeft: idx > 0 ? '-30px' : '0', 
-                    zIndex: 10 - idx,
-                    border: '2px solid #fff',
-                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-                  }} 
-                  alt={`produto-${idx}`} 
-                />
-              ))}
-            </div>
-            <div style={{ flex: 1, marginLeft: '10px' }}>
-              <div style={{ fontWeight: '900', fontSize: '14px', color: '#000', lineHeight: '1.2' }}>{produto.nome}</div>
+            {produto.imagens.length === 1 && (
+              <img 
+                src={produto.imagens[0]} 
+                style={imgStyle} 
+                alt="produto" 
+              />
+            )}
+            <div style={{ flex: 1, marginLeft: produto.imagens.length === 1 ? '10px' : '0' }}>
+              <div style={{ fontWeight: '900', fontSize: '14px', color: '#000', lineHeight: '1.2' }}>
+                {produto.imagens.length > 1 ? `CARRINHO (${produto.imagens.length} ITENS)` : produto.nome}
+              </div>
               <div style={{ fontSize: '20px', fontWeight: '900', color: '#000', marginTop: '5px' }}>
                 R$ {produto.preco.toFixed(2).replace('.', ',')}
               </div>
