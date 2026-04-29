@@ -22,17 +22,16 @@ const Header = () => {
         <SearchBar />
 
         {/* Nav links */}
-        <nav className="flex items-center gap-6 flex-shrink-0">
-          
+        <nav className="flex items-center gap-2 md:gap-6 flex-shrink-0">
           <RegisterModal />
           <button
             onClick={openCart}
-            className="text-sm font-medium text-accent hover:text-accent/80 transition-colors flex items-center gap-1.5"
+            className="text-sm font-medium text-accent hover:text-accent/80 transition-colors flex items-center gap-1.5 p-2"
           >
-            <ShoppingBag className="h-4 w-4" />
-            Carrinho
+            <ShoppingBag className="h-5 w-5" />
+            <span className="hidden md:block">Carrinho</span>
             {totalItems > 0 && (
-              <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-accent text-accent-foreground text-xs font-bold">
+              <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-accent text-accent-foreground text-[10px] font-bold">
                 {totalItems}
               </span>
             )}

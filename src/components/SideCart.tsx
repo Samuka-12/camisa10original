@@ -132,7 +132,7 @@ const SideCart = () => {
               <button
                 type="button"
                 onClick={getCleanCheckoutUrl}
-                className="block w-full py-3 rounded-lg bg-accent text-accent-foreground font-bold text-sm hover:bg-accent/90 transition-colors text-center"
+                className="block w-full py-4 rounded-lg bg-accent text-accent-foreground font-bold text-base hover:bg-accent/90 transition-colors text-center shadow-lg active:scale-[0.98] mb-2"
               >
                 Finalizar Compra
               </button>
