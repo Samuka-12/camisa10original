@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import imageCompression from 'browser-image-compression';
 
 const productSchema = z.object({
   name: z.string().min(1, "O nome é obrigatório"),
@@ -188,8 +189,8 @@ const ProductForm = () => {
                   onRemoveImage={() => setImageUrl("")}
                 />
 
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={isSaving}
                   className="w-full h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all"
                 >
