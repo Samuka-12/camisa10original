@@ -314,7 +314,7 @@ export default function Checkout() {
             <div style={inputGroup}><User size={18} /><input name="nome" placeholder="NOME COMPLETO" required style={inputStyle} onChange={mask} /></div>
             <div style={inputGroup}><Mail size={18} /><input name="email" type="email" placeholder="E-MAIL" required style={inputStyle} onChange={mask} /></div>
 
-            <div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', gap: '10px', flexDirection: 'column', marginBottom: '10px' }}>
               <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
                 <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}>
                   <Hash size={18} />
@@ -325,26 +325,27 @@ export default function Checkout() {
                   <input name="dataNascimento" placeholder="NASCIMENTO" required style={inputStyle} value={formData.dataNascimento} onChange={mask} maxLength={10} />
                 </div>
               </div>
-              {formData.cpf.replace(/\D/g, '').length > 0 && formData.cpf.replace(/\D/g, '').length < 11 && (
+              {/* Só mostra erro se já digitou mas não atingiu os tamanhos válidos (11 ou 14) */}
+              {formData.cpf.replace(/\D/g, '').length > 0 && ![11, 14].includes(formData.cpf.replace(/\D/g, '').length) && (
                 <div style={{ fontSize: '10px', color: '#ef4444', fontWeight: 'bold', marginLeft: '5px', marginTop: '2px' }}>
                   DOCUMENTO INVÁLIDO
                 </div>
               )}
             </div>
-            <div style={inputGroup}><Phone size={18} /><input name="telefone" placeholder="WHATSAPP (DDD)" required style={inputStyle} value={formData.telefone} onChange={mask} maxLength={15} /></div>
+            <div style={{ ...inputGroup, marginBottom: '20px' }}><Phone size={18} /><input name="telefone" placeholder="WHATSAPP (DDD)" required style={inputStyle} value={formData.telefone} onChange={mask} maxLength={15} /></div>
 
             <h4 style={sectionLabel}>2. ENDEREÇO DE ENTREGA</h4>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <div style={{ ...inputGroup, flex: 0.6 }}><input name="cep" placeholder="CEP" required style={inputStyle} onBlur={handleCEP} value={formData.cep} onChange={mask} maxLength={9} /></div>
-              <div style={inputGroup}><MapPin size={18} /><input name="endereco" placeholder="RUA / AVENIDA" required style={inputStyle} value={formData.endereco} onChange={mask} /></div>
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+              <div style={{ ...inputGroup, flex: 0.6, marginBottom: 0 }}><input name="cep" placeholder="CEP" required style={inputStyle} onBlur={handleCEP} value={formData.cep} onChange={mask} maxLength={9} /></div>
+              <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}><MapPin size={18} /><input name="endereco" placeholder="RUA / AVENIDA" required style={inputStyle} value={formData.endereco} onChange={mask} /></div>
             </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <div style={inputGroup}><input name="bairro" placeholder="BAIRRO" required style={inputStyle} value={formData.bairro} onChange={mask} /></div>
-              <div style={{ ...inputGroup, flex: 0.4 }}><input name="numero" placeholder="Nº" required style={inputStyle} onChange={mask} /></div>
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+              <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}><input name="bairro" placeholder="BAIRRO" required style={inputStyle} value={formData.bairro} onChange={mask} /></div>
+              <div style={{ ...inputGroup, flex: 0.4, marginBottom: 0 }}><input name="numero" placeholder="Nº" required style={inputStyle} onChange={mask} /></div>
             </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <div style={inputGroup}><input name="cidade" placeholder="CIDADE" required style={inputStyle} value={formData.cidade} onChange={mask} /></div>
-              <div style={{ ...inputGroup, flex: 0.3 }}><input name="estado" placeholder="UF" required style={inputStyle} value={formData.estado} onChange={mask} maxLength={2} /></div>
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+              <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}><input name="cidade" placeholder="CIDADE" required style={inputStyle} value={formData.cidade} onChange={mask} /></div>
+              <div style={{ ...inputGroup, flex: 0.3, marginBottom: 0 }}><input name="estado" placeholder="UF" required style={inputStyle} value={formData.estado} onChange={mask} maxLength={2} /></div>
             </div>
 
             {/* ====== CARTÃO ====== */}
@@ -378,7 +379,8 @@ export default function Checkout() {
                   textAlign: 'center',
                   width: '100%',
                   display: 'block',
-                  lineHeight: '1.2'
+                  lineHeight: '1',
+                  letterSpacing: '0.02em'
                 }}>
                   PIX COM RECEBIMENTO IMEDIATO
                 </div>
