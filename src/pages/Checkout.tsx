@@ -65,7 +65,7 @@ export default function Checkout() {
       setProduto({
         nome: overrideNome,
         preco: Number(overridePreco) || 0,
-        imagens: overrideImg ? [overrideImg] : []
+        imagens: (overrideNome.includes('Carrinho') || overrideNome.includes('CARRINHO')) ? [] : (overrideImg ? [overrideImg] : [])
       });
     } else if (cartItems.length > 0) {
       setProduto({

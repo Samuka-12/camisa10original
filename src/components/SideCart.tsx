@@ -23,7 +23,8 @@ const SideCart = () => {
       window.location.href = `${origin}/checkout?id=${item.product.id}&qty=${item.quantity}`;
     } else {
       const precoLimpo = Number(totalPrice) || 0;
-      window.location.href = `${origin}/checkout?nome=Carrinho (${totalItems} itens)&preco=${precoLimpo.toFixed(2)}`;
+      const nomeCarrinho = encodeURIComponent(`Carrinho (${totalItems} itens)`);
+      window.location.href = `${origin}/checkout?nome=${nomeCarrinho}&preco=${precoLimpo.toFixed(2)}`;
     }
   };
 
