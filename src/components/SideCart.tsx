@@ -72,7 +72,7 @@ const SideCart = () => {
                     <div className="flex items-center justify-between mt-2">
                       <p className="text-sm font-bold text-primary">
                         {/* Garante que o preço está formatado como moeda */}
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(item.product.priceNum) || 0)}
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((Number(item.product.priceNum) || 0) * item.quantity)}
                       </p>
 
                       <div className="flex items-center gap-2">
@@ -133,7 +133,7 @@ const SideCart = () => {
               <button
                 type="button"
                 onClick={getCleanCheckoutUrl}
-                className="block w-full py-4 rounded-lg bg-red-600 text-white font-bold text-base hover:bg-red-700 transition-colors text-center shadow-lg active:scale-[0.98] mb-2"
+                className="block w-full py-4 rounded-lg bg-accent text-accent-foreground font-bold text-base hover:bg-accent/90 transition-colors text-center shadow-lg active:scale-[0.98] mb-2"
               >
                 Finalizar Compra
               </button>

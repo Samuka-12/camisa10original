@@ -54,9 +54,18 @@ export default function Checkout() {
         .single()
         .then(({ data, error }) => {
           if (data) {
+            const parsePrice = (val: any) => {
+              if (typeof val === 'number') return val;
+              if (typeof val === 'string') {
+                const clean = val.replace(/[^\d,.]/g, '').replace(',', '.');
+                return parseFloat(clean) || 0;
+              }
+              return 0;
+            };
+
             setProduto({
               nome: overrideNome || data.nome,
-              preco: Number(overridePreco || data.preco) * qty || 0,
+              preco: (overridePreco ? Number(overridePreco) : parsePrice(data.preco)) * qty,
               imagens: [overrideImg || data.imagem_url || data.image].filter(img => img && !img.includes('placeholder')) as string[]
             });
           }
