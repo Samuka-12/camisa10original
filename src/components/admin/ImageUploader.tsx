@@ -43,7 +43,7 @@ export const ImageUploader = ({
       const filePath = `${fileName}`;
 
       const { data, error } = await supabase.storage
-        .from("product-images") // Name of the bucket
+        .from("camisetas") // Name of the bucket
         .upload(filePath, file, {
           cacheControl: "3600",
           upsert: false,
@@ -54,7 +54,7 @@ export const ImageUploader = ({
       }
 
       const { data: publicUrlData } = supabase.storage
-        .from("product-images")
+        .from("camisetas")
         .getPublicUrl(filePath);
 
       onUploadSuccess(publicUrlData.publicUrl);
