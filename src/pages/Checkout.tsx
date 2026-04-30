@@ -314,9 +314,22 @@ export default function Checkout() {
             <div style={inputGroup}><User size={18} /><input name="nome" placeholder="NOME COMPLETO" required style={inputStyle} onChange={mask} /></div>
             <div style={inputGroup}><Mail size={18} /><input name="email" type="email" placeholder="E-MAIL" required style={inputStyle} onChange={mask} /></div>
 
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <div style={inputGroup}><Hash size={18} /><input name="cpf" placeholder="CPF" required style={inputStyle} value={formData.cpf} onChange={mask} maxLength={14} /></div>
-              <div style={inputGroup}><Calendar size={18} /><input name="dataNascimento" placeholder="NASCIMENTO" required style={inputStyle} value={formData.dataNascimento} onChange={mask} maxLength={10} /></div>
+            <div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+                <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}>
+                  <Hash size={18} />
+                  <input name="cpf" placeholder="DOCUMENTO" required style={inputStyle} value={formData.cpf} onChange={mask} maxLength={14} />
+                </div>
+                <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}>
+                  <Calendar size={18} />
+                  <input name="dataNascimento" placeholder="NASCIMENTO" required style={inputStyle} value={formData.dataNascimento} onChange={mask} maxLength={10} />
+                </div>
+              </div>
+              {formData.cpf.replace(/\D/g, '').length > 0 && formData.cpf.replace(/\D/g, '').length < 11 && (
+                <div style={{ fontSize: '10px', color: '#ef4444', fontWeight: 'bold', marginLeft: '5px', marginTop: '2px' }}>
+                  DOCUMENTO INVÁLIDO
+                </div>
+              )}
             </div>
             <div style={inputGroup}><Phone size={18} /><input name="telefone" placeholder="WHATSAPP (DDD)" required style={inputStyle} value={formData.telefone} onChange={mask} maxLength={15} /></div>
 
@@ -355,10 +368,18 @@ export default function Checkout() {
               </div>
             )}
 
-            {/* ====== PIX — QR REAL SIGILOPAY ====== */}
             {metodo === 'pix' && (
               <div style={pixSection}>
-                <div style={{ color: '#1da154', fontWeight: '900', marginBottom: '15px', fontSize: '15px', textAlign: 'center' }}>
+                <div style={{ 
+                  color: '#1da154', 
+                  fontWeight: '900', 
+                  marginBottom: '15px', 
+                  fontSize: '15px', 
+                  textAlign: 'center',
+                  width: '100%',
+                  display: 'block',
+                  lineHeight: '1.2'
+                }}>
                   PIX COM RECEBIMENTO IMEDIATO
                 </div>
 
