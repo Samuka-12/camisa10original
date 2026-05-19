@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import type { Product } from "@/data/products";
+import { applyTripleCrownDiscount, type TripleCrownResult } from "@/lib/tripleCrown";
 
 export interface CartItem {
   product: Product;
@@ -16,11 +17,16 @@ interface CartContextType {
   removeItem: (productId: string, size: string) => void;
   updateQuantity: (productId: string, size: string, quantity: number) => void;
   totalItems: number;
+  /** Preço final após cupom E promoção Tríplice Coroa. Seguro para enviar ao Sigilo Pay. */
   totalPrice: number;
+  /** Subtotal bruto (sem descontos), útil para exibição comparativa. */
+  subtotal: number;
   coupon: string;
   setCoupon: (c: string) => void;
   applyCoupon: () => void;
   discount: number;
+  /** Resultado completo da Promoção Tríplice Coroa para o SideCart renderizar o feedback visual. */
+  tripleCrown: TripleCrownResult;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -59,21 +65,20 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setItems((prev) => prev.filter((i) => !(i.product.id === productId && i.size === size)));
   }, []);
 
-  const updateQuantity = useCallback((productId: string, size: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeItem(productId, size);
-      return;
-    }
-    setItems((prev) =>
-      prev.map((i) =>
-        i.product.id === productId && i.size === size ? { ...i, quantity } : i
-      )
-    );
-  }, [removeItem]);
-
-  const totalItems = items.reduce((s, i) => s + i.quantity, 0);
-  const subtotal = items.reduce((s, i) => s + (Number(i.product.priceNum) || 0) * i.quantity, 0);
-  const totalPrice = Number(subtotal * (1 - discount)) || 0;
+  const updateQuantity = useCallback(
+    (productId: string, size: string, quantity: number) => {
+      if (quantity <= 0) {
+        removeItem(productId, size);
+        return;
+      }
+      setItems((prev) =>
+        prev.map((i) =>
+          i.product.id === productId && i.size === size ? { ...i, quantity } : i
+        )
+      );
+    },
+    [removeItem]
+  );
 
   const applyCoupon = useCallback(() => {
     if (coupon.toUpperCase() === "CAMISA10") {
@@ -83,9 +88,52 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [coupon]);
 
+  // ── Cálculos financeiros ────────────────────────────────────────────────────
+
+  const totalItems = items.reduce((s, i) => s + i.quantity, 0);
+
+  /** Subtotal bruto (preço cheio × quantity de cada item, sem desconto algum). */
+  const subtotal = items.reduce(
+    (s, i) => s + (Number(i.product.priceNum) || 0) * i.quantity,
+    0
+  );
+
+  /**
+   * Promoção Tríplice Coroa — recalculada reativamente a cada mudança de `items`.
+   * Resultado imutável e puro: sem efeitos colaterais.
+   */
+  const tripleCrown = applyTripleCrownDiscount(items);
+
+  /**
+   * Preço final seguro para envio ao Sigilo Pay:
+   *   subtotal
+   *   − desconto_tríplice_coroa
+   *   × (1 − desconto_cupom)
+   */
+  const totalPrice =
+    Number((subtotal - tripleCrown.totalDiscount) * (1 - discount)) || 0;
+
+  // ── Provider ────────────────────────────────────────────────────────────────
+
   return (
     <CartContext.Provider
-      value={{ items, isOpen, openCart, closeCart, addItem, removeItem, updateQuantity, totalItems, totalPrice, coupon, setCoupon, applyCoupon, discount }}
+      value={{
+        items,
+        isOpen,
+        openCart,
+        closeCart,
+        addItem,
+        removeItem,
+        updateQuantity,
+        totalItems,
+        totalPrice,
+        subtotal,
+        coupon,
+        setCoupon,
+        applyCoupon,
+        discount,
+        tripleCrown,
+      }}
     >
       {children}
     </CartContext.Provider>
