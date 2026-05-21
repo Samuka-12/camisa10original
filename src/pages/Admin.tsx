@@ -11,6 +11,124 @@ import {
     LogOut
 } from 'lucide-react';
 
+function AnimatedBackground() {
+    const moneyItems = Array.from({ length: 30 });
+    return (
+        <div
+            aria-hidden="true"
+            style={{
+                position: "fixed",
+                inset: 0,
+                zIndex: 0,
+                overflow: "hidden",
+                pointerEvents: "none",
+                backgroundColor: "#050505",
+            }}
+        >
+            {/* Gatuno ao fundo em extasia (4 segundos) */}
+            <div
+                style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    opacity: 0.15,
+                }}
+            >
+                <img 
+                    src="/gatuno.jpg" 
+                    alt="Gatuno"
+                    style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        animation: "gatunoExtasia 4s cubic-bezier(0.4, 0, 0.2, 1) infinite",
+                        transformOrigin: "center bottom",
+                    }}
+                />
+            </div>
+
+            {/* Chuva de Dinheiro */}
+            {moneyItems.map((_, i) => {
+                const randomLeft = Math.random() * 100;
+                const randomDelay = Math.random() * 4;
+                const randomDuration = 3 + Math.random() * 4;
+                const randomScale = 0.5 + Math.random() * 1.5;
+                const isDolar = Math.random() > 0.5;
+
+                return (
+                    <div
+                        key={i}
+                        style={{
+                            position: "absolute",
+                            left: `${randomLeft}%`,
+                            top: "-10%",
+                            fontSize: `${24 * randomScale}px`,
+                            animation: `moneyRain ${randomDuration}s linear ${randomDelay}s infinite`,
+                            opacity: 0.6,
+                        }}
+                    >
+                        {isDolar ? "💵" : "💸"}
+                    </div>
+                );
+            })}
+
+            {/* Grid sutil por cima */}
+            <div
+                style={{
+                    position: "absolute",
+                    inset: 0,
+                    backgroundImage: `
+                        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)
+                    `,
+                    backgroundSize: "60px 60px",
+                }}
+            />
+
+            {/* Keyframes */}
+            <style>{`
+                @keyframes gatunoExtasia {
+                    0%, 100% {
+                        transform: scale(1) translateY(0px) rotate(0deg);
+                        filter: brightness(1) drop-shadow(0 0 20px rgba(255,255,255,0));
+                    }
+                    25% {
+                        transform: scale(1.08) translateY(-10px) rotate(-1deg);
+                        filter: brightness(1.2) drop-shadow(0 0 40px rgba(255,255,255,0.3));
+                    }
+                    50% {
+                        transform: scale(1.15) translateY(-20px) rotate(2deg);
+                        filter: brightness(1.4) drop-shadow(0 0 60px rgba(255,255,255,0.5));
+                    }
+                    75% {
+                        transform: scale(1.08) translateY(-10px) rotate(-1.5deg);
+                        filter: brightness(1.2) drop-shadow(0 0 40px rgba(255,255,255,0.3));
+                    }
+                }
+
+                @keyframes moneyRain {
+                    0% {
+                        transform: translateY(0) rotate(0deg) scale(1);
+                        opacity: 0;
+                    }
+                    10% {
+                        opacity: 0.8;
+                    }
+                    90% {
+                        opacity: 0.8;
+                    }
+                    100% {
+                        transform: translateY(120vh) rotate(360deg) scale(1.2);
+                        opacity: 0;
+                    }
+                }
+            `}</style>
+        </div>
+    );
+}
+
 export default function Admin() {
     const [aba, setAba] = useState<'pedidos' | 'catalogo' | 'novo'>('pedidos');
     const [pedidos, setPedidos] = useState<any[]>([]);
@@ -104,11 +222,22 @@ export default function Admin() {
     };
 
     return (
-        <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc', color: '#000', fontFamily: 'sans-serif' }}>
+        <div style={{ display: 'flex', minHeight: '100vh', background: 'transparent', color: '#fff', fontFamily: 'sans-serif', position: 'relative' }}>
+            <AnimatedBackground />
 
-            <aside style={{ width: '280px', background: '#fff', borderRight: '2px solid #000', padding: '20px', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ fontWeight: 900, fontSize: '20px', marginBottom: '40px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ background: '#2563eb', color: '#fff', padding: '8px', borderRadius: '8px' }}>👕</div>
+            <aside style={{ 
+                width: '280px', 
+                background: 'rgba(15,23,42,0.8)', 
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                borderRight: '1px solid rgba(255,255,255,0.06)', 
+                padding: '20px', 
+                display: 'flex', 
+                flexDirection: 'column',
+                zIndex: 10
+            }}>
+                <div style={{ fontWeight: 900, fontSize: '20px', marginBottom: '40px', display: 'flex', alignItems: 'center', gap: '10px', color: '#fff' }}>
+                    <div style={{ background: 'linear-gradient(135deg, #7c3aed, #3b82f6)', color: '#fff', padding: '8px', borderRadius: '8px' }}>👕</div>
                     Camisa 10 Admin
                 </div>
 
@@ -129,9 +258,9 @@ export default function Admin() {
                 </button>
             </aside>
 
-            <main style={{ flex: 1, padding: '40px' }}>
+            <main style={{ flex: 1, padding: '40px', zIndex: 10, backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                    <h1 style={{ fontSize: '32px', fontWeight: 900 }}>
+                    <h1 style={{ fontSize: '32px', fontWeight: 900, color: '#fff' }}>
                         {aba === 'pedidos' && '🛒 Captura de Dados'}
                         {aba === 'catalogo' && '👕 Catálogo de Produtos'}
                         {aba === 'novo' && '➕ Adicionar Novo Item'}
@@ -264,14 +393,14 @@ export default function Admin() {
     );
 }
 
-const bIn: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '15px', border: 'none', background: 'none', color: '#000', cursor: 'pointer', borderRadius: '12px', fontWeight: 900, textAlign: 'left' };
-const bAt: React.CSSProperties = { ...bIn, background: '#f1f5f9', color: '#2563eb', border: '1px solid #ddd' };
-const th: React.CSSProperties = { padding: '15px 20px', textAlign: 'left', fontSize: '12px', fontWeight: 900 };
-const td: React.CSSProperties = { padding: '15px 20px', fontSize: '14px' };
-const btnV: React.CSSProperties = { background: '#000', color: '#fff', border: 'none', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 900, display: 'flex', gap: '8px', alignItems: 'center' };
-const btnRef: React.CSSProperties = { padding: '10px 20px', border: '2px solid #000', background: '#fff', fontWeight: 900, borderRadius: '10px', cursor: 'pointer', display: 'flex', gap: '8px' };
-const tabCard: React.CSSProperties = { background: '#fff', borderRadius: '15px', border: '2px solid #000', overflow: 'hidden' };
-const formStyle: React.CSSProperties = { background: '#fff', padding: '30px', borderRadius: '20px', border: '2px solid #000', maxWidth: '500px' };
-const input: React.CSSProperties = { width: '100%', padding: '15px', marginBottom: '20px', borderRadius: '10px', border: '2px solid #000', fontWeight: 'bold', outline: 'none' };
-const label: React.CSSProperties = { display: 'block', marginBottom: '8px', fontWeight: 900 };
-const btnSave: React.CSSProperties = { width: '100%', padding: '15px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 900, cursor: 'pointer' };
+const bIn: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '15px', border: 'none', background: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', borderRadius: '12px', fontWeight: 900, textAlign: 'left', transition: 'all 0.2s' };
+const bAt: React.CSSProperties = { ...bIn, background: 'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(59,130,246,0.15))', color: '#fff', border: '1px solid rgba(124,58,237,0.3)' };
+const th: React.CSSProperties = { padding: '15px 20px', textAlign: 'left', fontSize: '12px', fontWeight: 900, color: 'rgba(255,255,255,0.5)', borderBottom: '1px solid rgba(255,255,255,0.06)' };
+const td: React.CSSProperties = { padding: '15px 20px', fontSize: '14px', borderBottom: '1px solid rgba(255,255,255,0.04)' };
+const btnV: React.CSSProperties = { background: 'linear-gradient(135deg, #7c3aed, #3b82f6)', color: '#fff', border: 'none', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 900, display: 'flex', gap: '8px', alignItems: 'center', boxShadow: '0 4px 15px rgba(124,58,237,0.35)' };
+const btnRef: React.CSSProperties = { padding: '10px 20px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontWeight: 900, borderRadius: '10px', cursor: 'pointer', display: 'flex', gap: '8px', transition: 'all 0.2s' };
+const tabCard: React.CSSProperties = { background: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.06)', overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' };
+const formStyle: React.CSSProperties = { background: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', padding: '30px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.06)', maxWidth: '500px', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' };
+const input: React.CSSProperties = { width: '100%', padding: '15px', marginBottom: '20px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontWeight: 'bold', outline: 'none', transition: 'all 0.2s' };
+const label: React.CSSProperties = { display: 'block', marginBottom: '8px', fontWeight: 900, color: 'rgba(255,255,255,0.7)' };
+const btnSave: React.CSSProperties = { width: '100%', padding: '15px', background: 'linear-gradient(135deg, #7c3aed, #3b82f6)', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 15px rgba(124,58,237,0.35)' };
