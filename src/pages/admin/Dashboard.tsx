@@ -54,59 +54,119 @@ const AdminDashboard = () => {
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 font-heading">Catálogo de Camisas</h1>
-          <p className="text-gray-500 mt-1">Gerencie seu inventário e lançamentos</p>
+          <h1 style={{ fontSize: "28px", fontWeight: 800, color: "#fff" }}>
+            Catálogo de Camisas
+          </h1>
+          <p style={{ color: "rgba(255,255,255,0.45)", marginTop: "4px", fontSize: "14px" }}>
+            Gerencie seu inventário e lançamentos
+          </p>
         </div>
         <Link to="/admin/produtos/novo">
-          <Button className="flex items-center text-sm font-semibold gap-2 py-5 px-6">
+          <Button
+            style={{
+              background: "linear-gradient(135deg, #7c3aed, #3b82f6)",
+              border: "none",
+              fontWeight: 700,
+              padding: "12px 24px",
+              borderRadius: "12px",
+              boxShadow: "0 4px 20px rgba(124,58,237,0.35)",
+            }}
+            className="flex items-center text-sm font-semibold gap-2"
+          >
             <PlusCircle className="w-5 h-5" />
             Nova Camisa
           </Button>
         </Link>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex gap-4">
+      <div
+        style={{
+          background: "rgba(255,255,255,0.04)",
+          borderRadius: "16px",
+          border: "1px solid rgba(255,255,255,0.06)",
+          overflow: "hidden",
+          backdropFilter: "blur(8px)",
+        }}
+      >
+        {/* Barra de busca */}
+        <div
+          style={{
+            padding: "14px 16px",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            background: "rgba(255,255,255,0.02)",
+          }}
+          className="flex gap-4"
+        >
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "rgba(255,255,255,0.3)" }} />
             <input
               type="text"
               placeholder="Buscar pelo nome ou seleção..."
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+              style={{
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                color: "#fff",
+                borderRadius: "10px",
+              }}
+              className="w-full pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 transition-all placeholder:text-white/25"
             />
           </div>
         </div>
 
+        {/* Tabela */}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50/50 border-b border-gray-100 text-xs uppercase tracking-wider text-gray-500 font-semibold">
-                <th className="p-4">Produto</th>
-                <th className="p-4">Time/Seleção</th>
-                <th className="p-4">Categoria</th>
-                <th className="p-4">Preço</th>
-                <th className="p-4 text-right">Ações</th>
+              <tr
+                style={{
+                  borderBottom: "1px solid rgba(255,255,255,0.06)",
+                  background: "rgba(255,255,255,0.02)",
+                }}
+              >
+                <th style={thStyle}>Produto</th>
+                <th style={thStyle}>Time/Seleção</th>
+                <th style={thStyle}>Categoria</th>
+                <th style={thStyle}>Preço</th>
+                <th style={{ ...thStyle, textAlign: "right" }}>Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-gray-500">
+                  <td colSpan={5} style={{ padding: "40px", textAlign: "center", color: "rgba(255,255,255,0.4)" }}>
                     Carregando catálogo...
                   </td>
                 </tr>
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-gray-500">
+                  <td colSpan={5} style={{ padding: "40px", textAlign: "center", color: "rgba(255,255,255,0.4)" }}>
                     Nenhum produto cadastrado ainda.
                   </td>
                 </tr>
               ) : (
                 products.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="p-4">
+                  <tr
+                    key={product.id}
+                    style={{
+                      borderBottom: "1px solid rgba(255,255,255,0.04)",
+                      transition: "background 0.2s",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.03)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                  >
+                    <td style={tdStyle}>
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
+                        <div
+                          style={{
+                            width: "48px",
+                            height: "48px",
+                            borderRadius: "10px",
+                            background: "rgba(255,255,255,0.05)",
+                            overflow: "hidden",
+                            flexShrink: 0,
+                            border: "1px solid rgba(255,255,255,0.06)",
+                          }}
+                        >
                           {product.image_url ? (
                             <img
                               src={product.image_url}
@@ -114,36 +174,56 @@ const AdminDashboard = () => {
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                            <div className="w-full h-full flex items-center justify-center" style={{ color: "rgba(255,255,255,0.2)", fontSize: "10px" }}>
                               Sem Foto
                             </div>
                           )}
                         </div>
-                        <span className="font-semibold text-gray-900">{product.name}</span>
+                        <span style={{ fontWeight: 600, color: "#fff" }}>{product.name}</span>
                       </div>
                     </td>
-                    <td className="p-4 text-gray-600">{product.team}</td>
-                    <td className="p-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-primary">
+                    <td style={{ ...tdStyle, color: "rgba(255,255,255,0.55)" }}>{product.team}</td>
+                    <td style={tdStyle}>
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          padding: "3px 10px",
+                          borderRadius: "20px",
+                          fontSize: "11px",
+                          fontWeight: 600,
+                          background: "rgba(124,58,237,0.15)",
+                          color: "#a78bfa",
+                          border: "1px solid rgba(124,58,237,0.2)",
+                        }}
+                      >
                         {product.category}
                       </span>
                     </td>
-                    <td className="p-4 font-semibold text-gray-900">
+                    <td style={{ ...tdStyle, fontWeight: 700, color: "#86efac" }}>
                       {new Intl.NumberFormat("pt-BR", {
                         style: "currency",
                         currency: "BRL",
                       }).format(product.price)}
                     </td>
-                    <td className="p-4 text-right">
+                    <td style={{ ...tdStyle, textAlign: "right" }}>
                       <div className="flex justify-end gap-2">
-                        {/* <Link to={`/admin/produtos/${product.id}/editar`}>
-                          <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                            <Edit className="w-4 h-4" />
-                          </button>
-                        </Link> */}
                         <button
                           onClick={() => handleDelete(product.id)}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          style={{
+                            padding: "8px",
+                            borderRadius: "8px",
+                            border: "none",
+                            background: "rgba(239,68,68,0.1)",
+                            color: "#f87171",
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = "rgba(239,68,68,0.2)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "rgba(239,68,68,0.1)";
+                          }}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -158,6 +238,21 @@ const AdminDashboard = () => {
       </div>
     </div>
   );
+};
+
+// Estilos da tabela
+const thStyle: React.CSSProperties = {
+  padding: "14px 16px",
+  fontSize: "11px",
+  fontWeight: 700,
+  textTransform: "uppercase",
+  letterSpacing: "0.08em",
+  color: "rgba(255,255,255,0.35)",
+};
+
+const tdStyle: React.CSSProperties = {
+  padding: "14px 16px",
+  fontSize: "14px",
 };
 
 export default AdminDashboard;

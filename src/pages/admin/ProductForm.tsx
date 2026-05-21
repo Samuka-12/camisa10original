@@ -75,13 +75,20 @@ const ProductForm = () => {
       <div className="flex items-center gap-4">
         <button
           onClick={() => navigate("/admin")}
-          className="p-2 bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors shadow-sm"
+          style={{
+            padding: "8px",
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: "50%",
+            cursor: "pointer",
+            transition: "all 0.2s",
+          }}
         >
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
+          <ArrowLeft className="w-5 h-5" style={{ color: "rgba(255,255,255,0.6)" }} />
         </button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 font-heading">Nova Camisa</h1>
-          <p className="text-gray-500 mt-1">Adicione um novo manto ao seu estoque</p>
+          <h1 style={{ fontSize: "28px", fontWeight: 800, color: "#fff" }}>Nova Camisa</h1>
+          <p style={{ color: "rgba(255,255,255,0.45)", marginTop: "4px", fontSize: "14px" }}>Adicione um novo manto ao seu estoque</p>
         </div>
       </div>
 
@@ -89,8 +96,8 @@ const ProductForm = () => {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="md:col-span-2 space-y-6">
-              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6">
-                <h2 className="text-lg font-semibold text-gray-900 border-b border-gray-100 pb-4">
+              <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "16px", padding: "24px" }} className="space-y-6">
+                <h2 style={{ fontSize: "16px", fontWeight: 600, color: "#fff", borderBottom: "1px solid rgba(255,255,255,0.06)", paddingBottom: "16px" }}>
                   Informações Básicas
                 </h2>
 
@@ -152,8 +159,8 @@ const ProductForm = () => {
                 />
               </div>
 
-              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6">
-                <h2 className="text-lg font-semibold text-gray-900 border-b border-gray-100 pb-4">
+              <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "16px", padding: "24px" }} className="space-y-6">
+                <h2 style={{ fontSize: "16px", fontWeight: 600, color: "#fff", borderBottom: "1px solid rgba(255,255,255,0.06)", paddingBottom: "16px" }}>
                   Detalhes Técnicos
                 </h2>
 
@@ -178,8 +185,8 @@ const ProductForm = () => {
             </div>
 
             <div className="space-y-6">
-              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6 sticky top-6">
-                <h2 className="text-lg font-semibold text-gray-900 border-b border-gray-100 pb-4">
+              <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "16px", padding: "24px", position: "sticky", top: "24px" }} className="space-y-6">
+                <h2 style={{ fontSize: "16px", fontWeight: 600, color: "#fff", borderBottom: "1px solid rgba(255,255,255,0.06)", paddingBottom: "16px" }}>
                   Imagem Mockup (Upload)
                 </h2>
 
@@ -192,7 +199,17 @@ const ProductForm = () => {
                 <Button
                   type="submit"
                   disabled={isSaving}
-                  className="w-full h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all"
+                  style={{
+                    width: "100%",
+                    height: "48px",
+                    fontSize: "15px",
+                    fontWeight: 700,
+                    background: "linear-gradient(135deg, #7c3aed, #3b82f6)",
+                    border: "none",
+                    borderRadius: "12px",
+                    boxShadow: "0 4px 20px rgba(124,58,237,0.35)",
+                    cursor: isSaving ? "wait" : "pointer",
+                  }}
                 >
                   {isSaving ? (
                     <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Salvando...</>
