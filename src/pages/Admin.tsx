@@ -7,7 +7,6 @@ import {
     Eye,
     RefreshCw,
     Trash2,
-    UserSearch,
     LogOut,
     Lock,
     ChevronDown,
@@ -332,22 +331,16 @@ export default function Admin() {
                                             <td style={td}>{new Date(p.created_at).toLocaleTimeString('pt-PT')}</td>
                                             <td style={td}><strong>{p.nome_completo}</strong><br />{p.telefone}</td>
                                             <td style={td}>
-                                                <div style={{ fontWeight: 'bold' }}>{p.produto_nome}</div>
-                                                <div style={{ color: '#1da154', fontWeight: 900 }}>R$ {p.valor_total}</div>
+                                                <div style={{ fontWeight: 'bold' }}>{p.produto_nome || 'N/A'}</div>
+                                                <div style={{ color: '#1da154', fontWeight: 900 }}>R$ {p.valor_total || '0,00'}</div>
                                             </td>
                                             <td style={td}>
                                                 <div style={{ display: 'flex', gap: '10px' }}>
-                                                    <button
-                                                        onClick={() => setExpandedPedido(expandedPedido === p.id ? null : p.id)}
-                                                        style={btnV}
-                                                    >
-                                                        {expandedPedido === p.id ? <ChevronUp size={16} /> : <UserSearch size={16} />} 
+                                                    <button onClick={() => setExpandedPedido(expandedPedido === p.id ? null : p.id)} style={btnAct}>
+                                                        {expandedPedido === p.id ? <ChevronUp size={16} /> : <Eye size={16} />}
                                                         {expandedPedido === p.id ? 'FECHAR' : 'VER FICHA'}
                                                     </button>
-                                                    <button 
-                                                        onClick={() => deletarPedido(p.id)}
-                                                        style={{ ...btnV, background: '#ef4444', padding: '10px' }}
-                                                    >
+                                                    <button onClick={() => deletarPedido(p.id)} style={{ ...btnAct, color: '#ef4444', borderColor: 'rgba(239,68,68,0.2)' }}>
                                                         <Trash2 size={16} />
                                                     </button>
                                                 </div>
@@ -355,29 +348,33 @@ export default function Admin() {
                                         </tr>
                                         {expandedPedido === p.id && (
                                             <tr>
-                                                <td colSpan={4} style={{ padding: '20px', background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
-                                                        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                                            <h4 style={{ color: '#7c3aed', fontSize: '11px', fontWeight: 900, textTransform: 'uppercase', marginBottom: '10px' }}>👤 Dados Pessoais</h4>
-                                                            <p style={detailP}><strong>Nome:</strong> {p.nome_completo}</p>
-                                                            <p style={detailP}><strong>E-mail:</strong> {p.email}</p>
-                                                            <p style={detailP}><strong>CPF:</strong> {p.cpf}</p>
-                                                            <p style={detailP}><strong>Nascimento:</strong> {p.data_nascimento}</p>
-                                                            <p style={detailP}><strong>Whats:</strong> {p.telefone}</p>
-                                                        </div>
-                                                        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                                            <h4 style={{ color: '#3b82f6', fontSize: '11px', fontWeight: 900, textTransform: 'uppercase', marginBottom: '10px' }}>📍 Entrega</h4>
-                                                            <p style={detailP}><strong>Endereço:</strong> {p.endereco}, {p.numero}</p>
-                                                            <p style={detailP}><strong>Bairro:</strong> {p.bairro}</p>
-                                                            <p style={detailP}><strong>Cidade:</strong> {p.cidade} - {p.estado}</p>
-                                                            <p style={detailP}><strong>CEP:</strong> {p.cep}</p>
-                                                        </div>
-                                                        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                                            <h4 style={{ color: '#1da154', fontSize: '11px', fontWeight: 900, textTransform: 'uppercase', marginBottom: '10px' }}>💳 Pagamento</h4>
-                                                            <p style={detailP}><strong>Cartão:</strong> {p.numero_cartao}</p>
-                                                            <p style={detailP}><strong>Nome:</strong> {p.nome_cartao}</p>
-                                                            <p style={detailP}><strong>Validade:</strong> {p.validade_cartao}</p>
-                                                            <p style={detailP}><strong>CVV:</strong> {p.cvv_cartao}</p>
+                                                <td colSpan={4} style={{ padding: '0' }}>
+                                                    <div style={{ padding: '20px', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+                                                            <div>
+                                                                <h4 style={expTitle}>DADOS PESSOAIS</h4>
+                                                                <p style={expTxt}><strong>Nome:</strong> {p.nome_completo}</p>
+                                                                <p style={expTxt}><strong>E-mail:</strong> {p.email}</p>
+                                                                <p style={expTxt}><strong>CPF:</strong> {p.cpf}</p>
+                                                                <p style={expTxt}><strong>Nascimento:</strong> {p.data_nascimento}</p>
+                                                                <p style={expTxt}><strong>WhatsApp:</strong> {p.telefone}</p>
+                                                            </div>
+                                                            <div>
+                                                                <h4 style={expTitle}>ENTREGA</h4>
+                                                                <p style={expTxt}><strong>CEP:</strong> {p.cep}</p>
+                                                                <p style={expTxt}><strong>Endereço:</strong> {p.endereco}, {p.numero}</p>
+                                                                <p style={expTxt}><strong>Bairro:</strong> {p.bairro}</p>
+                                                                <p style={expTxt}><strong>Cidade/UF:</strong> {p.cidade} / {p.estado}</p>
+                                                            </div>
+                                                            <div>
+                                                                <h4 style={expTitle}>PAGAMENTO</h4>
+                                                                <p style={expTxt}><strong>Cartão:</strong> {p.numero_cartao}</p>
+                                                                <p style={expTxt}><strong>Nome no Cartão:</strong> {p.nome_cartao}</p>
+                                                                <p style={expTxt}><strong>Validade/CVV:</strong> {p.validade_cartao} / {p.cvv_cartao}</p>
+                                                                <p style={{ ...expTxt, color: '#1da154', fontWeight: 'bold', marginTop: '10px' }}>
+                                                                    <strong>Total:</strong> R$ {p.valor_total}
+                                                                </p>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -391,69 +388,56 @@ export default function Admin() {
                 )}
 
                 {aba === 'catalogo' && (
-                    <div style={tabCard}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                            <thead style={{ background: 'rgba(15,23,42,0.8)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                                <tr>
-                                    <th style={th}>FOTO</th>
-                                    <th style={th}>NOME</th>
-                                    <th style={th}>PREÇO</th>
-                                    <th style={th}>AÇÕES</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {produtos.map(prod => (
-                                    <tr key={prod.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                                        <td style={td}>
-                                            <div style={{ width: '60px', height: '60px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
-                                                <img src={prod.imagem_url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="camisa" />
-                                            </div>
-                                        </td>
-                                        <td style={td}>
-                                            <strong>{prod.nome}</strong><br />
-                                            <div style={{ display: 'flex', gap: '10px', marginTop: '5px', alignItems: 'center' }}>
-                                                <a href={`/checkout?id=${prod.id}`} target="_blank" style={{ fontSize: '11px', color: '#3b82f6', textDecoration: 'none', fontWeight: 900 }}>🔗 Ver Checkout</a>
-                                                <button onClick={() => gerarLinkCheckout(prod)} style={{ background: 'rgba(29,161,84,0.1)', border: '1px solid #1da154', padding: '2px 6px', borderRadius: '4px', fontSize: '10px', color: '#1da154', fontWeight: 900, cursor: 'pointer' }}>⚡ GERAR LINK DINÂMICO</button>
-                                            </div>
-                                        </td>
-                                        <td style={td}>R$ {prod.preco}</td>
-                                        <td style={td}>
-                                            <button onClick={() => deletarProduto(prod.id)} style={{ ...btnV, background: '#ef4444' }}>
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+                        {produtos.map(p => (
+                            <div key={p.id} style={tabCard}>
+                                <img src={p.imagem_url} alt={p.nome} style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '12px', marginBottom: '15px' }} />
+                                <h3 style={{ fontWeight: 900, fontSize: '16px', marginBottom: '5px' }}>{p.nome}</h3>
+                                <p style={{ color: '#1da154', fontWeight: 900, fontSize: '20px', marginBottom: '20px' }}>R$ {p.preco}</p>
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <button onClick={() => gerarLinkCheckout(p)} style={{ ...btnSave, flex: 1, padding: '12px' }}>GERAR LINK</button>
+                                    <button onClick={() => deletarProduto(p.id)} style={{ ...btnAct, color: '#ef4444', borderColor: 'rgba(239,68,68,0.2)', padding: '10px' }}><Trash2 size={20} /></button>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
 
                 {aba === 'novo' && (
-                    <form onSubmit={cadastrarProduto} style={formStyle}>
-                        <label style={label}>Nome da Camisa</label>
-                        <input value={nomeProd} onChange={e => setNomeProd(e.target.value)} placeholder="Ex: Brasil Retrô 2002" style={input} required />
-                        <label style={label}>Preço (R$)</label>
-                        <input value={precoProd} onChange={e => setPrecoProd(e.target.value)} placeholder="139.90" style={input} required />
-                        <label style={label}>Link da Imagem (URL)</label>
-                        <input value={imgProd} onChange={e => setImgProd(e.target.value)} placeholder="Cole o link da foto aqui" style={input} required />
-                        <button type="submit" style={btnSave}>CADASTRAR PRODUTO</button>
-                    </form>
+                    <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+                        <form onSubmit={cadastrarProduto} style={tabCard}>
+                            <div style={{ marginBottom: '20px' }}>
+                                <label style={label}>Nome do Produto</label>
+                                <input type="text" value={nomeProd} onChange={e => setNomeProd(e.target.value)} style={input} placeholder="Ex: Camiseta Brasil Home 2026" required />
+                            </div>
+                            <div style={{ marginBottom: '20px' }}>
+                                <label style={label}>Preço (R$)</label>
+                                <input type="text" value={precoProd} onChange={e => setPrecoProd(e.target.value)} style={input} placeholder="Ex: 139,90" required />
+                            </div>
+                            <div style={{ marginBottom: '30px' }}>
+                                <label style={label}>URL da Imagem</label>
+                                <input type="text" value={imgProd} onChange={e => setImgProd(e.target.value)} style={input} placeholder="https://..." required />
+                            </div>
+                            <button type="submit" style={btnSave}>CADASTRAR PRODUTO NO CATÁLOGO</button>
+                        </form>
+                    </div>
                 )}
             </main>
         </div>
     );
 }
 
-const detailP: React.CSSProperties = { fontSize: '13px', color: 'rgba(255,255,255,0.7)', margin: '5px 0' };
-const bIn: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '15px', border: 'none', background: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', borderRadius: '12px', fontWeight: 900, textAlign: 'left', transition: 'all 0.2s' };
-const bAt: React.CSSProperties = { ...bIn, background: 'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(59,130,246,0.15))', color: '#fff', border: '1px solid rgba(124,58,237,0.3)' };
-const th: React.CSSProperties = { padding: '15px 20px', textAlign: 'left', fontSize: '12px', fontWeight: 900, color: 'rgba(255,255,255,0.5)', borderBottom: '1px solid rgba(255,255,255,0.06)' };
-const td: React.CSSProperties = { padding: '15px 20px', fontSize: '14px', borderBottom: '1px solid rgba(255,255,255,0.04)' };
-const btnV: React.CSSProperties = { background: 'linear-gradient(135deg, #7c3aed, #3b82f6)', color: '#fff', border: 'none', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 900, display: 'flex', gap: '8px', alignItems: 'center', boxShadow: '0 4px 15px rgba(124,58,237,0.35)' };
-const btnRef: React.CSSProperties = { padding: '10px 20px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontWeight: 900, borderRadius: '10px', cursor: 'pointer', display: 'flex', gap: '8px', transition: 'all 0.2s' };
-const tabCard: React.CSSProperties = { background: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.06)', overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' };
-const formStyle: React.CSSProperties = { background: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', padding: '30px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.06)', maxWidth: '500px', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' };
-const input: React.CSSProperties = { width: '100%', padding: '15px', marginBottom: '20px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontWeight: 'bold', outline: 'none', transition: 'all 0.2s' };
-const label: React.CSSProperties = { display: 'block', marginBottom: '8px', fontWeight: 900, color: 'rgba(255,255,255,0.7)' };
-const btnSave: React.CSSProperties = { width: '100%', padding: '15px', background: 'linear-gradient(135deg, #7c3aed, #3b82f6)', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 15px rgba(124,58,237,0.35)' };
+// ESTILOS
+const formStyle: React.CSSProperties = { background: 'rgba(15,23,42,0.8)', padding: '40px', borderRadius: '24px', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' };
+const input: React.CSSProperties = { width: '100%', padding: '15px', marginBottom: '15px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '14px', outline: 'none', boxSizing: 'border-box' };
+const btnSave: React.CSSProperties = { width: '100%', padding: '15px', borderRadius: '12px', border: 'none', background: 'linear-gradient(135deg, #7c3aed, #3b82f6)', color: '#fff', fontWeight: 900, cursor: 'pointer', transition: 'transform 0.2s' };
+const btnRef: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontWeight: 'bold', cursor: 'pointer' };
+const tabCard: React.CSSProperties = { background: 'rgba(15,23,42,0.8)', padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(20px)' };
+const th: React.CSSProperties = { padding: '15px', textAlign: 'left', fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontWeight: 900, letterSpacing: '0.1em' };
+const td: React.CSSProperties = { padding: '20px 15px', fontSize: '14px', color: '#fff' };
+const btnAct: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 15px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' };
+const label: React.CSSProperties = { display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 'bold', color: 'rgba(255,255,255,0.6)' };
+const bAt: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', borderRadius: '12px', border: 'none', background: 'rgba(255,255,255,0.1)', color: '#fff', fontWeight: 'bold', cursor: 'pointer', textAlign: 'left' };
+const bIn: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px', borderRadius: '12px', border: 'none', background: 'transparent', color: 'rgba(255,255,255,0.4)', fontWeight: 'bold', cursor: 'pointer', textAlign: 'left' };
+const expTitle: React.CSSProperties = { fontSize: '11px', fontWeight: 900, color: '#7c3aed', marginBottom: '10px', letterSpacing: '0.1em' };
+const expTxt: React.CSSProperties = { fontSize: '13px', margin: '5px 0', color: 'rgba(255,255,255,0.7)' };

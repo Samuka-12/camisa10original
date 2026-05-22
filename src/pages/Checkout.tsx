@@ -307,7 +307,7 @@ export default function Checkout() {
               <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
                 <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}>
                   <Hash size={18} />
-                  <input name="cpf" placeholder="DOCUMENTO" required style={inputStyle} value={formData.cpf} onChange={mask} maxLength={14} />
+                  <input name="cpf" placeholder="CPF" required style={inputStyle} value={formData.cpf} onChange={mask} maxLength={14} />
                 </div>
                 <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}>
                   <Calendar size={18} />
@@ -315,7 +315,7 @@ export default function Checkout() {
                 </div>
               </div>
               {formData.cpf.replace(/\D/g, '').length > 0 && ![11, 14].includes(formData.cpf.replace(/\D/g, '').length) && (
-                <div style={{ fontSize: '10px', color: '#ef4444', fontWeight: 'bold', marginLeft: '5px', marginTop: '2px' }}>DOCUMENTO INVÁLIDO</div>
+                <div style={{ fontSize: '10px', color: '#ef4444', fontWeight: 'bold', marginLeft: '5px', marginTop: '2px' }}>CPF INVÁLIDO</div>
               )}
             </div>
             <div style={{ ...inputGroup, marginBottom: '20px' }}><Phone size={18} /><input name="telefone" placeholder="WHATSAPP (DDD)" required style={inputStyle} value={formData.telefone} onChange={mask} maxLength={15} /></div>
