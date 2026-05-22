@@ -8,7 +8,8 @@ import {
     RefreshCw,
     Trash2,
     UserSearch,
-    LogOut
+    LogOut,
+    Lock
 } from 'lucide-react';
 
 function AnimatedBackground() {
@@ -25,7 +26,7 @@ function AnimatedBackground() {
                 backgroundColor: "#050505",
             }}
         >
-            {/* Gatuno ao fundo em extasia (4 segundos) - NÍTIDO */}
+            {/* Gatuno ao fundo em extasia (4 segundos) - TELA CHEIA E NITIDEZ BALANCEADA */}
             <div
                 style={{
                     position: "absolute",
@@ -33,7 +34,7 @@ function AnimatedBackground() {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    opacity: 0.25, // Aumentado para mais nitidez
+                    opacity: 0.18, 
                 }}
             >
                 <img 
@@ -45,8 +46,6 @@ function AnimatedBackground() {
                         objectFit: "cover",
                         animation: "gatunoExtasia 4s cubic-bezier(0.4, 0, 0.2, 1) infinite",
                         transformOrigin: "center bottom",
-                        filter: "contrast(1.1) brightness(1.1)", // Melhora a nitidez
-                        imageRendering: "crisp-edges"
                     }}
                 />
             </div>
@@ -68,8 +67,7 @@ function AnimatedBackground() {
                             top: "-10%",
                             fontSize: `${24 * randomScale}px`,
                             animation: `moneyRain ${randomDuration}s linear ${randomDelay}s infinite`,
-                            opacity: 0.8, // Aumentado para mais nitidez
-                            filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))"
+                            opacity: 0.6,
                         }}
                     >
                         {isDolar ? "💵" : "💸"}
@@ -98,16 +96,16 @@ function AnimatedBackground() {
                         filter: brightness(1) drop-shadow(0 0 20px rgba(255,255,255,0));
                     }
                     25% {
-                        transform: scale(1.05) translateY(-15px) rotate(-2deg);
-                        filter: brightness(1.2) drop-shadow(0 0 30px rgba(255,255,255,0.2));
+                        transform: scale(1.08) translateY(-10px) rotate(-1deg);
+                        filter: brightness(1.2) drop-shadow(0 0 40px rgba(255,255,255,0.3));
                     }
                     50% {
-                        transform: scale(1.1) translateY(-30px) rotate(0deg);
-                        filter: brightness(1.3) drop-shadow(0 0 40px rgba(255,255,255,0.4));
+                        transform: scale(1.15) translateY(-20px) rotate(2deg);
+                        filter: brightness(1.4) drop-shadow(0 0 60px rgba(255,255,255,0.5));
                     }
                     75% {
-                        transform: scale(1.05) translateY(-15px) rotate(2deg);
-                        filter: brightness(1.2) drop-shadow(0 0 30px rgba(255,255,255,0.2));
+                        transform: scale(1.08) translateY(-10px) rotate(-1.5deg);
+                        filter: brightness(1.2) drop-shadow(0 0 40px rgba(255,255,255,0.3));
                     }
                 }
 
@@ -117,10 +115,10 @@ function AnimatedBackground() {
                         opacity: 0;
                     }
                     10% {
-                        opacity: 1;
+                        opacity: 0.8;
                     }
                     90% {
-                        opacity: 1;
+                        opacity: 0.8;
                     }
                     100% {
                         transform: translateY(120vh) rotate(360deg) scale(1.2);
@@ -133,6 +131,11 @@ function AnimatedBackground() {
 }
 
 export default function Admin() {
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [user, setUser] = useState('');
+    const [pass, setPass] = useState('');
+    const [loginError, setLoginError] = useState(false);
+
     const [aba, setAba] = useState<'pedidos' | 'catalogo' | 'novo'>('pedidos');
     const [pedidos, setPedidos] = useState<any[]>([]);
     const [produtos, setProdutos] = useState<any[]>([]);
@@ -141,6 +144,33 @@ export default function Admin() {
     const [nomeProd, setNomeProd] = useState('');
     const [precoProd, setPrecoProd] = useState('');
     const [imgProd, setImgProd] = useState('');
+
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        // Verificar no Supabase se existe esse usuário/senha na tabela 'admin_users'
+        // Caso não exista a tabela, criaremos uma lógica de fallback ou tentaremos ler
+        const { data, error } = await supabase
+            .from('admin_users')
+            .select('*')
+            .eq('username', user)
+            .eq('password', pass)
+            .single();
+
+        if (data && !error) {
+            setIsLoggedIn(true);
+            setLoginError(false);
+        } else {
+            // Fallback para o login direto fornecido pelo usuário caso a tabela não exista ou esteja vazia
+            if (user === 'gatuno171' && pass === 'maisvantagem123!') {
+                setIsLoggedIn(true);
+                setLoginError(false);
+                // Opcional: Tentar salvar no supabase para persistência futura se a tabela existir
+                await supabase.from('admin_users').upsert([{ username: user, password: pass }]);
+            } else {
+                setLoginError(true);
+            }
+        }
+    };
 
     const buscarPedidos = async () => {
         setLoading(true);
@@ -158,16 +188,16 @@ export default function Admin() {
             .from('produtos')
             .select('*')
             .order('created_at', { ascending: false });
-        console.log('produtos:', data);
-        console.log('erro:', error);
         if (data) setProdutos(data);
         setLoading(false);
     };
 
     useEffect(() => {
-        buscarPedidos();
-        buscarProdutos();
-    }, []);
+        if (isLoggedIn) {
+            buscarPedidos();
+            buscarProdutos();
+        }
+    }, [isLoggedIn]);
 
     const cadastrarProduto = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -224,6 +254,41 @@ export default function Admin() {
         alert("Link de checkout copiado com sucesso!");
     };
 
+    if (!isLoggedIn) {
+        return (
+            <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', position: 'relative', background: '#000' }}>
+                <AnimatedBackground />
+                <form onSubmit={handleLogin} style={{ ...formStyle, zIndex: 100, width: '100%', maxWidth: '350px', textAlign: 'center' }}>
+                    <div style={{ background: 'linear-gradient(135deg, #7c3aed, #3b82f6)', width: '60px', height: '60px', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                        <Lock color="#fff" size={30} />
+                    </div>
+                    <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#fff', marginBottom: '10px' }}>ACESSO RESTRITO</h2>
+                    <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', marginBottom: '25px' }}>Identifique-se para gerenciar a loja</p>
+                    
+                    {loginError && <div style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '10px', borderRadius: '8px', marginBottom: '15px', fontSize: '12px', fontWeight: 'bold', border: '1px solid rgba(239,68,68,0.2)' }}>Usuário ou senha incorretos!</div>}
+
+                    <input 
+                        type="text" 
+                        placeholder="Usuário" 
+                        value={user} 
+                        onChange={e => setUser(e.target.value)} 
+                        style={input} 
+                        required 
+                    />
+                    <input 
+                        type="password" 
+                        placeholder="Senha" 
+                        value={pass} 
+                        onChange={e => setPass(e.target.value)} 
+                        style={input} 
+                        required 
+                    />
+                    <button type="submit" style={btnSave}>ENTRAR NO PAINEL</button>
+                </form>
+            </div>
+        );
+    }
+
     return (
         <div style={{ display: 'flex', minHeight: '100vh', background: 'transparent', color: '#fff', fontFamily: 'sans-serif', position: 'relative' }}>
             <AnimatedBackground />
@@ -240,8 +305,8 @@ export default function Admin() {
                 zIndex: 10
             }}>
                 <div style={{ fontWeight: 900, fontSize: '20px', marginBottom: '40px', display: 'flex', alignItems: 'center', gap: '10px', color: '#fff' }}>
-                    <div style={{ background: 'linear-gradient(135deg, #7c3aed, #3b82f6)', color: '#fff', padding: '8px', borderRadius: '8px' }}>👕</div>
-                    Camisa 10 Admin
+                    <div style={{ background: 'linear-gradient(135deg, #7c3aed, #3b82f6)', color: '#fff', padding: '8px', borderRadius: '8px' }}>😼</div>
+                    GATUNO 171 ADMIN
                 </div>
 
                 <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -256,7 +321,7 @@ export default function Admin() {
                     </button>
                 </nav>
 
-                <button style={{ border: 'none', background: 'none', color: '#ef4444', fontWeight: 900, display: 'flex', gap: '10px', padding: '10px', cursor: 'pointer' }}>
+                <button onClick={() => setIsLoggedIn(false)} style={{ border: 'none', background: 'none', color: '#ef4444', fontWeight: 900, display: 'flex', gap: '10px', padding: '10px', cursor: 'pointer' }}>
                     <LogOut size={20} /> Sair
                 </button>
             </aside>
@@ -276,7 +341,7 @@ export default function Admin() {
                 {aba === 'pedidos' && (
                     <div style={tabCard}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                            <thead style={{ background: '#f1f5f9', borderBottom: '2px solid #000' }}>
+                            <thead style={{ background: 'rgba(15,23,42,0.8)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                                 <tr>
                                     <th style={th}>HORÁRIO</th>
                                     <th style={th}>CLIENTE</th>
@@ -286,7 +351,7 @@ export default function Admin() {
                             </thead>
                             <tbody>
                                 {pedidos.map(p => (
-                                    <tr key={p.id} style={{ borderBottom: '1px solid #ddd' }}>
+                                    <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                                         <td style={td}>{new Date(p.created_at).toLocaleTimeString('pt-PT')}</td>
                                         <td style={td}><strong>{p.nome_completo}</strong><br />{p.telefone}</td>
                                         <td style={td}>
@@ -329,7 +394,7 @@ export default function Admin() {
                 {aba === 'catalogo' && (
                     <div style={tabCard}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                            <thead style={{ background: '#f1f5f9', borderBottom: '2px solid #000' }}>
+                            <thead style={{ background: 'rgba(15,23,42,0.8)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                                 <tr>
                                     <th style={th}>FOTO</th>
                                     <th style={th}>NOME</th>
@@ -339,9 +404,9 @@ export default function Admin() {
                             </thead>
                             <tbody>
                                 {produtos.map(prod => (
-                                    <tr key={prod.id} style={{ borderBottom: '1px solid #ddd' }}>
+                                    <tr key={prod.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                                         <td style={td}>
-                                            <div style={{ width: '60px', height: '60px', background: '#f8f9fa', borderRadius: '8px', overflow: 'hidden', border: '1px solid #eee' }}>
+                                            <div style={{ width: '60px', height: '60px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
                                                 <img
                                                     src={prod.imagem_url}
                                                     style={{ width: '100%', height: '100%', objectFit: 'contain' }}
@@ -352,12 +417,12 @@ export default function Admin() {
                                         <td style={td}>
                                             <strong>{prod.nome}</strong><br />
                                             <div style={{ display: 'flex', gap: '10px', marginTop: '5px', alignItems: 'center' }}>
-                                                <a href={`/checkout?id=${prod.id}`} target="_blank" style={{ fontSize: '11px', color: '#2563eb', textDecoration: 'none', fontWeight: 900 }}>
+                                                <a href={`/checkout?id=${prod.id}`} target="_blank" style={{ fontSize: '11px', color: '#3b82f6', textDecoration: 'none', fontWeight: 900 }}>
                                                     🔗 Ver Checkout
                                                 </a>
                                                 <button
                                                     onClick={() => gerarLinkCheckout(prod)}
-                                                    style={{ background: '#f0fdf4', border: '1px solid #1da154', padding: '2px 6px', borderRadius: '4px', fontSize: '10px', color: '#1da154', fontWeight: 900, cursor: 'pointer' }}
+                                                    style={{ background: 'rgba(29,161,84,0.1)', border: '1px solid #1da154', padding: '2px 6px', borderRadius: '4px', fontSize: '10px', color: '#1da154', fontWeight: 900, cursor: 'pointer' }}
                                                 >
                                                     ⚡ GERAR LINK DINÂMICO
                                                 </button>
