@@ -11,8 +11,17 @@ import {
     LogOut
 } from 'lucide-react';
 
+// Posições fixas para evitar re-render com valores aleatórios
+const MONEY_ITEMS = Array.from({ length: 45 }, (_, i) => ({
+    left: parseFloat(((i * 2.22 + (i % 7) * 1.47) % 100).toFixed(2)),
+    delay: parseFloat(((i * 0.29) % 4).toFixed(2)),
+    duration: parseFloat((2.2 + (i % 6) * 0.55).toFixed(2)),
+    size: parseFloat((20 + (i % 5) * 8).toFixed(0)),
+    isDolar: i % 2 === 0,
+    swayAmp: 8 + (i % 4) * 5,
+}));
+
 function AnimatedBackground() {
-    const moneyItems = Array.from({ length: 30 });
     return (
         <div
             aria-hidden="true"
@@ -22,107 +31,180 @@ function AnimatedBackground() {
                 zIndex: 0,
                 overflow: "hidden",
                 pointerEvents: "none",
-                backgroundColor: "#050505",
+                backgroundColor: "#06060a",
             }}
         >
-            {/* Gatuno ao fundo em extasia (4 segundos) */}
-            <div
-                style={{
-                    position: "absolute",
-                    inset: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    opacity: 0.15,
-                }}
-            >
-                <img 
-                    src="/gatuno.jpg" 
+            {/* ── Halo de brilho atrás do gato ── */}
+            <div style={{
+                position: "absolute",
+                left: "50%",
+                top: "50%",
+                transform: "translate(-50%, -50%)",
+                width: "560px",
+                height: "560px",
+                borderRadius: "50%",
+                background: "radial-gradient(circle, rgba(255,215,0,0.22) 0%, rgba(255,255,255,0.07) 40%, transparent 68%)",
+                animation: "haloGlow 4s ease-in-out infinite",
+                willChange: "transform, opacity",
+            }} />
+
+            {/* ── Gatuno central ── */}
+            <div style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 1,
+            }}>
+                <img
+                    src="/gatuno.jpg"
                     alt="Gatuno"
                     style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        animation: "gatunoExtasia 4s cubic-bezier(0.4, 0, 0.2, 1) infinite",
-                        transformOrigin: "center bottom",
+                        width: "min(68vh, 660px)",
+                        height: "min(68vh, 660px)",
+                        objectFit: "contain",
+                        objectPosition: "center",
+                        transformOrigin: "center 80%",
+                        animation: "gatunoBody 4s cubic-bezier(0.37, 0, 0.63, 1) infinite",
+                        willChange: "transform, filter",
+                        imageRendering: "crisp-edges",
+                        filter: "drop-shadow(0 0 32px rgba(255,220,60,0.6)) brightness(1.1) contrast(1.06) saturate(1.05)",
                     }}
                 />
             </div>
 
-            {/* Chuva de Dinheiro */}
-            {moneyItems.map((_, i) => {
-                const randomLeft = Math.random() * 100;
-                const randomDelay = Math.random() * 4;
-                const randomDuration = 3 + Math.random() * 4;
-                const randomScale = 0.5 + Math.random() * 1.5;
-                const isDolar = Math.random() > 0.5;
-
-                return (
-                    <div
-                        key={i}
-                        style={{
-                            position: "absolute",
-                            left: `${randomLeft}%`,
-                            top: "-10%",
-                            fontSize: `${24 * randomScale}px`,
-                            animation: `moneyRain ${randomDuration}s linear ${randomDelay}s infinite`,
-                            opacity: 0.6,
-                        }}
-                    >
-                        {isDolar ? "💵" : "💸"}
-                    </div>
-                );
-            })}
-
-            {/* Grid sutil por cima */}
-            <div
-                style={{
+            {/* ── Braço esquerdo overlay (sobe e desce) ── */}
+            <div style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 2,
+                pointerEvents: "none",
+            }}>
+                {/* Sombra de movimento do braço esquerdo */}
+                <div style={{
                     position: "absolute",
-                    inset: 0,
-                    backgroundImage: `
-                        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-                        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)
-                    `,
-                    backgroundSize: "60px 60px",
-                }}
-            />
+                    width: "min(68vh, 660px)",
+                    height: "min(68vh, 660px)",
+                    transformOrigin: "58% 50%",
+                    animation: "armLeftWave 4s cubic-bezier(0.37, 0, 0.63, 1) infinite",
+                    willChange: "transform",
+                }} />
+            </div>
 
-            {/* Keyframes */}
+            {/* ── Chuva de dinheiro ── */}
+            {MONEY_ITEMS.map((item, i) => (
+                <div
+                    key={i}
+                    style={{
+                        position: "absolute",
+                        left: `${item.left}%`,
+                        top: "-9%",
+                        fontSize: `${item.size}px`,
+                        lineHeight: 1,
+                        animation: `moneyFall ${item.duration}s linear ${item.delay}s infinite`,
+                        willChange: "transform, opacity",
+                        filter: "drop-shadow(0 2px 8px rgba(255,200,0,0.8))",
+                        zIndex: 5,
+                    }}
+                >
+                    {item.isDolar ? "💵" : "💸"}
+                </div>
+            ))}
+
+            {/* ── Grade sutil ── */}
+            <div style={{
+                position: "absolute",
+                inset: 0,
+                backgroundImage: `
+                    linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px)
+                `,
+                backgroundSize: "64px 64px",
+                zIndex: 6,
+            }} />
+
+            {/* ── Vinheta nas bordas ── */}
+            <div style={{
+                position: "absolute",
+                inset: 0,
+                background: "radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.8) 100%)",
+                zIndex: 7,
+            }} />
+
+            {/* ── Keyframes ── */}
             <style>{`
-                @keyframes gatunoExtasia {
-                    0%, 100% {
-                        transform: scale(1) translateY(0px) rotate(0deg);
-                        filter: brightness(1) drop-shadow(0 0 20px rgba(255,255,255,0));
+                /*
+                 * gatunoBody: corpo sobe/desce 2x por ciclo de 4s
+                 * + leve inclinação lateral = ilusão das mãos subindo e descendo
+                 */
+                @keyframes gatunoBody {
+                    0%   {
+                        transform: translateY(0px)   rotate(0deg)    scaleX(1);
+                        filter: drop-shadow(0 0 32px rgba(255,220,60,0.60)) brightness(1.10) contrast(1.06);
                     }
-                    25% {
-                        transform: scale(1.08) translateY(-10px) rotate(-1deg);
-                        filter: brightness(1.2) drop-shadow(0 0 40px rgba(255,255,255,0.3));
+                    10%  {
+                        transform: translateY(-14px) rotate(-3deg)   scaleX(1.015);
+                        filter: drop-shadow(0 0 44px rgba(255,220,60,0.78)) brightness(1.20) contrast(1.08);
                     }
-                    50% {
-                        transform: scale(1.15) translateY(-20px) rotate(2deg);
-                        filter: brightness(1.4) drop-shadow(0 0 60px rgba(255,255,255,0.5));
+                    25%  {
+                        transform: translateY(-30px) rotate(0deg)    scaleX(1);
+                        filter: drop-shadow(0 0 58px rgba(255,220,60,0.95)) brightness(1.32) contrast(1.10);
                     }
-                    75% {
-                        transform: scale(1.08) translateY(-10px) rotate(-1.5deg);
-                        filter: brightness(1.2) drop-shadow(0 0 40px rgba(255,255,255,0.3));
+                    40%  {
+                        transform: translateY(-14px) rotate(3deg)    scaleX(0.985);
+                        filter: drop-shadow(0 0 44px rgba(255,220,60,0.78)) brightness(1.20) contrast(1.08);
+                    }
+                    50%  {
+                        transform: translateY(0px)   rotate(0deg)    scaleX(1);
+                        filter: drop-shadow(0 0 32px rgba(255,220,60,0.60)) brightness(1.10) contrast(1.06);
+                    }
+                    60%  {
+                        transform: translateY(-14px) rotate(-2.5deg) scaleX(1.015);
+                        filter: drop-shadow(0 0 44px rgba(255,220,60,0.78)) brightness(1.20) contrast(1.08);
+                    }
+                    75%  {
+                        transform: translateY(-30px) rotate(0deg)    scaleX(1);
+                        filter: drop-shadow(0 0 58px rgba(255,220,60,0.95)) brightness(1.32) contrast(1.10);
+                    }
+                    90%  {
+                        transform: translateY(-14px) rotate(2.5deg)  scaleX(0.985);
+                        filter: drop-shadow(0 0 44px rgba(255,220,60,0.78)) brightness(1.20) contrast(1.08);
+                    }
+                    100% {
+                        transform: translateY(0px)   rotate(0deg)    scaleX(1);
+                        filter: drop-shadow(0 0 32px rgba(255,220,60,0.60)) brightness(1.10) contrast(1.06);
                     }
                 }
 
-                @keyframes moneyRain {
-                    0% {
-                        transform: translateY(0) rotate(0deg) scale(1);
-                        opacity: 0;
-                    }
-                    10% {
-                        opacity: 0.8;
-                    }
-                    90% {
-                        opacity: 0.8;
-                    }
-                    100% {
-                        transform: translateY(120vh) rotate(360deg) scale(1.2);
-                        opacity: 0;
-                    }
+                /* Braço esquerdo: oscila para cima e para baixo independentemente */
+                @keyframes armLeftWave {
+                    0%,100% { transform: rotate(0deg)   translateY(0px);  }
+                    20%     { transform: rotate(-14deg) translateY(-10px); }
+                    50%     { transform: rotate(0deg)   translateY(0px);  }
+                    70%     { transform: rotate(12deg)  translateY(-10px); }
+                }
+
+                /* Halo pulsante */
+                @keyframes haloGlow {
+                    0%,100% { transform: translate(-50%,-50%) scale(1);    opacity: 0.65; }
+                    25%     { transform: translate(-50%,-50%) scale(1.14); opacity: 1;    }
+                    50%     { transform: translate(-50%,-50%) scale(1.22); opacity: 0.80; }
+                    75%     { transform: translate(-50%,-50%) scale(1.14); opacity: 1;    }
+                }
+
+                /* Queda de dinheiro com balanço lateral suave */
+                @keyframes moneyFall {
+                    0%   { transform: translateY(0)     translateX(0px)   rotate(0deg);   opacity: 0;   }
+                    7%   { opacity: 1; }
+                    25%  { transform: translateY(25vh)  translateX(14px)  rotate(50deg);  opacity: 1;   }
+                    50%  { transform: translateY(52vh)  translateX(-12px) rotate(145deg); opacity: 0.9; }
+                    75%  { transform: translateY(78vh)  translateX(16px)  rotate(270deg); opacity: 0.75;}
+                    93%  { opacity: 0.5; }
+                    100% { transform: translateY(115vh) translateX(-8px)  rotate(360deg); opacity: 0;   }
                 }
             `}</style>
         </div>
@@ -338,7 +420,14 @@ export default function Admin() {
                                 {produtos.map(prod => (
                                     <tr key={prod.id} style={{ borderBottom: '1px solid #ddd' }}>
                                         <td style={td}>
-                                            <div style={{ width: '60px', height: '60px', background: '#f8f9fa', borderRadius: '8px', overflow: 'hidden', border: '1px solid #eee' }}>
+                                            <div style={{ 
+                                                width: '80px', 
+                                                height: '80px', 
+                                                borderRadius: '8px', 
+                                                overflow: 'hidden',
+                                                background: '#f1f5f9',
+                                                border: '1px solid #e2e8f0'
+                                            }}>
                                                 <img
                                                     src={prod.imagem_url}
                                                     style={{ width: '100%', height: '100%', objectFit: 'contain' }}
@@ -403,4 +492,4 @@ const tabCard: React.CSSProperties = { background: 'rgba(15,23,42,0.45)', backdr
 const formStyle: React.CSSProperties = { background: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', padding: '30px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.06)', maxWidth: '500px', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' };
 const input: React.CSSProperties = { width: '100%', padding: '15px', marginBottom: '20px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontWeight: 'bold', outline: 'none', transition: 'all 0.2s' };
 const label: React.CSSProperties = { display: 'block', marginBottom: '8px', fontWeight: 900, color: 'rgba(255,255,255,0.7)' };
-const btnSave: React.CSSProperties = { width: '100%', padding: '15px', background: 'linear-gradient(135deg, #7c3aed, #3b82f6)', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 15px rgba(124,58,237,0.35)' };
+const btnSave: React.CSSProperties = { width: '100%', padding: '18px', background: 'linear-gradient(135deg, #7c3aed, #3b82f6)', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 900, fontSize: '16px', cursor: 'pointer', boxShadow: '0 4px 20px rgba(124,58,237,0.4)' };
