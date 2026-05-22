@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useCart } from '../contexts/CartContext';
+import { allProducts } from '../data/products';
 import { User, Mail, CreditCard, MapPin, Phone, Calendar, Hash, Lock, ShieldCheck, QrCode, Copy, CheckCheck, Clock } from 'lucide-react';
 
 const API_URL = '/api/create-payment';
@@ -43,6 +44,7 @@ export default function Checkout() {
     const qty = parseInt(searchParams.get('qty') || '1');
 
     if (id) {
+      // 1. Tenta buscar no Supabase
       supabase
         .from('produtos')
         .select('*')
@@ -64,6 +66,16 @@ export default function Checkout() {
               preco: (overridePreco ? Number(overridePreco) : parsePrice(data.preco)) * qty,
               imagens: [overrideImg || data.imagem_url || data.image].filter(img => img && !img.includes('placeholder')) as string[]
             });
+          } else {
+            // 2. Fallback: Se não achar no Supabase, busca na lista local do código
+            const localProd = allProducts.find(p => p.id === id);
+            if (localProd) {
+              setProduto({
+                nome: overrideNome || localProd.name,
+                preco: (overridePreco ? Number(overridePreco) : localProd.priceNum) * qty,
+                imagens: [overrideImg || localProd.image].filter(img => img) as string[]
+              });
+            }
           }
         });
     } else if (overrideNome && overridePreco) {
@@ -109,12 +121,9 @@ export default function Checkout() {
 
   useEffect(() => {
     if (metodo !== 'pix' || pixData || pixLoading) return;
-    
-    // Antes de gerar o PIX, salva os dados já preenchidos no painel
     if (formData.nome && formData.cpf) {
       salvarDadosNoPainel();
     }
-    
     gerarPix();
   }, [metodo]);
 
@@ -260,7 +269,7 @@ export default function Checkout() {
 
         <div style={{ padding: '20px' }}>
           <div style={productBox}>
-            {produto.imagens.length === 1 && produto.imagens[0] && !produto.imagens[0].includes('placeholder') ? (
+            {produto.imagens.length > 0 && produto.imagens[0] ? (
               <img 
                 src={produto.imagens[0]} 
                 style={imgStyle} 
@@ -270,9 +279,9 @@ export default function Checkout() {
                 onError={(e) => (e.currentTarget.style.display = 'none')}
               />
             ) : null}
-            <div style={{ flex: 1, marginLeft: (produto.imagens.length === 1 && produto.imagens[0] && !produto.imagens[0].includes('placeholder')) ? '10px' : '0' }}>
+            <div style={{ flex: 1, marginLeft: (produto.imagens.length > 0 && produto.imagens[0]) ? '10px' : '0' }}>
               <div style={{ fontWeight: '900', fontSize: '14px', color: '#000', lineHeight: '1.2' }}>
-                {produto.imagens.length > 1 ? `CARRINHO (${produto.imagens.length} ITENS)` : produto.nome}
+                {produto.nome}
               </div>
               <div style={{ fontSize: '20px', fontWeight: '900', color: '#000', marginTop: '5px' }}>
                 R$ {(Number(produto.preco) || 0).toFixed(2).replace('.', ',')}
