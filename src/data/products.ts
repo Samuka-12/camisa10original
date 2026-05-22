@@ -17,7 +17,7 @@ export interface Product {
 
 export const allProducts: Product[] = [
   {
-    id: "60b4d28c-9137-4b46-9244-5cced17f9aac",
+    id: "421a5c9d-63d2-44be-831d-1c01dec4a146",
     image: `${BASE_URL}/01-brasil-frente.jpg`,
     images: [`${BASE_URL}/01-brasil-frente.jpg`, `${BASE_URL}/01-brasil-verso.jpg`, `${BASE_URL}/01-brasil-modelo.jpg`],
     name: "Camiseta Seleção Brasileira Home 2026/27",
@@ -27,10 +27,10 @@ export const allProducts: Product[] = [
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XGG"],
     description: "Vista o manto da maior seleção do mundo. Edição 2026/27 com design moderno e detalhes em verde.",
-    externalCheckoutUrl: "/checkout?id=60b4d28c-9137-4b46-9244-5cced17f9aac"
+    externalCheckoutUrl: "/checkout?id=421a5c9d-63d2-44be-831d-1c01dec4a146"
   },
   {
-    id: "163158f3-5246-431b-a53c-1123e42158f3",
+    id: "0d2e2638-9c47-4637-b278-5bef856687fa",
     image: `${BASE_URL}/02-espanha-frente.jpg`,
     images: [`${BASE_URL}/02-espanha-frente.jpg`, `${BASE_URL}/02-espanha-verso.jpg`],
     name: "Camiseta Seleção Espanhola 2026/27",
@@ -40,10 +40,10 @@ export const allProducts: Product[] = [
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG"],
     description: "A Fúria espanhola em forma de camisa. Vermelho vibrante com detalhes em dourado e azul marinho.",
-    externalCheckoutUrl: "/checkout?id=163158f3-5246-431b-a53c-1123e42158f3"
+    externalCheckoutUrl: "/checkout?id=0d2e2638-9c47-4637-b278-5bef856687fa"
   },
   {
-    id: "1724482f-317c-42d4-8fed-086b128eb1d5",
+    id: "da698fa3-abd8-44ee-afba-b4da0ca4f6a5",
     image: `${BASE_URL}/03-argentina-frente.jpg`,
     images: [`${BASE_URL}/03-argentina-frente.jpg`, `${BASE_URL}/03-argentina-verso.jpg`],
     name: "Camiseta Seleção Argentina 2026/27",
@@ -53,10 +53,10 @@ export const allProducts: Product[] = [
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XGG"],
     description: "As listras albicelestes que carregam a herança de Maradona e Messi. Tricampeã mundial.",
-    externalCheckoutUrl: "/checkout?id=1724482f-317c-42d4-8fed-086b128eb1d5"
+    externalCheckoutUrl: "/checkout?id=da698fa3-abd8-44ee-afba-b4da0ca4f6a5"
   },
   {
-    id: "f0f3386b-df33-49b8-9af0-57cb918db34a",
+    id: "28774c5c-6fe1-439d-b4d2-2d1c274e9df4",
     image: `${BASE_URL}/04-inglaterra-frente.jpg`,
     images: [`${BASE_URL}/04-inglaterra-frente.jpg`, `${BASE_URL}/04-inglaterra-verso.png`, `${BASE_URL}/04-inglaterra-modelo.jpg`],
     name: "Camiseta Seleção Inglesa 2026/27",
@@ -66,10 +66,10 @@ export const allProducts: Product[] = [
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG"],
     description: "O berço do futebol em uma camisa impecável. Elegância britânica com detalhes em vermelho e azul.",
-    externalCheckoutUrl: "/checkout?id=f0f3386b-df33-49b8-9af0-57cb918db34a"
+    externalCheckoutUrl: "/checkout?id=28774c5c-6fe1-439d-b4d2-2d1c274e9df4"
   },
   {
-    id: "b143af80-1395-41ea-b960-5dffb7bf95b3",
+    id: "cde19a73-e642-4ef8-b518-cbdcc3362403",
     image: `${BASE_URL}/05-brasil-azul-frente.jpg`,
     images: [`${BASE_URL}/05-brasil-azul-frente.jpg`, `${BASE_URL}/05-brasil-azul-verso.jpg`],
     name: "Camiseta Seleção Brasileira Azul 2026/27",
@@ -79,7 +79,7 @@ export const allProducts: Product[] = [
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XGG"],
     description: "O manto azul da seleção pentacampeã. Design arrojado com padrão camuflado.",
-    externalCheckoutUrl: "/checkout?id=b143af80-1395-41ea-b960-5dffb7bf95b3"
+    externalCheckoutUrl: "/checkout?id=cde19a73-e642-4ef8-b518-cbdcc3362403"
   },
   {
     id: "c3f43773-c264-4830-9c97-df85ae1f4d4e",
