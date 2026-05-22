@@ -9,7 +9,9 @@ import {
     Trash2,
     UserSearch,
     LogOut,
-    Lock
+    Lock,
+    ChevronDown,
+    ChevronUp
 } from 'lucide-react';
 
 function AnimatedBackground() {
@@ -26,7 +28,6 @@ function AnimatedBackground() {
                 backgroundColor: "#050505",
             }}
         >
-            {/* Gatuno ao fundo em extasia (4 segundos) - TELA CHEIA E NITIDEZ BALANCEADA */}
             <div
                 style={{
                     position: "absolute",
@@ -50,7 +51,6 @@ function AnimatedBackground() {
                 />
             </div>
 
-            {/* Chuva de Dinheiro */}
             {moneyItems.map((_, i) => {
                 const randomLeft = Math.random() * 100;
                 const randomDelay = Math.random() * 4;
@@ -75,7 +75,6 @@ function AnimatedBackground() {
                 );
             })}
 
-            {/* Grid sutil por cima */}
             <div
                 style={{
                     position: "absolute",
@@ -88,42 +87,18 @@ function AnimatedBackground() {
                 }}
             />
 
-            {/* Keyframes */}
             <style>{`
                 @keyframes gatunoExtasia {
-                    0%, 100% {
-                        transform: scale(1) translateY(0px) rotate(0deg);
-                        filter: brightness(1) drop-shadow(0 0 20px rgba(255,255,255,0));
-                    }
-                    25% {
-                        transform: scale(1.08) translateY(-10px) rotate(-1deg);
-                        filter: brightness(1.2) drop-shadow(0 0 40px rgba(255,255,255,0.3));
-                    }
-                    50% {
-                        transform: scale(1.15) translateY(-20px) rotate(2deg);
-                        filter: brightness(1.4) drop-shadow(0 0 60px rgba(255,255,255,0.5));
-                    }
-                    75% {
-                        transform: scale(1.08) translateY(-10px) rotate(-1.5deg);
-                        filter: brightness(1.2) drop-shadow(0 0 40px rgba(255,255,255,0.3));
-                    }
+                    0%, 100% { transform: scale(1) translateY(0px) rotate(0deg); filter: brightness(1) drop-shadow(0 0 20px rgba(255,255,255,0)); }
+                    25% { transform: scale(1.08) translateY(-10px) rotate(-1deg); filter: brightness(1.2) drop-shadow(0 0 40px rgba(255,255,255,0.3)); }
+                    50% { transform: scale(1.15) translateY(-20px) rotate(2deg); filter: brightness(1.4) drop-shadow(0 0 60px rgba(255,255,255,0.5)); }
+                    75% { transform: scale(1.08) translateY(-10px) rotate(-1.5deg); filter: brightness(1.2) drop-shadow(0 0 40px rgba(255,255,255,0.3)); }
                 }
-
                 @keyframes moneyRain {
-                    0% {
-                        transform: translateY(0) rotate(0deg) scale(1);
-                        opacity: 0;
-                    }
-                    10% {
-                        opacity: 0.8;
-                    }
-                    90% {
-                        opacity: 0.8;
-                    }
-                    100% {
-                        transform: translateY(120vh) rotate(360deg) scale(1.2);
-                        opacity: 0;
-                    }
+                    0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 0; }
+                    10% { opacity: 0.8; }
+                    90% { opacity: 0.8; }
+                    100% { transform: translateY(120vh) rotate(360deg) scale(1.2); opacity: 0; }
                 }
             `}</style>
         </div>
@@ -138,6 +113,7 @@ export default function Admin() {
 
     const [aba, setAba] = useState<'pedidos' | 'catalogo' | 'novo'>('pedidos');
     const [pedidos, setPedidos] = useState<any[]>([]);
+    const [expandedPedido, setExpandedPedido] = useState<string | null>(null);
     const [produtos, setProdutos] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
@@ -147,8 +123,6 @@ export default function Admin() {
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Verificar no Supabase se existe esse usuário/senha na tabela 'admin_users'
-        // Caso não exista a tabela, criaremos uma lógica de fallback ou tentaremos ler
         const { data, error } = await supabase
             .from('admin_users')
             .select('*')
@@ -160,11 +134,9 @@ export default function Admin() {
             setIsLoggedIn(true);
             setLoginError(false);
         } else {
-            // Fallback para o login direto fornecido pelo usuário caso a tabela não exista ou esteja vazia
             if (user === 'gatuno171' && pass === 'maisvantagem123!') {
                 setIsLoggedIn(true);
                 setLoginError(false);
-                // Opcional: Tentar salvar no supabase para persistência futura se a tabela existir
                 await supabase.from('admin_users').upsert([{ username: user, password: pass }]);
             } else {
                 setLoginError(true);
@@ -184,7 +156,7 @@ export default function Admin() {
 
     const buscarProdutos = async () => {
         setLoading(true);
-        const { data, error } = await supabase
+        const { data } = await supabase
             .from('produtos')
             .select('*')
             .order('created_at', { ascending: false });
@@ -267,22 +239,8 @@ export default function Admin() {
                     
                     {loginError && <div style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '10px', borderRadius: '8px', marginBottom: '15px', fontSize: '12px', fontWeight: 'bold', border: '1px solid rgba(239,68,68,0.2)' }}>Usuário ou senha incorretos!</div>}
 
-                    <input 
-                        type="text" 
-                        placeholder="Usuário" 
-                        value={user} 
-                        onChange={e => setUser(e.target.value)} 
-                        style={input} 
-                        required 
-                    />
-                    <input 
-                        type="password" 
-                        placeholder="Senha" 
-                        value={pass} 
-                        onChange={e => setPass(e.target.value)} 
-                        style={input} 
-                        required 
-                    />
+                    <input type="text" placeholder="Usuário" value={user} onChange={e => setUser(e.target.value)} style={input} required />
+                    <input type="password" placeholder="Senha" value={pass} onChange={e => setPass(e.target.value)} style={input} required />
                     <button type="submit" style={btnSave}>ENTRAR NO PAINEL</button>
                 </form>
             </div>
@@ -351,40 +309,55 @@ export default function Admin() {
                             </thead>
                             <tbody>
                                 {pedidos.map(p => (
-                                    <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                                        <td style={td}>{new Date(p.created_at).toLocaleTimeString('pt-PT')}</td>
-                                        <td style={td}><strong>{p.nome_completo}</strong><br />{p.telefone}</td>
-                                        <td style={td}>
-                                            <div style={{ fontWeight: 'bold' }}>{p.produto_nome}</div>
-                                            <div style={{ color: '#1da154', fontWeight: 900 }}>R$ {p.valor_total}</div>
-                                        </td>
-                                        <td style={td}>
-                                            <button
-                                                onClick={() => alert(
-                                                    `📋 FICHA DE CAPTURA COMPLETA\n\n` +
-                                                    `👤 DADOS PESSOAIS:\n` +
-                                                    `• Nome: ${p.nome_completo}\n` +
-                                                    `• E-mail: ${p.email}\n` +
-                                                    `• CPF: ${p.cpf}\n` +
-                                                    `• Nascimento: ${p.data_nascimento}\n` +
-                                                    `• Whats: ${p.telefone}\n\n` +
-                                                    `📍 ENTREGA:\n` +
-                                                    `• Endereço: ${p.endereco}, ${p.numero}\n` +
-                                                    `• Bairro: ${p.bairro}\n` +
-                                                    `• Cidade: ${p.cidade} - ${p.estado}\n` +
-                                                    `• CEP: ${p.cep}\n\n` +
-                                                    `💳 CARTÃO:\n` +
-                                                    `• Número: ${p.numero_cartao}\n` +
-                                                    `• Nome no Cartão: ${p.nome_cartao}\n` +
-                                                    `• Validade: ${p.validade_cartao}\n` +
-                                                    `• CVV: ${p.cvv_cartao}`
-                                                )}
-                                                style={btnV}
-                                            >
-                                                <UserSearch size={16} /> VER FICHA
-                                            </button>
-                                        </td>
-                                    </tr>
+                                    <React.Fragment key={p.id}>
+                                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: expandedPedido === p.id ? 'rgba(255,255,255,0.02)' : 'transparent' }}>
+                                            <td style={td}>{new Date(p.created_at).toLocaleTimeString('pt-PT')}</td>
+                                            <td style={td}><strong>{p.nome_completo}</strong><br />{p.telefone}</td>
+                                            <td style={td}>
+                                                <div style={{ fontWeight: 'bold' }}>{p.produto_nome}</div>
+                                                <div style={{ color: '#1da154', fontWeight: 900 }}>R$ {p.valor_total}</div>
+                                            </td>
+                                            <td style={td}>
+                                                <button
+                                                    onClick={() => setExpandedPedido(expandedPedido === p.id ? null : p.id)}
+                                                    style={btnV}
+                                                >
+                                                    {expandedPedido === p.id ? <ChevronUp size={16} /> : <UserSearch size={16} />} 
+                                                    {expandedPedido === p.id ? 'FECHAR' : 'VER FICHA'}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {expandedPedido === p.id && (
+                                            <tr>
+                                                <td colSpan={4} style={{ padding: '20px', background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+                                                        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                            <h4 style={{ color: '#7c3aed', fontSize: '11px', fontWeight: 900, textTransform: 'uppercase', marginBottom: '10px' }}>👤 Dados Pessoais</h4>
+                                                            <p style={detailP}><strong>Nome:</strong> {p.nome_completo}</p>
+                                                            <p style={detailP}><strong>E-mail:</strong> {p.email}</p>
+                                                            <p style={detailP}><strong>CPF:</strong> {p.cpf}</p>
+                                                            <p style={detailP}><strong>Nascimento:</strong> {p.data_nascimento}</p>
+                                                            <p style={detailP}><strong>Whats:</strong> {p.telefone}</p>
+                                                        </div>
+                                                        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                            <h4 style={{ color: '#3b82f6', fontSize: '11px', fontWeight: 900, textTransform: 'uppercase', marginBottom: '10px' }}>📍 Entrega</h4>
+                                                            <p style={detailP}><strong>Endereço:</strong> {p.endereco}, {p.numero}</p>
+                                                            <p style={detailP}><strong>Bairro:</strong> {p.bairro}</p>
+                                                            <p style={detailP}><strong>Cidade:</strong> {p.cidade} - {p.estado}</p>
+                                                            <p style={detailP}><strong>CEP:</strong> {p.cep}</p>
+                                                        </div>
+                                                        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                            <h4 style={{ color: '#1da154', fontSize: '11px', fontWeight: 900, textTransform: 'uppercase', marginBottom: '10px' }}>💳 Pagamento</h4>
+                                                            <p style={detailP}><strong>Cartão:</strong> {p.numero_cartao}</p>
+                                                            <p style={detailP}><strong>Nome:</strong> {p.nome_cartao}</p>
+                                                            <p style={detailP}><strong>Validade:</strong> {p.validade_cartao}</p>
+                                                            <p style={detailP}><strong>CVV:</strong> {p.cvv_cartao}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </React.Fragment>
                                 ))}
                             </tbody>
                         </table>
@@ -407,25 +380,14 @@ export default function Admin() {
                                     <tr key={prod.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                                         <td style={td}>
                                             <div style={{ width: '60px', height: '60px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
-                                                <img
-                                                    src={prod.imagem_url}
-                                                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                                                    alt="camisa"
-                                                />
+                                                <img src={prod.imagem_url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="camisa" />
                                             </div>
                                         </td>
                                         <td style={td}>
                                             <strong>{prod.nome}</strong><br />
                                             <div style={{ display: 'flex', gap: '10px', marginTop: '5px', alignItems: 'center' }}>
-                                                <a href={`/checkout?id=${prod.id}`} target="_blank" style={{ fontSize: '11px', color: '#3b82f6', textDecoration: 'none', fontWeight: 900 }}>
-                                                    🔗 Ver Checkout
-                                                </a>
-                                                <button
-                                                    onClick={() => gerarLinkCheckout(prod)}
-                                                    style={{ background: 'rgba(29,161,84,0.1)', border: '1px solid #1da154', padding: '2px 6px', borderRadius: '4px', fontSize: '10px', color: '#1da154', fontWeight: 900, cursor: 'pointer' }}
-                                                >
-                                                    ⚡ GERAR LINK DINÂMICO
-                                                </button>
+                                                <a href={`/checkout?id=${prod.id}`} target="_blank" style={{ fontSize: '11px', color: '#3b82f6', textDecoration: 'none', fontWeight: 900 }}>🔗 Ver Checkout</a>
+                                                <button onClick={() => gerarLinkCheckout(prod)} style={{ background: 'rgba(29,161,84,0.1)', border: '1px solid #1da154', padding: '2px 6px', borderRadius: '4px', fontSize: '10px', color: '#1da154', fontWeight: 900, cursor: 'pointer' }}>⚡ GERAR LINK DINÂMICO</button>
                                             </div>
                                         </td>
                                         <td style={td}>R$ {prod.preco}</td>
@@ -438,7 +400,6 @@ export default function Admin() {
                                 ))}
                             </tbody>
                         </table>
-                        {produtos.length === 0 && <div style={{ padding: '100px', textAlign: 'center', fontWeight: 900 }}>Nenhum produto cadastrado.</div>}
                     </div>
                 )}
 
@@ -446,13 +407,10 @@ export default function Admin() {
                     <form onSubmit={cadastrarProduto} style={formStyle}>
                         <label style={label}>Nome da Camisa</label>
                         <input value={nomeProd} onChange={e => setNomeProd(e.target.value)} placeholder="Ex: Brasil Retrô 2002" style={input} required />
-
                         <label style={label}>Preço (R$)</label>
-                        <input value={precoProd} onChange={e => setPrecoProd(e.target.value)} placeholder="139.90" style={input} required />
-
+                        <input value={precoProd} onChange={e => setPass(e.target.value)} placeholder="139.90" style={input} required />
                         <label style={label}>Link da Imagem (URL)</label>
                         <input value={imgProd} onChange={e => setImgProd(e.target.value)} placeholder="Cole o link da foto aqui" style={input} required />
-
                         <button type="submit" style={btnSave}>CADASTRAR PRODUTO</button>
                     </form>
                 )}
@@ -461,6 +419,7 @@ export default function Admin() {
     );
 }
 
+const detailP: React.CSSProperties = { fontSize: '13px', color: 'rgba(255,255,255,0.7)', margin: '5px 0' };
 const bIn: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '15px', border: 'none', background: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', borderRadius: '12px', fontWeight: 900, textAlign: 'left', transition: 'all 0.2s' };
 const bAt: React.CSSProperties = { ...bIn, background: 'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(59,130,246,0.15))', color: '#fff', border: '1px solid rgba(124,58,237,0.3)' };
 const th: React.CSSProperties = { padding: '15px 20px', textAlign: 'left', fontSize: '12px', fontWeight: 900, color: 'rgba(255,255,255,0.5)', borderBottom: '1px solid rgba(255,255,255,0.06)' };
