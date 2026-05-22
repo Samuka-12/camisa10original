@@ -209,6 +209,24 @@ export default function Admin() {
         }
     };
 
+    const deletarPedido = async (id: string) => {
+        if (confirm("Tem certeza que deseja excluir este registro de pedido permanentemente?")) {
+            setLoading(true);
+            const { error } = await supabase
+                .from('checkouts')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                alert("Erro ao excluir pedido: " + error.message);
+            } else {
+                alert("Pedido excluído com sucesso!");
+                buscarPedidos();
+            }
+            setLoading(false);
+        }
+    };
+
     const gerarLinkCheckout = (prod: any) => {
         const qty = prompt("Quantas unidades para este link? (Ex: 1, 2, 3...)", "1") || "1";
         const isCustom = confirm("Deseja personalizar o preço ou nome para este link específico?");
@@ -318,13 +336,21 @@ export default function Admin() {
                                                 <div style={{ color: '#1da154', fontWeight: 900 }}>R$ {p.valor_total}</div>
                                             </td>
                                             <td style={td}>
-                                                <button
-                                                    onClick={() => setExpandedPedido(expandedPedido === p.id ? null : p.id)}
-                                                    style={btnV}
-                                                >
-                                                    {expandedPedido === p.id ? <ChevronUp size={16} /> : <UserSearch size={16} />} 
-                                                    {expandedPedido === p.id ? 'FECHAR' : 'VER FICHA'}
-                                                </button>
+                                                <div style={{ display: 'flex', gap: '10px' }}>
+                                                    <button
+                                                        onClick={() => setExpandedPedido(expandedPedido === p.id ? null : p.id)}
+                                                        style={btnV}
+                                                    >
+                                                        {expandedPedido === p.id ? <ChevronUp size={16} /> : <UserSearch size={16} />} 
+                                                        {expandedPedido === p.id ? 'FECHAR' : 'VER FICHA'}
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => deletarPedido(p.id)}
+                                                        style={{ ...btnV, background: '#ef4444', padding: '10px' }}
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                         {expandedPedido === p.id && (
@@ -408,7 +434,7 @@ export default function Admin() {
                         <label style={label}>Nome da Camisa</label>
                         <input value={nomeProd} onChange={e => setNomeProd(e.target.value)} placeholder="Ex: Brasil Retrô 2002" style={input} required />
                         <label style={label}>Preço (R$)</label>
-                        <input value={precoProd} onChange={e => setPass(e.target.value)} placeholder="139.90" style={input} required />
+                        <input value={precoProd} onChange={e => setPrecoProd(e.target.value)} placeholder="139.90" style={input} required />
                         <label style={label}>Link da Imagem (URL)</label>
                         <input value={imgProd} onChange={e => setImgProd(e.target.value)} placeholder="Cole o link da foto aqui" style={input} required />
                         <button type="submit" style={btnSave}>CADASTRAR PRODUTO</button>
