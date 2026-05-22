@@ -143,7 +143,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG"],
-    description: "A Azzurra que encanta o mundo. Tetracampeã mundial em branco gelo.",
+    description: "A Azzurra que encanta o world. Tetracampeã mundial em branco gelo.",
     externalCheckoutUrl: "/checkout?id=2b6ab8d9-1707-4158-93b3-a8c9d2600bb2"
   },
   {
@@ -760,7 +760,7 @@ export const allProducts: Product[] = [
   {
     id: "57fc9654-10e5-4710-91c6-6c61df44373c",
     image: `${BASE_URL}/58-remo-frente.png`,
-    images: [`${BASE_URL}/58-remo-frente.png`, `${BASE_URL}/58-remo-verso.png`],
+    images: [`${BASE_URL}/57-chape-frente.png`, `${BASE_URL}/57-chape-verso.png`],
     name: "Camiseta Remo Home 2026/27",
     team: "Clube do Remo",
     price: "R$ 109,93",
