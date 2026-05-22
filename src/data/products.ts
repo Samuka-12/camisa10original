@@ -82,7 +82,7 @@ export const allProducts: Product[] = [
     externalCheckoutUrl: "/checkout?id=b143af80-1395-41ea-b960-5dffb7bf95b3"
   },
   {
-    id: "7f27a433-69a0-4a9c-9ff3-5a158d797ca0",
+    id: "c3f43773-c264-4830-9c97-df85ae1f4d4e",
     image: `${BASE_URL}/06-franca-frente.jpg`,
     images: [`${BASE_URL}/06-franca-frente.jpg`, `${BASE_URL}/06-franca-verso.jpg`],
     name: "Camiseta Seleção Francesa 2026/27",
@@ -92,10 +92,10 @@ export const allProducts: Product[] = [
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG"],
     description: "Les Bleus em sua forma mais elegante. Bicampeã mundial, unindo tradição e modernidade.",
-    externalCheckoutUrl: "/checkout?id=7f27a433-69a0-4a9c-9ff3-5a158d797ca0"
+    externalCheckoutUrl: "/checkout?id=c3f43773-c264-4830-9c97-df85ae1f4d4e"
   },
   {
-    id: "71af1982-f1ca-4e35-b91e-8e1ad9bfbbb2",
+    id: "9300e288-b4f6-40c4-91a9-414b5475c1ef",
     image: `${BASE_URL}/07-alemanha-frente.jpg`,
     images: [`${BASE_URL}/07-alemanha-frente.jpg`, `${BASE_URL}/07-alemanha-verso.jpg`],
     name: "Camiseta Seleção Alemã 2026/27",
@@ -105,10 +105,10 @@ export const allProducts: Product[] = [
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XGG"],
     description: "A máquina alemã em forma de camisa. Tetracampeã mundial com design retrô-moderno.",
-    externalCheckoutUrl: "/checkout?id=71af1982-f1ca-4e35-b91e-8e1ad9bfbbb2"
+    externalCheckoutUrl: "/checkout?id=9300e288-b4f6-40c4-91a9-414b5475c1ef"
   },
   {
-    id: "8a43c8a2-152e-4a96-a9f1-b91db4ab4c07",
+    id: "d66eef0e-5566-4591-882c-6adb14c77f10",
     image: `${BASE_URL}/08-portugal-frente.jpg`,
     images: [`${BASE_URL}/08-portugal-frente.jpg`, `${BASE_URL}/08-portugal-verso.jpg`],
     name: "Camiseta Seleção Portuguesa 2026/27",
@@ -118,10 +118,10 @@ export const allProducts: Product[] = [
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG"],
     description: "O vermelho de Portugal que conquistou a Europa. Padrão ondulado elegante.",
-    externalCheckoutUrl: "/checkout?id=8a43c8a2-152e-4a96-a9f1-b91db4ab4c07"
+    externalCheckoutUrl: "/checkout?id=d66eef0e-5566-4591-882c-6adb14c77f10"
   },
   {
-    id: "ce318ad5-6e24-455b-9a98-4b84fc26c476",
+    id: "4d071167-b4b9-46ee-b982-7b97eacd3f9c",
     image: `${BASE_URL}/09-holanda-frente.jpg`,
     images: [`${BASE_URL}/09-holanda-frente.jpg`, `${BASE_URL}/09-holanda-verso.jpg`],
     name: "Camiseta Seleção Holandesa 2026/27",
@@ -131,10 +131,10 @@ export const allProducts: Product[] = [
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG"],
     description: "A Laranja Mecânica em versão away. Design clean e moderno que honra a tradição.",
-    externalCheckoutUrl: "/checkout?id=ce318ad5-6e24-455b-9a98-4b84fc26c476"
+    externalCheckoutUrl: "/checkout?id=4d071167-b4b9-46ee-b982-7b97eacd3f9c"
   },
   {
-    id: "37bf2a9c-fd7f-40ab-a36f-af4873fb508b",
+    id: "2b6ab8d9-1707-4158-93b3-a8c9d2600bb2",
     image: `${BASE_URL}/10-italia-frente.jpg`,
     images: [`${BASE_URL}/10-italia-frente.jpg`, `${BASE_URL}/10-italia-verso.jpg`],
     name: "Camiseta Seleção Italiana 2026/27",
@@ -144,10 +144,10 @@ export const allProducts: Product[] = [
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG"],
     description: "A Azzurra que encanta o mundo. Tetracampeã mundial em branco gelo.",
-    externalCheckoutUrl: "/checkout?id=37bf2a9c-fd7f-40ab-a36f-af4873fb508b"
+    externalCheckoutUrl: "/checkout?id=2b6ab8d9-1707-4158-93b3-a8c9d2600bb2"
   },
   {
-    id: "8707c163-1b30-4623-bdf2-1145f432e250",
+    id: "8efd9895-60a9-4268-9512-a5ff7927be2e",
     image: `${BASE_URL}/11-milan-frente.jpg`,
     images: [`${BASE_URL}/11-milan-frente.jpg`, `${BASE_URL}/11-milan-verso.jpg`],
     name: "Camiseta Milan 2009/10",
@@ -157,10 +157,10 @@ export const allProducts: Product[] = [
     category: ["retrô"],
     sizes: ["P", "M", "G", "GG", "XGG"],
     description: "O Diavolo em sua era dourada. Camisa manga longa vestida por lendas como Kaká.",
-    externalCheckoutUrl: "/checkout?id=8707c163-1b30-4623-bdf2-1145f432e250"
+    externalCheckoutUrl: "/checkout?id=8efd9895-60a9-4268-9512-a5ff7927be2e"
   },
   {
-    id: "ee655070-ed53-40c0-afe3-bb15ac8ea04b",
+    id: "3e812368-f2e2-4f45-9fb8-38377d74d038",
     image: `${BASE_URL}/12-inter-frente.jpg`,
     images: [`${BASE_URL}/12-inter-frente.jpg`, `${BASE_URL}/12-inter-verso.jpg`],
     name: "Camiseta Inter de Milão 1998/99",
@@ -170,10 +170,10 @@ export const allProducts: Product[] = [
     category: ["retrô"],
     sizes: ["P", "M", "G", "GG"],
     description: "A Nerazzurri na era Ronaldo Fenômeno. Pura nostalgia e poder.",
-    externalCheckoutUrl: "/checkout?id=ee655070-ed53-40c0-afe3-bb15ac8ea04b"
+    externalCheckoutUrl: "/checkout?id=3e812368-f2e2-4f45-9fb8-38377d74d038"
   },
   {
-    id: "e121f324-d1b5-4f8a-b4d4-99822e921f42",
+    id: "82e720a7-a5d3-4c62-ad8c-d03b4e0a2f43",
     image: `${BASE_URL}/13-juventus-frente.jpg`,
     images: [`${BASE_URL}/13-juventus-frente.jpg`, `${BASE_URL}/13-juventus-verso.jpg`],
     name: "Camiseta Juventus 1995/97",
@@ -183,10 +183,10 @@ export const allProducts: Product[] = [
     category: ["retrô"],
     sizes: ["P", "M", "G", "GG", "XGG"],
     description: "A Vecchia Signora campeã da Champions. Relíquia do futebol mundial.",
-    externalCheckoutUrl: "/checkout?id=e121f324-d1b5-4f8a-b4d4-99822e921f42"
+    externalCheckoutUrl: "/checkout?id=82e720a7-a5d3-4c62-ad8c-d03b4e0a2f43"
   },
   {
-    id: "7a131914-3e37-4b0b-9a1d-e588b1a109db",
+    id: "16ee2b91-cef3-492c-801c-1680bc64b1d3",
     image: `${BASE_URL}/14-lazio-frente.jpg`,
     images: [`${BASE_URL}/14-lazio-frente.jpg`, `${BASE_URL}/14-lazio-verso.jpg`],
     name: "Camiseta Lazio 1999/2000",
@@ -196,10 +196,10 @@ export const allProducts: Product[] = [
     category: ["retrô"],
     sizes: ["P", "M", "G", "GG"],
     description: "A Lazio campeã do Scudetto. Peça rara e exclusiva.",
-    externalCheckoutUrl: "/checkout?id=7a131914-3e37-4b0b-9a1d-e588b1a109db"
+    externalCheckoutUrl: "/checkout?id=16ee2b91-cef3-492c-801c-1680bc64b1d3"
   },
   {
-    id: "654f2c3f-a0da-4170-a5bd-a3610a06e066",
+    id: "514cd6fb-3b0f-4de4-a1be-5b9283459c5f",
     image: `${BASE_URL}/15-fiorentina-frente.jpg`,
     images: [`${BASE_URL}/15-fiorentina-frente.jpg`, `${BASE_URL}/15-fiorentina-verso.jpg`],
     name: "Camiseta Fiorentina 1995/96",
@@ -209,10 +209,10 @@ export const allProducts: Product[] = [
     category: ["retrô"],
     sizes: ["P", "M", "G", "GG"],
     description: "A Viola de Batistuta em sua fase mais gloriosa. Obra de arte do futebol italiano.",
-    externalCheckoutUrl: "/checkout?id=654f2c3f-a0da-4170-a5bd-a3610a06e066"
+    externalCheckoutUrl: "/checkout?id=514cd6fb-3b0f-4de4-a1be-5b9283459c5f"
   },
   {
-    id: "856fe81a-08db-4a17-83be-2f32bc9958e7",
+    id: "1e2ced50-987a-48f7-96d6-1ff800ca30bd",
     image: `${BASE_URL}/16-parma-frente.jpg`,
     images: [`${BASE_URL}/16-parma-frente.jpg`, `${BASE_URL}/16-parma-verso.jpg`],
     name: "Camiseta Parma 2002/03",
@@ -222,10 +222,10 @@ export const allProducts: Product[] = [
     category: ["retrô"],
     sizes: ["P", "M", "G", "GG", "XGG"],
     description: "O Parma da era de ouro do calcio italiano. Representa o auge dos anos 2000.",
-    externalCheckoutUrl: "/checkout?id=856fe81a-08db-4a17-83be-2f32bc9958e7"
+    externalCheckoutUrl: "/checkout?id=1e2ced50-987a-48f7-96d6-1ff800ca30bd"
   },
   {
-    id: "d0d30f1f-5efd-4e8a-b9f8-a8a9daef4dc7",
+    id: "7424482f-317c-42d4-8fed-086b128eb1d5",
     image: `${BASE_URL}/17-milan-home-frente.jpg`,
     images: [`${BASE_URL}/17-milan-home-frente.jpg`, `${BASE_URL}/17-milan-home-verso.jpg`],
     name: "Camiseta Milan Home 2026/27",
@@ -235,10 +235,10 @@ export const allProducts: Product[] = [
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG"],
     description: "O Diavolo rossonero em sua versão moderna. DNA do Milan vivo.",
-    externalCheckoutUrl: "/checkout?id=d0d30f1f-5efd-4e8a-b9f8-a8a9daef4dc7"
+    externalCheckoutUrl: "/checkout?id=7424482f-317c-42d4-8fed-086b128eb1d5"
   },
   {
-    id: "f0dcfa0b-2ebf-4096-adf7-1d67725e8172",
+    id: "f0f3386b-df33-49b8-9af0-57cb918db34a",
     image: `${BASE_URL}/18-inter-frente.jpg`,
     images: [`${BASE_URL}/18-inter-frente.jpg`, `${BASE_URL}/18-inter-verso.jpg`],
     name: "Camiseta Inter de Milão 2026/27",
@@ -248,10 +248,10 @@ export const allProducts: Product[] = [
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XGG"],
     description: "A Nerazzurri com listras onduladas. Design arrojado e tradição.",
-    externalCheckoutUrl: "/checkout?id=f0dcfa0b-2ebf-4096-adf7-1d67725e8172"
+    externalCheckoutUrl: "/checkout?id=f0f3386b-df33-49b8-9af0-57cb918db34a"
   },
   {
-    id: "3c38b627-a66e-427e-acdf-e0cecf8aba46",
+    id: "b143af80-1395-41ea-b960-5dffb7bf95b3",
     image: `${BASE_URL}/19-juventus-frente.jpg`,
     images: [`${BASE_URL}/19-juventus-frente.jpg`, `${BASE_URL}/19-juventus-verso.jpg`],
     name: "Camiseta Juventus 2026/27",
@@ -261,10 +261,10 @@ export const allProducts: Product[] = [
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG"],
     description: "A Vecchia Signora reinventada. Modernidade unida à tradição da Juve.",
-    externalCheckoutUrl: "/checkout?id=3c38b627-a66e-427e-acdf-e0cecf8aba46"
+    externalCheckoutUrl: "/checkout?id=b143af80-1395-41ea-b960-5dffb7bf95b3"
   },
   {
-    id: "b22f1b45-27c3-4730-a7ae-c5642c2619f8",
+    id: "7f27a433-69a0-4a9c-9ff3-5a158d797ca0",
     image: `${BASE_URL}/20-roma-frente.jpg`,
     images: [`${BASE_URL}/20-roma-frente.jpg`, `${BASE_URL}/20-roma-verso.jpg`],
     name: "Camiseta Roma 2026/27",
@@ -274,7 +274,7 @@ export const allProducts: Product[] = [
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG"],
     description: "A Lupa Capitolina em forma de camisa. Grená profundo e paixão eterna.",
-    externalCheckoutUrl: "/checkout?id=b22f1b45-27c3-4730-a7ae-c5642c2619f8"
+    externalCheckoutUrl: "/checkout?id=7f27a433-69a0-4a9c-9ff3-5a158d797ca0"
   },
   {
     id: "71af1982-f1ca-4e35-b91e-8e1ad9bfbbb2",
