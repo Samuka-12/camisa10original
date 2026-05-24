@@ -695,7 +695,7 @@ export const allProducts: Product[] = [
   {
     id: "07eb8b8f-5718-4d4e-a5f4-e0e810cb6521",
     image: `${BASE_URL}/53-botafogo-sp-frente.png`,
-    images: [`${BASE_URL}/53-botafogo-sp-frente.png`, `${bytes_URL}/53-botafogo-sp-verso.png`],
+    images: [`${BASE_URL}/53-botafogo-sp-frente.png`, `${BASE_URL}/53-botafogo-sp-verso.png`],
     name: "Camiseta Botafogo Home 2026/27",
     team: "Botafogo",
     price: "R$ 109,93",
@@ -760,7 +760,7 @@ export const allProducts: Product[] = [
   {
     id: "57fc9654-10e5-4710-91c6-6c61df44373c",
     image: `${BASE_URL}/58-remo-frente.png`,
-    images: [`${BASE_URL}/57-chape-frente.png`, `${BASE_URL}/57-chape-verso.png`],
+    images: [`${BASE_URL}/58-remo-frente.png`, `${BASE_URL}/58-remo-verso.png`],
     name: "Camiseta Remo Home 2026/27",
     team: "Clube do Remo",
     price: "R$ 109,93",
@@ -785,11 +785,8 @@ export const allProducts: Product[] = [
   },
   {
     id: "7609f213-55d2-4115-aadd-dc2f92301a4d",
-    image: "https://r.jina.ai/i/https://attachments.manus.im/ChatGPTImage24demai.de2026,13_53_49.png",
-    images: [
-      "https://r.jina.ai/i/https://attachments.manus.im/ChatGPTImage24demai.de2026,13_53_49.png",
-      "https://r.jina.ai/i/https://attachments.manus.im/ChatGPTImage24demai.de2026,13_56_33.png"
-    ],
+    image: `${BASE_URL}/61-palestina-frente.png`,
+    images: [`${BASE_URL}/61-palestina-frente.png`, `${BASE_URL}/61-palestina-verso.png`],
     name: "Camiseta Seleção Palestina 2026",
     team: "Seleção Palestina",
     price: "R$ 109,93",
