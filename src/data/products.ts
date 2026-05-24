@@ -656,7 +656,7 @@ export const allProducts: Product[] = [
   {
     id: "c19cb7f5-95ea-4915-bcbf-c8962173de99",
     image: `${BASE_URL}/50-frente.png`,
-    images: [`${BASE_URL}/50-frente.png`, `${bytes_URL}/50-verso.png`],
+    images: [`${BASE_URL}/50-frente.png`, `${BASE_URL}/50-verso.png`],
     name: "Camiseta Bahia Home 2026/27",
     team: "Bahia",
     price: "R$ 109,93",
