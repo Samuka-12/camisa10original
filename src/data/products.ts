@@ -130,7 +130,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG"],
-    description: "A Laranja Mecânica em versão away. Design clean e moderno que honra a tradição.",
+    description: "A Laranja Mecânica em version away. Design clean e moderno que honra a tradição.",
     externalCheckoutUrl: "/checkout?id=4d071167-b4b9-46ee-b982-7b97eacd3f9c"
   },
   {
@@ -695,7 +695,7 @@ export const allProducts: Product[] = [
   {
     id: "07eb8b8f-5718-4d4e-a5f4-e0e810cb6521",
     image: `${BASE_URL}/53-botafogo-sp-frente.png`,
-    images: [`${BASE_URL}/53-botafogo-sp-frente.png`, `${BASE_URL}/53-botafogo-sp-verso.png`],
+    images: [`${BASE_URL}/53-botafogo-sp-frente.png`, `${bytes_URL}/53-botafogo-sp-verso.png`],
     name: "Camiseta Botafogo Home 2026/27",
     team: "Botafogo",
     price: "R$ 109,93",
@@ -782,6 +782,22 @@ export const allProducts: Product[] = [
     sizes: ["P", "M", "G", "GG", "XGG"],
     description: "O amarelo vibrante do Leão Caipira. Orgulho local paulista.",
     externalCheckoutUrl: "/checkout?id=2600c8ec-21b6-473c-ab62-c3c994d1eb49"
+  },
+  {
+    id: "7609f213-55d2-4115-aadd-dc2f92301a4d",
+    image: "https://r.jina.ai/i/https://attachments.manus.im/ChatGPTImage24demai.de2026,13_53_49.png",
+    images: [
+      "https://r.jina.ai/i/https://attachments.manus.im/ChatGPTImage24demai.de2026,13_53_49.png",
+      "https://r.jina.ai/i/https://attachments.manus.im/ChatGPTImage24demai.de2026,13_56_33.png"
+    ],
+    name: "Camiseta Seleção Palestina 2026",
+    team: "Seleção Palestina",
+    price: "R$ 109,93",
+    priceNum: 109.93,
+    category: ["seleções"],
+    sizes: ["P", "M", "G", "GG", "XGG"],
+    description: "O manto da resistência e orgulho palestino. Edição 2026 com design exclusivo e detalhes que honram a história do país.",
+    externalCheckoutUrl: "/checkout?id=7609f213-55d2-4115-aadd-dc2f92301a4d"
   }
 ];
 
