@@ -656,7 +656,7 @@ export const allProducts: Product[] = [
   {
     id: "c19cb7f5-95ea-4915-bcbf-c8962173de99",
     image: `${BASE_URL}/50-frente.png`,
-    images: [`${BASE_URL}/50-frente.png`, `${BASE_URL}/50-verso.png`],
+    images: [`${BASE_URL}/50-frente.png`, `${bytes_URL}/50-verso.png`],
     name: "Camiseta Bahia Home 2026/27",
     team: "Bahia",
     price: "R$ 109,93",
@@ -795,6 +795,19 @@ export const allProducts: Product[] = [
     sizes: ["P", "M", "G", "GG", "XGG"],
     description: "O manto da resistência e orgulho palestino. Edição 2026 com design exclusivo e detalhes que honram a história do país.",
     externalCheckoutUrl: "/checkout?id=7609f213-55d2-4115-aadd-dc2f92301a4d"
+  },
+  {
+    id: "9adab132-ac18-479f-bde3-aa1d2a82471c",
+    image: `${BASE_URL}/62-inter-frente.png`,
+    images: [`${BASE_URL}/62-inter-frente.png`, `${BASE_URL}/62-inter-verso.png`],
+    name: "Camiseta Internacional Manga Longa Branca 2026",
+    team: "Internacional",
+    price: "R$ 109,93",
+    priceNum: 109.93,
+    category: ["brasileirão"],
+    sizes: ["P", "M", "G", "GG", "XGG"],
+    description: "O manto branco do Colorado em versão manga longa. Elegância e tradição para o torcedor gaúcho.",
+    externalCheckoutUrl: "/checkout?id=9adab132-ac18-479f-bde3-aa1d2a82471c"
   }
 ];
 
