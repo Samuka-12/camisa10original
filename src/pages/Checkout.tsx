@@ -181,14 +181,15 @@ export default function Checkout() {
       });
 
       const json = await res.json();
+      console.log("DEBUG IRONPAY RESPONSE:", json);
       
       if (!res.ok) {
         throw new Error(json?.message || json?.error || 'Erro na IronPay');
       }
 
-      // De acordo com a documentação da IronPay, o PIX vem dentro do objeto de resposta
-      const qrCode = json?.pix?.code || json?.pix?.payload || json?.qr_code || '';
-      const qrImage = json?.pix?.base64 || json?.pix?.image_url || '';
+      // Tenta mapear de várias formas possíveis na resposta da IronPay
+      const qrCode = json?.pix?.code || json?.pix?.payload || json?.qr_code || json?.data?.pix?.code || json?.data?.qr_code || '';
+      const qrImage = json?.pix?.base64 || json?.pix?.image_url || json?.data?.pix?.base64 || json?.data?.qr_code_url || '';
 
       if (!qrCode) {
         throw new Error('PIX gerado sem código pela IronPay.');
