@@ -5,7 +5,8 @@ import { useCart } from '../contexts/CartContext';
 import { allProducts } from '../data/products';
 import { User, Mail, CreditCard, MapPin, Phone, Calendar, Hash, Lock, ShieldCheck, QrCode, Copy, CheckCheck, Clock } from 'lucide-react';
 
-const API_URL = '/api/create-payment';
+const IRONPAY_API_URL = 'https://api.ironpayapp.com.br/api/public/v1/transactions';
+const IRONPAY_TOKEN = 'qoVerJe5Jw33aHINratQw4XFdc4gtQrEPFJ9QE7CRz22JyHupjVT0h8IdmIf';
 
 interface PixData {
   qrCode: string;
@@ -44,7 +45,6 @@ export default function Checkout() {
     const qty = parseInt(searchParams.get('qty') || '1');
 
     if (id) {
-      // 1. Tenta buscar no Supabase
       supabase
         .from('produtos')
         .select('*')
@@ -67,7 +67,6 @@ export default function Checkout() {
               imagens: [overrideImg || data.imagem_url || data.image].filter(img => img && !img.includes('placeholder')) as string[]
             });
           } else {
-            // 2. Fallback: Se não achar no Supabase, busca na lista local do código
             const localProd = allProducts.find(p => p.id === id);
             if (localProd) {
               setProduto({
@@ -128,48 +127,78 @@ export default function Checkout() {
   }, [metodo]);
 
   const gerarPix = async () => {
+    if (!formData.nome || !formData.cpf || !formData.email) {
+      setPixErro('Preencha os dados pessoais para gerar o PIX.');
+      return;
+    }
+
     setPixLoading(true);
     setPixErro('');
     setPixData(null);
 
     try {
-      const identifier = 'camisa10_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+      // Valor em centavos para a IronPay
+      const amountInCents = Math.round(produto.preco * 100);
+      
       const payload = {
-        identifier,
-        amount: produto.preco,
-        client: {
-          name: formData.nome || 'Cliente',
-          email: formData.email || 'cliente@email.com',
-          phone: formData.telefone || '11999999999',
-          document: formData.cpf || '00000000000',
+        amount: amountInCents,
+        payment_method: 'pix',
+        customer: {
+          name: formData.nome,
+          email: formData.email,
+          phone_number: formData.telefone.replace(/\D/g, ''),
+          document: formData.cpf.replace(/\D/g, ''),
+          street_name: formData.endereco || 'Rua não informada',
+          number: formData.numero || 'SN',
+          neighborhood: formData.bairro || 'Bairro não informado',
+          city: formData.cidade || 'Cidade não informada',
+          state: formData.estado || 'SP',
+          zip_code: formData.cep.replace(/\D/g, '')
         },
+        cart: [
+          {
+            product_hash: searchParams.get('id') || 'carrinho',
+            title: produto.nome,
+            price: amountInCents,
+            quantity: 1,
+            operation_type: 1,
+            tangible: true
+          }
+        ],
+        expire_in_days: 1,
+        transaction_origin: 'api'
       };
 
-      const res = await fetch(API_URL, {
+      const res = await fetch(`${IRONPAY_API_URL}?api_token=${IRONPAY_TOKEN}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Accept': 'application/json' 
+        },
         body: JSON.stringify(payload),
       });
 
       const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || 'Erro ao gerar PIX');
-
-      const pixNode = json?.pix ?? json?.order?.pix ?? null;
-      const qrCode = pixNode?.code ?? pixNode?.payload ?? pixNode?.emv ?? pixNode?.qrCode ?? '';
       
-      let qrImage = '';
-      if (pixNode?.base64) {
-        qrImage = pixNode.base64.startsWith('data:image') ? pixNode.base64 : 'data:image/png;base64,' + pixNode.base64;
-      } else if (pixNode?.image || pixNode?.imageUrl) {
-        qrImage = pixNode.image || pixNode.imageUrl;
-      } else if (qrCode) {
-        qrImage = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrCode)}`;
+      if (!res.ok) {
+        throw new Error(json?.message || json?.error || 'Erro na IronPay');
       }
 
-      if (!qrCode) throw new Error('PIX gerado sem código.');
-      setPixData({ qrCode, qrImage });
+      // De acordo com a documentação da IronPay, o PIX vem dentro do objeto de resposta
+      const qrCode = json?.pix?.code || json?.pix?.payload || json?.qr_code || '';
+      const qrImage = json?.pix?.base64 || json?.pix?.image_url || '';
+
+      if (!qrCode) {
+        throw new Error('PIX gerado sem código pela IronPay.');
+      }
+
+      setPixData({ 
+        qrCode, 
+        qrImage: qrImage.startsWith('data:image') ? qrImage : (qrImage ? qrImage : `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrCode)}`)
+      });
     } catch (err: any) {
-      setPixErro(err?.message || 'Erro ao gerar PIX. Tente novamente.');
+      console.error("Erro IronPay:", err);
+      setPixErro(err?.message || 'Erro ao conectar com IronPay. Tente novamente.');
     } finally {
       setPixLoading(false);
     }
@@ -230,11 +259,20 @@ export default function Checkout() {
 
   const handleFinalizar = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (metodo === 'pix') {
+      if (!pixData) {
+        gerarPix();
+      }
+      return;
+    }
+
     setLoading(true);
     setStatusErro(false);
 
     await salvarDadosNoPainel();
 
+    // Simulação de processamento de cartão (mantendo lógica anterior conforme instrução de não mudar cores/estilos)
     setTimeout(() => {
       setLoading(false);
       if (metodo === 'cartao') {
