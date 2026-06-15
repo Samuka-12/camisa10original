@@ -126,30 +126,39 @@ export default function Checkout() {
         throw new Error(json?.error || json?.message || json?.errorDescription || `Erro ${res.status}`);
       }
 
-      // Pega o nó pix da resposta (suporta estruturas diferentes)
-      const pixNode = json?.pix ?? json?.order?.pix ?? null;
+      // O backend agora retorna um nó pix normalizado com: pix.code, pix.base64, pix.image
+      const pixNode = json?.pix ?? json?.order?.pix ?? json?.data?.pix ?? null;
 
       const qrCode =
         pixNode?.code ??
         pixNode?.payload ??
         pixNode?.emv ??
         pixNode?.qrCode ??
-        pixNode?.qrcode ?? '';
+        pixNode?.qrcode ??
+        pixNode?.qr_code ??
+        pixNode?.pixCopiaECola ??
+        json?.pixCopiaECola ??
+        json?.qr_code ?? '';
 
-      let qrImage = '';
-      if (pixNode?.base64) {
+      let qrImage = pixNode?.image ?? '';
+
+      if (!qrImage && pixNode?.base64) {
         const b64 = pixNode.base64;
         qrImage = b64.startsWith('data:image') ? b64 : 'data:image/png;base64,' + b64;
-      } else if (pixNode?.image) {
-        qrImage = pixNode.image;
-      } else if (pixNode?.imageUrl) {
+      } else if (!qrImage && pixNode?.imageUrl) {
         qrImage = pixNode.imageUrl;
-      } else if (qrCode) {
-        // fallback: gera imagem via serviço público
+      }
+
+      // Fallback: gera imagem do QR via serviço público (caso a API não retorne base64)
+      if (!qrImage && qrCode) {
         qrImage = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrCode)}`;
       }
 
-      if (!qrCode) throw new Error('PIX gerado sem código copia-e-cola na resposta.');
+      if (!qrCode) {
+        // Log para debug: mostra a resposta bruta no console do navegador
+        console.error('[gerarPix] Resposta da API sem código PIX:', json);
+        throw new Error('PIX gerado sem código copia-e-cola. Verifique os logs do servidor.');
+      }
 
       setPixData({ qrCode, qrImage });
     } catch (err: any) {

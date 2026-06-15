@@ -25,7 +25,7 @@ function AnimatedBackground() {
                 backgroundColor: "#050505",
             }}
         >
-            {/* Gatuno ao fundo em extasia (4 segundos) */}
+            {/* Gatuno ao fundo em extasia (4 segundos) - Alta nitidez */}
             <div
                 style={{
                     position: "absolute",
@@ -33,7 +33,7 @@ function AnimatedBackground() {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    opacity: 0.15,
+                    opacity: 0.3, // Mais visível e nítido
                 }}
             >
                 <img 
@@ -42,7 +42,7 @@ function AnimatedBackground() {
                     style={{
                         width: "100%",
                         height: "100%",
-                        objectFit: "cover",
+                        objectFit: "contain", // Preserva proporções e mantém o texto
                         animation: "gatunoExtasia 4s cubic-bezier(0.4, 0, 0.2, 1) infinite",
                         transformOrigin: "center bottom",
                     }}
@@ -87,24 +87,20 @@ function AnimatedBackground() {
                 }}
             />
 
-            {/* Keyframes */}
+            {/* Keyframes - Sem filtros de desfoque/sombra para manter 100% nítido */}
             <style>{`
                 @keyframes gatunoExtasia {
                     0%, 100% {
                         transform: scale(1) translateY(0px) rotate(0deg);
-                        filter: brightness(1) drop-shadow(0 0 20px rgba(255,255,255,0));
                     }
                     25% {
-                        transform: scale(1.08) translateY(-10px) rotate(-1deg);
-                        filter: brightness(1.2) drop-shadow(0 0 40px rgba(255,255,255,0.3));
+                        transform: scale(1.05) translateY(-10px) rotate(-1deg);
                     }
                     50% {
-                        transform: scale(1.15) translateY(-20px) rotate(2deg);
-                        filter: brightness(1.4) drop-shadow(0 0 60px rgba(255,255,255,0.5));
+                        transform: scale(1.1) translateY(-20px) rotate(1.5deg);
                     }
                     75% {
-                        transform: scale(1.08) translateY(-10px) rotate(-1.5deg);
-                        filter: brightness(1.2) drop-shadow(0 0 40px rgba(255,255,255,0.3));
+                        transform: scale(1.05) translateY(-10px) rotate(-1deg);
                     }
                 }
 
@@ -130,6 +126,12 @@ function AnimatedBackground() {
 }
 
 export default function Admin() {
+    const [authorized, setAuthorized] = useState(false);
+    const [authLoading, setAuthLoading] = useState(true);
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [loginError, setLoginError] = useState('');
+
     const [aba, setAba] = useState<'pedidos' | 'catalogo' | 'novo'>('pedidos');
     const [pedidos, setPedidos] = useState<any[]>([]);
     const [produtos, setProdutos] = useState<any[]>([]);
@@ -138,6 +140,41 @@ export default function Admin() {
     const [nomeProd, setNomeProd] = useState('');
     const [precoProd, setPrecoProd] = useState('');
     const [imgProd, setImgProd] = useState('');
+
+    // Mapeamento: username -> email cadastrado no Supabase Auth
+    const USER_EMAIL_MAP: Record<string, string> = {
+        'gatuno171': 'gatuno171@camisa10admin.com',
+    };
+
+    useEffect(() => {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) setAuthorized(true);
+            setAuthLoading(false);
+        });
+    }, []);
+
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoginError('');
+        const email = USER_EMAIL_MAP[username.trim().toLowerCase()];
+        if (!email) {
+            setLoginError('Usuário não encontrado.');
+            return;
+        }
+        setLoading(true);
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        setLoading(false);
+        if (error) {
+            setLoginError('Usuário ou senha incorretos!');
+        } else {
+            setAuthorized(true);
+        }
+    };
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        setAuthorized(false);
+    };
 
     const buscarPedidos = async () => {
         setLoading(true);
@@ -221,6 +258,122 @@ export default function Admin() {
         alert("Link de checkout copiado com sucesso!");
     };
 
+    if (authLoading) {
+        return (
+            <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', background: '#050505', position: 'relative' }}>
+                <AnimatedBackground />
+                <span style={{ zIndex: 10, color: '#fff', fontSize: '18px', fontWeight: 900 }}>Verificando acesso...</span>
+            </div>
+        );
+    }
+
+    if (!authorized) {
+        return (
+            <div style={{ display: 'flex', minHeight: '100vh', background: 'transparent', color: '#fff', fontFamily: 'sans-serif', position: 'relative', alignItems: 'center', justifyContent: 'center' }}>
+                <AnimatedBackground />
+                <form onSubmit={handleLogin} style={{
+                    background: 'rgba(10,14,30,0.75)', 
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                    padding: '40px', 
+                    borderRadius: '20px', 
+                    border: '1px solid rgba(255,255,255,0.08)', 
+                    width: '380px',
+                    boxShadow: '0 8px 48px rgba(0,0,0,0.7)',
+                    zIndex: 10,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '20px'
+                }}>
+                    <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+                        <div style={{ 
+                            background: 'linear-gradient(135deg, #7c3aed, #3b82f6)', 
+                            color: '#fff', 
+                            padding: '12px', 
+                            borderRadius: '12px', 
+                            width: 'fit-content', 
+                            margin: '0 auto 15px',
+                            boxShadow: '0 4px 15px rgba(124,58,237,0.35)',
+                            fontSize: '28px',
+                            lineHeight: 1
+                        }}>
+                            🐱
+                        </div>
+                        <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#fff', margin: 0 }}>Gatuno 171 Admin</h2>
+                        <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', marginTop: '5px' }}>Acesso restrito à diretoria 💸</p>
+                    </div>
+
+                    {loginError && (
+                        <div style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: '8px', padding: '10px 14px', color: '#fc8181', fontSize: '13px', fontWeight: 700 }}>
+                            {loginError}
+                        </div>
+                    )}
+
+                    <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 900, color: 'rgba(255,255,255,0.6)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Usuário</label>
+                        <input 
+                            type="text" 
+                            value={username}
+                            onChange={e => setUsername(e.target.value)}
+                            placeholder="gatuno171" 
+                            style={{
+                                width: '100%', 
+                                padding: '12px', 
+                                borderRadius: '8px', 
+                                border: '1px solid rgba(255,255,255,0.1)', 
+                                background: 'rgba(255,255,255,0.06)', 
+                                color: '#fff', 
+                                fontWeight: 'bold', 
+                                outline: 'none',
+                                boxSizing: 'border-box'
+                            }} 
+                            required 
+                        />
+                    </div>
+
+                    <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 900, color: 'rgba(255,255,255,0.6)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Senha</label>
+                        <input 
+                            type="password" 
+                            value={password}
+                            onChange={e => setPassword(e.target.value)}
+                            placeholder="••••••••••••" 
+                            style={{
+                                width: '100%', 
+                                padding: '12px', 
+                                borderRadius: '8px', 
+                                border: '1px solid rgba(255,255,255,0.1)', 
+                                background: 'rgba(255,255,255,0.06)', 
+                                color: '#fff', 
+                                fontWeight: 'bold', 
+                                outline: 'none',
+                                boxSizing: 'border-box'
+                            }} 
+                            required 
+                        />
+                    </div>
+
+                    <button type="submit" disabled={loading} style={{
+                        width: '100%',
+                        padding: '14px',
+                        background: loading ? 'rgba(124,58,237,0.5)' : 'linear-gradient(135deg, #7c3aed, #3b82f6)',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontWeight: 900,
+                        cursor: loading ? 'not-allowed' : 'pointer',
+                        boxShadow: '0 4px 20px rgba(124,58,237,0.4)',
+                        transition: 'all 0.2s',
+                        fontSize: '15px'
+                    }}>
+                        {loading ? 'Entrando...' : 'Entrar no Painel 🐱'}
+                    </button>
+                </form>
+            </div>
+        );
+    }
+
+
     return (
         <div style={{ display: 'flex', minHeight: '100vh', background: 'transparent', color: '#fff', fontFamily: 'sans-serif', position: 'relative' }}>
             <AnimatedBackground />
@@ -236,9 +389,9 @@ export default function Admin() {
                 flexDirection: 'column',
                 zIndex: 10
             }}>
-                <div style={{ fontWeight: 900, fontSize: '20px', marginBottom: '40px', display: 'flex', alignItems: 'center', gap: '10px', color: '#fff' }}>
-                    <div style={{ background: 'linear-gradient(135deg, #7c3aed, #3b82f6)', color: '#fff', padding: '8px', borderRadius: '8px' }}>👕</div>
-                    Camisa 10 Admin
+                <div style={{ fontWeight: 900, fontSize: '18px', marginBottom: '40px', display: 'flex', alignItems: 'center', gap: '10px', color: '#fff' }}>
+                    <div style={{ background: 'linear-gradient(135deg, #7c3aed, #3b82f6)', color: '#fff', padding: '8px', borderRadius: '8px' }}>🐱</div>
+                    Gatuno 171 Admin
                 </div>
 
                 <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -253,12 +406,12 @@ export default function Admin() {
                     </button>
                 </nav>
 
-                <button style={{ border: 'none', background: 'none', color: '#ef4444', fontWeight: 900, display: 'flex', gap: '10px', padding: '10px', cursor: 'pointer' }}>
+                <button onClick={handleLogout} style={{ border: 'none', background: 'none', color: '#ef4444', fontWeight: 900, display: 'flex', gap: '10px', padding: '10px', cursor: 'pointer' }}>
                     <LogOut size={20} /> Sair
                 </button>
             </aside>
 
-            <main style={{ flex: 1, padding: '40px', zIndex: 10, backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}>
+            <main style={{ flex: 1, padding: '40px', zIndex: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
                     <h1 style={{ fontSize: '32px', fontWeight: 900, color: '#fff' }}>
                         {aba === 'pedidos' && '🛒 Captura de Dados'}
