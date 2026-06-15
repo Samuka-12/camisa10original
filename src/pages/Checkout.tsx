@@ -142,7 +142,9 @@ export default function Checkout() {
       
       const payload = {
         amount: amountInCents,
+        offer_hash: searchParams.get('id') || 'default_offer',
         payment_method: 'pix',
+        installments: 1,
         customer: {
           name: formData.nome,
           email: formData.email,
