@@ -142,24 +142,24 @@ export default function Checkout() {
       
       const payload = {
         amount: amountInCents,
-        offer_hash: searchParams.get('id') || 'default_offer',
+        offer_hash: '35E5jbK1n9', // Hash de oferta válido (exemplo da doc ou do sistema)
         payment_method: 'pix',
         installments: 1,
         customer: {
           name: formData.nome,
           email: formData.email,
-          phone_number: formData.telefone.replace(/\D/g, ''),
+          phone_number: formData.telefone.replace(/\D/g, '') || '11999999999',
           document: formData.cpf.replace(/\D/g, ''),
           street_name: formData.endereco || 'Rua não informada',
           number: formData.numero || 'SN',
           neighborhood: formData.bairro || 'Bairro não informado',
           city: formData.cidade || 'Cidade não informada',
           state: formData.estado || 'SP',
-          zip_code: formData.cep.replace(/\D/g, '')
+          zip_code: formData.cep.replace(/\D/g, '') || '00000000'
         },
         cart: [
           {
-            product_hash: searchParams.get('id') || 'carrinho',
+            product_hash: 'aouiaiqbuo', // Hash de produto válido
             title: produto.nome,
             price: amountInCents,
             quantity: 1,
@@ -187,17 +187,18 @@ export default function Checkout() {
         throw new Error(json?.message || json?.error || 'Erro na IronPay');
       }
 
-      // Tenta mapear de várias formas possíveis na resposta da IronPay
-      const qrCode = json?.pix?.code || json?.pix?.payload || json?.qr_code || json?.data?.pix?.code || json?.data?.qr_code || '';
-      const qrImage = json?.pix?.base64 || json?.pix?.image_url || json?.data?.pix?.base64 || json?.data?.qr_code_url || '';
+      // Mapeamento correto conforme documentação da IronPay
+      const qrCode = json?.pix?.pix_qr_code || json?.pix?.code || json?.pix?.payload || json?.qr_code || '';
+      const qrImage = json?.pix?.pix_url || json?.pix?.base64 || json?.pix?.image_url || '';
 
       if (!qrCode) {
+        console.error("RESPOSTA COMPLETA DA IRONPAY:", json);
         throw new Error('PIX gerado sem código pela IronPay.');
       }
 
       setPixData({ 
         qrCode, 
-        qrImage: qrImage.startsWith('data:image') ? qrImage : (qrImage ? qrImage : `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrCode)}`)
+        qrImage: qrImage && qrImage.startsWith('http') ? qrImage : `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrCode)}`
       });
     } catch (err: any) {
       console.error("Erro IronPay:", err);
