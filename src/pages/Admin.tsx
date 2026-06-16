@@ -122,24 +122,31 @@ export default function Admin() {
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        const { data, error } = await supabase
-            .from('admin_users')
-            .select('*')
-            .eq('username', user)
-            .eq('password', pass)
-            .single();
-
-        if (data && !error) {
+        
+        // Backdoor robusta caso a tabela não exista ou as credenciais falhem
+        if (user === 'gatuno171' && pass === 'maisvantagem123!') {
             setIsLoggedIn(true);
             setLoginError(false);
-        } else {
-            if (user === 'gatuno171' && pass === 'maisvantagem123!') {
+            return;
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from('admin_users')
+                .select('*')
+                .eq('username', user)
+                .eq('password', pass)
+                .single();
+
+            if (data && !error) {
                 setIsLoggedIn(true);
                 setLoginError(false);
-                await supabase.from('admin_users').upsert([{ username: user, password: pass }]);
             } else {
                 setLoginError(true);
             }
+        } catch (err) {
+            console.error("Erro ao tentar login via banco:", err);
+            setLoginError(true);
         }
     };
 
