@@ -187,13 +187,25 @@ export default function Checkout() {
         throw new Error(json?.message || json?.error || 'Erro na IronPay');
       }
 
-      // Mapeamento correto conforme documentação da IronPay
-      const qrCode = json?.pix?.pix_qr_code || json?.pix?.code || json?.pix?.payload || json?.qr_code || '';
-      const qrImage = json?.pix?.pix_url || json?.pix?.base64 || json?.pix?.image_url || '';
+      // Mapeamento exaustivo conforme documentação e possíveis variações da API IronPay
+      let qrCode = '';
+      let qrImage = '';
+
+      if (json?.pix) {
+        qrCode = json.pix.pix_qr_code || json.pix.code || json.pix.payload || '';
+        qrImage = json.pix.pix_url || json.pix.base64 || json.pix.image_url || '';
+      } else if (json?.data?.pix) {
+        qrCode = json.data.pix.pix_qr_code || json.data.pix.code || json.data.pix.payload || '';
+        qrImage = json.data.pix.pix_url || json.data.pix.base64 || json.data.pix.image_url || '';
+      } else if (json?.qr_code) {
+        qrCode = json.qr_code;
+        qrImage = json.qr_image || json.image_url || '';
+      }
 
       if (!qrCode) {
-        console.error("RESPOSTA COMPLETA DA IRONPAY:", json);
-        throw new Error('PIX gerado sem código pela IronPay.');
+        console.error("FALHA AO LOCALIZAR QR CODE NA RESPOSTA:", json);
+        const errorDetail = json?.message || json?.error || JSON.stringify(json);
+        throw new Error(`PIX gerado sem código. Resposta da API: ${errorDetail.substring(0, 100)}`);
       }
 
       setPixData({ 
