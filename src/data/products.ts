@@ -797,3 +797,26 @@ export const allProducts: Product[] = [
     externalCheckoutUrl: "/checkout?id=9adab132-ac18-479f-bde3-aa1d2a82471c"
   }
 ];
+
+export const searchProducts = (query: string): Product[] => {
+  const lowercaseQuery = query.toLowerCase();
+  return allProducts.filter(
+    (product) =>
+      product.name.toLowerCase().includes(lowercaseQuery) ||
+      product.team.toLowerCase().includes(lowercaseQuery) ||
+      product.description.toLowerCase().includes(lowercaseQuery)
+  );
+};
+
+export const selecoes = allProducts.filter((p) => p.category.includes("seleções"));
+export const retro = allProducts.filter((p) => p.category.includes("retrô"));
+export const europeus = allProducts.filter((p) => p.category.includes("europeus"));
+export const brasileirao = allProducts.filter((p) => p.category.includes("brasileirão"));
+
+export const getProductsByCategory = (category: string): Product[] => {
+  return allProducts.filter((p) => p.category.includes(category.toLowerCase()));
+};
+
+export const getProductById = (id: string): Product | undefined => {
+  return allProducts.find((p) => p.id === id);
+};

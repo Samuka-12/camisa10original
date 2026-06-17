@@ -132,14 +132,25 @@ export default function Checkout() {
       return;
     }
 
+    // Validar se o preço é válido
+    if (!produto.preco || produto.preco <= 0) {
+      setPixErro('Erro: Valor do produto inválido. Tente novamente.');
+      return;
+    }
+
     setPixLoading(true);
     setPixErro('');
     setPixData(null);
 
     try {
-      // Valor em centavos para a IronPay
-      const amountInCents = Math.round(produto.preco * 100);
+      // Valor em centavos para a IronPay (garantir que é um número inteiro positivo)
+      const amountInCents = Math.max(1, Math.round(parseFloat(String(produto.preco)) * 100));
       
+      // Validar amount antes de enviar
+      if (!amountInCents || amountInCents <= 0 || !Number.isInteger(amountInCents)) {
+        throw new Error('Valor do pagamento inválido. Por favor, verifique o preço do produto.');
+      }
+
       const payload = {
         amount: amountInCents,
         offer_hash: '35E5jbK1n9', // Hash de oferta válido (exemplo da doc ou do sistema)
@@ -171,6 +182,8 @@ export default function Checkout() {
         transaction_origin: 'api'
       };
 
+      console.log("DEBUG PAYLOAD ENVIADO:", payload);
+      
       const res = await fetch(`${IRONPAY_API_URL}?api_token=${IRONPAY_TOKEN}`, {
         method: 'POST',
         headers: { 
@@ -182,9 +195,12 @@ export default function Checkout() {
 
       const json = await res.json();
       console.log("DEBUG IRONPAY RESPONSE:", json);
+      console.log("DEBUG RESPONSE STATUS:", res.status, res.statusText);
       
       if (!res.ok) {
-        throw new Error(json?.message || json?.error || 'Erro na IronPay');
+        const errorMsg = json?.message || json?.error || json?.errors?.[0]?.message || 'Erro na IronPay';
+        console.error("ERRO DETALHADO:", errorMsg);
+        throw new Error(errorMsg);
       }
 
       // Mapeamento exaustivo conforme documentação e possíveis variações da API IronPay
