@@ -127,6 +127,14 @@ export default function Checkout() {
           phone: formData.telefone || '11999999999',
           document: formData.cpf || '00000000000',
         },
+        tracking: {
+          fbclid: searchParams.get('fbclid') || '',
+          utm_source: searchParams.get('utm_source') || '',
+          utm_medium: searchParams.get('utm_medium') || '',
+          utm_campaign: searchParams.get('utm_campaign') || '',
+          utm_content: searchParams.get('utm_content') || '',
+          utm_term: searchParams.get('utm_term') || ''
+        }
       };
 
       const res = await fetch(API_URL, {

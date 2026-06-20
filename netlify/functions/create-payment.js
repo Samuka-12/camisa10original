@@ -96,6 +96,14 @@ exports.handler = async (event, context) => {
                 email: body.client?.email || '',
                 phone: body.client?.phone || '',
                 document: body.client?.document || ''
+            },
+            tracking: {
+                fbclid: body.tracking?.fbclid || '',
+                utm_source: body.tracking?.utm_source || '',
+                utm_medium: body.tracking?.utm_medium || '',
+                utm_campaign: body.tracking?.utm_campaign || '',
+                utm_content: body.tracking?.utm_content || '',
+                utm_term: body.tracking?.utm_term || ''
             }
         };
 
