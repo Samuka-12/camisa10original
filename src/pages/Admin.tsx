@@ -144,6 +144,7 @@ export default function Admin() {
     // Mapeamento: username -> email cadastrado no Supabase Auth
     const USER_EMAIL_MAP: Record<string, string> = {
         'gatuno171': 'gatuno171@camisa10admin.com',
+        'samuel': 'samuelcab444@gmail.com',
     };
 
     useEffect(() => {
