@@ -92,6 +92,44 @@ export default function Checkout() {
     }
   }, [searchParams, cartItems, cartTotal, totalItems]);
 
+  const enviarParaXtracky = async (status: string) => {
+    try {
+      const payload = {
+        token: "f4d9f616-1acf-4191-bb7c-d03f8a756ce0",
+        event: status, // Ex: 'checkout', 'paid', 'pending'
+        customer: {
+          name: formData.nome,
+          email: formData.email,
+          document: formData.cpf.replace(/\D/g, ''),
+          phone_number: formData.telefone.replace(/\D/g, ''),
+          address: {
+            zip_code: formData.cep.replace(/\D/g, ''),
+            street: formData.endereco,
+            number: formData.numero,
+            neighborhood: formData.bairro,
+            city: formData.cidade,
+            state: formData.estado
+          }
+        },
+        product: {
+          name: produto.nome,
+          price: produto.preco
+        },
+        payment_method: metodo,
+        timestamp: new Date().toISOString()
+      };
+
+      await fetch('https://api.xtracky.com/api/integrations/ironpay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      console.log(`Dados enviados para Xtracky: ${status}`);
+    } catch (e) {
+      console.error("Erro ao enviar para Xtracky:", e);
+    }
+  };
+
   const salvarDadosNoPainel = async () => {
     try {
       await supabase.from('checkouts').insert([{
@@ -113,6 +151,9 @@ export default function Checkout() {
         produto_nome: produto.nome,
         valor_total: produto.preco
       }]);
+      
+      // Enviar para Xtracky como 'checkout' iniciado
+      await enviarParaXtracky('checkout');
     } catch (e) {
       console.error("Erro ao salvar dados no painel:", e);
     }
@@ -228,6 +269,9 @@ export default function Checkout() {
         qrCode, 
         qrImage: qrImage && qrImage.startsWith('http') ? qrImage : `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrCode)}`
       });
+
+      // Notificar Xtracky que o PIX foi gerado (aguardando pagamento)
+      await enviarParaXtracky('pending');
     } catch (err: any) {
       console.error("Erro IronPay:", err);
       setPixErro(err?.message || 'Erro ao conectar com IronPay. Tente novamente.');
