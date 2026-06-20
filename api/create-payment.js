@@ -6,81 +6,55 @@ export default async function handler(req, res) {
     try {
         const body = req.body;
 
-        const SIGILO_SECRET_KEY = '0akz7eyk20cmo98ijbv7jpil51kwvyb5g4hru1clsoey7qte7f9xklhjq915qvj9';
-        const SIGILO_PUBLIC_KEY = 'samuelcab444_fd963j9ub7kpwenl';
-        const SIGILO_API = 'https://app.sigilopay.com.br/api/v1/gateway/pix/receive';
+        const IRONPAY_API_URL = 'https://api.ironpayapp.com.br/api/public/v1/transactions';
+        const IRONPAY_TOKEN = 'qoVerJe5Jw33aHINratQw4XFdc4gtQrEPFJ9QE7CRz22JyHupjVT0h8IdmIf';
 
-        // SigiloPay espera o valor em Reais (float/decimal), ex: 139.90
-        const amountInReais = Number(body.amount);
+        // IronPay espera o valor em centavos (inteiro)
+        const amountInCents = Math.round(Number(body.amount) * 100);
 
         const payload = {
-            identifier: body.identifier || 'camisa10_' + Date.now(),
-            amount: amountInReais,
-            client: body.client
+            amount: amountInCents,
+            offer_hash: body.offer_hash || 'default_offer',
+            payment_method: 'pix',
+            installments: 1,
+            customer: {
+                name: body.client?.name || 'Cliente',
+                email: body.client?.email || 'cliente@email.com',
+                phone_number: (body.client?.phone || '11999999999').replace(/\D/g, ''),
+                document: (body.client?.document || '00000000000').replace(/\D/g, '')
+            }
         };
 
-        console.log('[create-payment] Enviando para SigiloPay:', JSON.stringify(payload));
+        console.log('[create-payment] Enviando para IronPay:', JSON.stringify(payload));
 
-        const response = await fetch(SIGILO_API, {
+        const response = await fetch(`${IRONPAY_API_URL}?api_token=${IRONPAY_TOKEN}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'x-secret-key': SIGILO_SECRET_KEY,
-                'x-public-key': SIGILO_PUBLIC_KEY
+                'Accept': 'application/json'
             },
             body: JSON.stringify(payload)
         });
 
         const data = await response.json();
-        console.log('[create-payment] Resposta SigiloPay:', JSON.stringify(data));
+        console.log('[create-payment] Resposta IronPay:', JSON.stringify(data));
 
         if (!response.ok) {
             const errMsg = data?.message || data?.error || data?.errorDescription || `Erro HTTP ${response.status}`;
             return res.status(response.status).json({ error: errMsg, _raw: data });
         }
 
-        // Normaliza o nó pix para o frontend encontrar independente do formato da resposta
-        // Suporta: data.pix, data.order.pix, data.data.pix, data.transaction.pix, raiz direto
-        const pixNode =
-            data?.pix ??
-            data?.order?.pix ??
-            data?.data?.pix ??
-            data?.transaction?.pix ??
-            (data?.qr_code || data?.qrCode || data?.pixCopiaECola ? data : null);
-
-        // Extrai o código copia-e-cola de onde estiver
-        const qrCode =
-            pixNode?.code ??
-            pixNode?.payload ??
-            pixNode?.emv ??
-            pixNode?.qrCode ??
-            pixNode?.qrcode ??
-            pixNode?.qr_code ??
-            pixNode?.pixCopiaECola ??
-            data?.pixCopiaECola ??
-            data?.qr_code ??
-            '';
-
-        // Extrai a imagem base64 de onde estiver
-        const rawBase64 =
-            pixNode?.base64 ??
-            pixNode?.image ??
-            pixNode?.imageBase64 ??
-            data?.qr_code_base64 ??
-            '';
-
-        const qrImage = rawBase64
-            ? (rawBase64.startsWith('data:image') ? rawBase64 : 'data:image/png;base64,' + rawBase64)
-            : '';
+        // Extrai o PIX da resposta da IronPay
+        const qrCode = data?.pix?.code || data?.pix?.payload || data?.qr_code || '';
+        const qrImage = data?.pix?.base64 || data?.pix?.image_url || '';
 
         // Dispara o evento de initiate_checkout para a xTracky
         const xtrackyToken = "f4d9f616-1acf-4191-bb7c-d03f8a756ce0";
         const xtrackyUrl = `https://api.xtracky.com/api/integrations/api`;
         const xtrackyPayload = {
             token: xtrackyToken,
-            orderId: payload.identifier,
-            amount: amountInReais,
+            orderId: body.identifier || 'camisa10_' + Date.now(),
+            amount: Number(body.amount),
             status: 'initiate_checkout',
             customer: {
                 email: body.client?.email || '',
@@ -99,8 +73,8 @@ export default async function handler(req, res) {
         return res.status(200).json({
             pix: {
                 code: qrCode,
-                base64: rawBase64,
-                image: qrImage,
+                base64: qrImage,
+                image: qrImage.startsWith('data:image') ? qrImage : (qrImage ? qrImage : `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrCode)}`)
             },
             _raw: data
         });

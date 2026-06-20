@@ -5,24 +5,27 @@ export default async function handler(req, res) {
 
     try {
         const payload = req.body;
-        console.log('Webhook recebido da SigiloPay:', payload);
+        console.log('Webhook recebido da IronPay:', payload);
 
         // Dispara o evento de webhook para a xTracky
         const xtrackyToken = "f4d9f616-1acf-4191-bb7c-d03f8a756ce0";
         const xtrackyUrl = `https://api.xtracky.com/api/integrations/api`;
 
+        // IronPay envia status como: paid, refunded, pending, waiting_payment
+        const isPaid = ['paid', 'approved', 'PAID', 'authorized'].includes(payload.status);
+
         // Prepara o payload no formato esperado pelo xTracky
         const xtrackyPayload = {
             token: xtrackyToken,
-            orderId: payload.identifier || payload.id || 'TESTE-' + Date.now(),
-            amount: payload.amount || 0,
-            status: payload.status === 'PAID' || payload.status === 'paid' || payload.status === 'approved' ? 'paid' : (payload.status || 'pending'),
+            orderId: payload.id || payload.transaction_id || 'IRONPAY-' + Date.now(),
+            amount: payload.amount ? payload.amount / 100 : 0, // IronPay retorna em centavos
+            status: isPaid ? 'paid' : (payload.status || 'pending'),
             customer: {
-                email: payload.client?.email || payload.customer?.email || '',
-                phone: payload.client?.phone || payload.customer?.phone || '',
-                document: payload.client?.document || payload.customer?.document || ''
+                email: payload.customer?.email || '',
+                phone: payload.customer?.phone_number || payload.customer?.phone || '',
+                document: payload.customer?.document || ''
             },
-            raw_payload: payload // Repassa o body original para debug
+            raw_payload: payload
         };
 
         console.log('Disparando Webhook para xTracky:', xtrackyPayload);

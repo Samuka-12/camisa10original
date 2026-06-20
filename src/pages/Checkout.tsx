@@ -119,6 +119,7 @@ export default function Checkout() {
       const payload = {
         identifier,
         amount: produto.preco,
+        offer_hash: searchParams.get('id') || 'default_offer',
         client: {
           name: formData.nome || 'Cliente',
           email: formData.email || 'cliente@email.com',
