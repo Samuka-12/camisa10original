@@ -16,6 +16,7 @@ export interface Product {
 }
 
 export const allProducts: Product[] = [
+  // ===================== SELEÇÕES =====================
   {
     id: "421a5c9d-63d2-44be-831d-1c01dec4a146",
     image: `${BASE_URL}/01-brasil-frente.jpg`,
@@ -147,6 +148,21 @@ export const allProducts: Product[] = [
     externalCheckoutUrl: "/checkout?id=2b6ab8d9-1707-4158-93b3-a8c9d2600bb2"
   },
   {
+    id: "7609f213-55d2-4115-aadd-dc2f92301a4d",
+    image: `${BASE_URL}/61-palestina-frente.png`,
+    images: [`${BASE_URL}/61-palestina-frente.png`, `${BASE_URL}/61-palestina-verso.png`],
+    name: "Camiseta Seleção Palestina 2026",
+    team: "Seleção Palestina",
+    price: "R$ 109,93",
+    priceNum: 109.93,
+    category: ["seleções"],
+    sizes: ["P", "M", "G", "GG", "XXL"],
+    description: "Vista o orgulho e a resistência da Palestina. Camiseta oficial 2026 com design exclusivo que honra a história e a cultura do país.",
+    externalCheckoutUrl: "/checkout?id=7609f213-55d2-4115-aadd-dc2f92301a4d"
+  },
+
+  // ===================== RETRÔ =====================
+  {
     id: "8efd9895-60a9-4268-9512-a5ff7927be2e",
     image: `${BASE_URL}/11-milan-frente.jpg`,
     images: [`${BASE_URL}/11-milan-frente.jpg`, `${BASE_URL}/11-milan-verso.jpg`],
@@ -224,6 +240,8 @@ export const allProducts: Product[] = [
     description: "O Parma da era de ouro do calcio italiano. Representa o auge dos anos 2000.",
     externalCheckoutUrl: "/checkout?id=1e2ced50-987a-48f7-96d6-1ff800ca30bd"
   },
+
+  // ===================== EUROPEUS =====================
   {
     id: "7424482f-317c-42d4-8fed-086b128eb1d5",
     image: `${BASE_URL}/17-milan-home-frente.jpg`,
@@ -368,6 +386,19 @@ export const allProducts: Product[] = [
     externalCheckoutUrl: "/checkout?id=e121f324-d1b5-4f8a-b4d4-99822e921f42"
   },
   {
+    id: "a1b2c3d4-1111-4444-aaaa-111122223333",
+    image: `${BASE_URL}/28-leverkusen-frente.jpg`,
+    images: [`${BASE_URL}/28-leverkusen-frente.jpg`, `${BASE_URL}/28-leverkusen-verso.jpg`],
+    name: "Camiseta Bayer Leverkusen 2026/27",
+    team: "Bayer Leverkusen",
+    price: "R$ 109,93",
+    priceNum: 109.93,
+    category: ["europeus"],
+    sizes: ["P", "M", "G", "GG", "XXL"],
+    description: "O Werkself em vermelho e preto. A equipe que surpreendeu a Europa.",
+    externalCheckoutUrl: "/checkout?id=a1b2c3d4-1111-4444-aaaa-111122223333"
+  },
+  {
     id: "a315024b-326d-4952-b91c-959882202021",
     image: `${BASE_URL}/30-bayern-frente.png`,
     images: [`${BASE_URL}/30-bayern-frente.png`, `${BASE_URL}/30-bayern-verso.png`],
@@ -381,7 +412,7 @@ export const allProducts: Product[] = [
     externalCheckoutUrl: "/checkout?id=a315024b-326d-4952-b91c-959882202021"
   },
   {
-    id: "71af1982-f1ca-4e35-b91e-8e1ad9bfbbb2",
+    id: "a2b3c4d5-2222-5555-bbbb-222233334444",
     image: `${BASE_URL}/29-leipzig-frente.jpg`,
     images: [`${BASE_URL}/29-leipzig-frente.jpg`, `${BASE_URL}/29-leipzig-verso.jpg`],
     name: "Camiseta RB Leipzig 2026/27",
@@ -391,12 +422,64 @@ export const allProducts: Product[] = [
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XXL"],
     description: "O design moderno do Leipzig que desafia a tradição. Energia e velocidade.",
-    externalCheckoutUrl: "/checkout?id=71af1982-f1ca-4e35-b91e-8e1ad9bfbbb2"
+    externalCheckoutUrl: "/checkout?id=a2b3c4d5-2222-5555-bbbb-222233334444"
+  },
+  {
+    id: "a3b4c5d6-3333-6666-cccc-333344445555",
+    image: `${BASE_URL}/31-frankfurt-frente.jpg`,
+    images: [`${BASE_URL}/31-frankfurt-frente.jpg`, `${BASE_URL}/31-frankfurt-verso.jpg`],
+    name: "Camiseta Eintracht Frankfurt 2026/27",
+    team: "Eintracht Frankfurt",
+    price: "R$ 109,93",
+    priceNum: 109.93,
+    category: ["europeus"],
+    sizes: ["P", "M", "G", "GG", "XXL"],
+    description: "A Águia de Frankfurt em preto e branco. Força e determinação alemã.",
+    externalCheckoutUrl: "/checkout?id=a3b4c5d6-3333-6666-cccc-333344445555"
+  },
+  {
+    id: "a4b5c6d7-4444-7777-dddd-444455556666",
+    image: `${BASE_URL}/32-realmadrid-frente.jpg`,
+    images: [`${BASE_URL}/32-realmadrid-frente.jpg`, `${BASE_URL}/32-realmadrid-verso.jpg`],
+    name: "Camiseta Real Madrid 2026/27",
+    team: "Real Madrid",
+    price: "R$ 109,93",
+    priceNum: 109.93,
+    category: ["europeus"],
+    sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
+    description: "O branco imaculado do clube mais vitorioso da Champions League. Lendas em campo.",
+    externalCheckoutUrl: "/checkout?id=a4b5c6d7-4444-7777-dddd-444455556666"
+  },
+  {
+    id: "a5b6c7d8-5555-8888-eeee-555566667777",
+    image: `${BASE_URL}/33-barcelona-frente.jpg`,
+    images: [`${BASE_URL}/33-barcelona-frente.jpg`, `${BASE_URL}/33-barcelona-verso.jpg`],
+    name: "Camiseta Barcelona 2026/27",
+    team: "FC Barcelona",
+    price: "R$ 109,93",
+    priceNum: 109.93,
+    category: ["europeus"],
+    sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
+    description: "Més que un club. As listras blaugrana que representam a identidade catalã.",
+    externalCheckoutUrl: "/checkout?id=a5b6c7d8-5555-8888-eeee-555566667777"
+  },
+  {
+    id: "a6b7c8d9-6666-9999-ffff-666677778888",
+    image: `${BASE_URL}/34-atletico-frente.jpg`,
+    images: [`${BASE_URL}/34-atletico-frente.jpg`, `${BASE_URL}/34-atletico-verso.jpg`],
+    name: "Camiseta Atlético de Madrid 2026/27",
+    team: "Atlético de Madrid",
+    price: "R$ 109,93",
+    priceNum: 109.93,
+    category: ["europeus"],
+    sizes: ["P", "M", "G", "GG", "XXL"],
+    description: "O Colchonero em listras vermelhas e brancas. Garra e determinação do Wanda.",
+    externalCheckoutUrl: "/checkout?id=a6b7c8d9-6666-9999-ffff-666677778888"
   },
   {
     id: "f37a513c-743a-4933-875b-017646554552",
-    image: `${BASE_URL}/30-psg-frente.jpg`,
-    images: [`${BASE_URL}/30-psg-frente.jpg`, `${BASE_URL}/30-psg-verso.jpg`],
+    image: `${BASE_URL}/35-psg-frente.jpg`,
+    images: [`${BASE_URL}/35-psg-frente.jpg`, `${BASE_URL}/35-psg-verso.jpg`],
     name: "Camiseta PSG 2026/27",
     team: "Paris Saint-Germain",
     price: "R$ 109,93",
@@ -408,8 +491,8 @@ export const allProducts: Product[] = [
   },
   {
     id: "46820241-1123-4155-987a-b5ff7927be2e",
-    image: `${BASE_URL}/31-marseille-frente.jpg`,
-    images: [`${BASE_URL}/31-marseille-frente.jpg`, `${BASE_URL}/31-marseille-verso.jpg`],
+    image: `${BASE_URL}/36-marseille-frente.jpg`,
+    images: [`${BASE_URL}/36-marseille-frente.jpg`, `${BASE_URL}/36-marseille-verso.jpg`],
     name: "Camiseta Olympique de Marseille 2026/27",
     team: "Olympique de Marseille",
     price: "R$ 109,93",
@@ -420,9 +503,9 @@ export const allProducts: Product[] = [
     externalCheckoutUrl: "/checkout?id=46820241-1123-4155-987a-b5ff7927be2e"
   },
   {
-    id: "71af1982-f1ca-4e35-b91e-8e1ad9bfbbb2",
-    image: `${BASE_URL}/32-lyon-frente.jpg`,
-    images: [`${BASE_URL}/32-lyon-frente.jpg`, `${BASE_URL}/32-lyon-verso.jpg`],
+    id: "b7c8d9e0-7777-0000-aaaa-777788889999",
+    image: `${BASE_URL}/37-lyon-frente.jpg`,
+    images: [`${BASE_URL}/37-lyon-frente.jpg`, `${BASE_URL}/37-lyon-verso.jpg`],
     name: "Camiseta Lyon 2026/27",
     team: "Olympique Lyonnais",
     price: "R$ 109,93",
@@ -430,112 +513,36 @@ export const allProducts: Product[] = [
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XXL"],
     description: "A tradição do Lyon em branco com detalhes em azul e vermelho.",
-    externalCheckoutUrl: "/checkout?id=71af1982-f1ca-4e35-b91e-8e1ad9bfbbb2"
+    externalCheckoutUrl: "/checkout?id=b7c8d9e0-7777-0000-aaaa-777788889999"
   },
   {
-    id: "3e812368-f2e2-4f45-9fb8-38377d74d038",
-    image: `${BASE_URL}/33-ajax-frente.jpg`,
-    images: [`${BASE_URL}/33-ajax-frente.jpg`, `${BASE_URL}/33-ajax-verso.jpg`],
-    name: "Camiseta Ajax 2026/27",
-    team: "Ajax Amsterdam",
-    price: "R$ 109,93",
-    priceNum: 109.93,
-    category: ["europeus"],
-    sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "A escola de futebol de Amsterdã em sua versão mais moderna.",
-    externalCheckoutUrl: "/checkout?id=3e812368-f2e2-4f45-9fb8-38377d74d038"
-  },
-  {
-    id: "1e2ced50-987a-48f7-96d6-1ff800ca30bd",
-    image: `${BASE_URL}/34-benfica-frente.jpg`,
-    images: [`${BASE_URL}/34-benfica-frente.jpg`, `${BASE_URL}/34-benfica-verso.jpg`],
-    name: "Camiseta Benfica 2026/27",
-    team: "SL Benfica",
+    id: "b8c9d0e1-8888-1111-bbbb-888899990000",
+    image: `${BASE_URL}/38-lille-frente.jpg`,
+    images: [`${BASE_URL}/38-lille-frente.jpg`, `${BASE_URL}/38-lille-verso.jpg`],
+    name: "Camiseta Lille 2026/27",
+    team: "LOSC Lille",
     price: "R$ 109,93",
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O vermelho encarnado das Águias de Lisboa. Tradição e glória.",
-    externalCheckoutUrl: "/checkout?id=1e2ced50-987a-48f7-96d6-1ff800ca30bd"
+    description: "O vermelho e azul do Lille. Tradição do norte da França.",
+    externalCheckoutUrl: "/checkout?id=b8c9d0e1-8888-1111-bbbb-888899990000"
   },
   {
-    id: "d66eef0e-5566-4591-882c-6adb14c77f10",
-    image: `${BASE_URL}/35-porto-frente.jpg`,
-    images: [`${BASE_URL}/35-porto-frente.jpg`, `${BASE_URL}/35-porto-verso.jpg`],
-    name: "Camiseta FC Porto 2026/27",
-    team: "FC Porto",
+    id: "b9c0d1e2-9999-2222-cccc-999900001111",
+    image: `${BASE_URL}/39-monaco-frente.jpg`,
+    images: [`${BASE_URL}/39-monaco-frente.jpg`, `${BASE_URL}/39-monaco-verso.jpg`],
+    name: "Camiseta Monaco 2026/27",
+    team: "AS Monaco",
     price: "R$ 109,93",
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O azul e branco dos Dragões que conquistaram a Europa.",
-    externalCheckoutUrl: "/checkout?id=d66eef0e-5566-4591-882c-6adb14c77f10"
+    description: "O vermelho e branco do principado. Elegância e estilo mediterrâneo.",
+    externalCheckoutUrl: "/checkout?id=b9c0d1e2-9999-2222-cccc-999900001111"
   },
-  {
-    id: "7f27a433-69a0-4a9c-9ff3-5a158d797ca0",
-    image: `${BASE_URL}/36-sporting-frente.jpg`,
-    images: [`${BASE_URL}/36-sporting-frente.jpg`, `${BASE_URL}/36-sporting-verso.jpg`],
-    name: "Camiseta Sporting CP 2026/27",
-    team: "Sporting CP",
-    price: "R$ 109,93",
-    priceNum: 109.93,
-    category: ["europeus"],
-    sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O verde e branco dos Leões de Alvalade. DNA formador.",
-    externalCheckoutUrl: "/checkout?id=7f27a433-69a0-4a9c-9ff3-5a158d797ca0"
-  },
-  {
-    id: "8a43c8a2-152e-4a96-a9f1-b91db4ab4c07",
-    image: `${BASE_URL}/37-celtic-frente.jpg`,
-    images: [`${BASE_URL}/37-celtic-frente.jpg`, `${BASE_URL}/37-celtic-verso.jpg`],
-    name: "Camiseta Celtic 2026/27",
-    team: "Celtic FC",
-    price: "R$ 109,93",
-    priceNum: 109.93,
-    category: ["europeus"],
-    sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "As listras horizontais verdes e brancas que ecoam em Glasgow.",
-    externalCheckoutUrl: "/checkout?id=8a43c8a2-152e-4a96-a9f1-b91db4ab4c07"
-  },
-  {
-    id: "b143af80-1395-41ea-b960-5dffb7bf95b3",
-    image: `${BASE_URL}/38-rangers-frente.jpg`,
-    images: [`${BASE_URL}/38-rangers-frente.jpg`, `${BASE_URL}/38-rangers-verso.jpg`],
-    name: "Camiseta Rangers 2026/27",
-    team: "Rangers FC",
-    price: "R$ 109,93",
-    priceNum: 109.93,
-    category: ["europeus"],
-    sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O azul real dos Gers. Tradição e rivalidade em Glasgow.",
-    externalCheckoutUrl: "/checkout?id=b143af80-1395-41ea-b960-5dffb7bf95b3"
-  },
-  {
-    id: "f0f3386b-df33-49b8-9af0-57cb918db34a",
-    image: `${BASE_URL}/39-galatasaray-frente.jpg`,
-    images: [`${BASE_URL}/39-galatasaray-frente.jpg`, `${BASE_URL}/39-galatasaray-verso.jpg`],
-    name: "Camiseta Galatasaray 2026/27",
-    team: "Galatasaray SK",
-    price: "R$ 109,93",
-    priceNum: 109.93,
-    category: ["europeus"],
-    sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O design clássico dividido em vermelho e amarelo de Istambul.",
-    externalCheckoutUrl: "/checkout?id=f0f3386b-df33-49b8-9af0-57cb918db34a"
-  },
-  {
-    id: "7424482f-317c-42d4-8fed-086b128eb1d5",
-    image: `${BASE_URL}/40-fenerbahce-frente.jpg`,
-    images: [`${BASE_URL}/40-fenerbahce-frente.jpg`, `${BASE_URL}/40-fenerbahce-verso.jpg`],
-    name: "Camiseta Fenerbahçe 2026/27",
-    team: "Fenerbahçe SK",
-    price: "R$ 109,93",
-    priceNum: 109.93,
-    category: ["europeus"],
-    sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "As listras amarelas e azuis que representam a paixão turca.",
-    externalCheckoutUrl: "/checkout?id=7424482f-317c-42d4-8fed-086b128eb1d5"
-  },
+
+  // ===================== BRASILEIRÃO =====================
   {
     id: "9781385c-152e-4a96-a9f1-b91db4ab4c07",
     image: `${BASE_URL}/42-palmeiras-frente.png`,
@@ -563,7 +570,7 @@ export const allProducts: Product[] = [
     externalCheckoutUrl: "/checkout?id=ce318ad5-6e24-455b-9a98-4b84fc26c476"
   },
   {
-    id: "8a43c8a2-152e-4a96-a9f1-b91db4ab4c07",
+    id: "c1d2e3f4-aaaa-bbbb-cccc-111122223333",
     image: `${BASE_URL}/43-saopaulo-frente.png`,
     images: [`${BASE_URL}/43-saopaulo-frente.png`, `${BASE_URL}/43-saopaulo-verso.png`],
     name: "Camiseta São Paulo 2026/27",
@@ -573,36 +580,10 @@ export const allProducts: Product[] = [
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
     description: "O Tricolor Paulista com suas listras horizontais clássicas. Soberano.",
-    externalCheckoutUrl: "/checkout?id=8a43c8a2-152e-4a96-a9f1-b91db4ab4c07"
+    externalCheckoutUrl: "/checkout?id=c1d2e3f4-aaaa-bbbb-cccc-111122223333"
   },
   {
-    id: "71af1982-f1ca-4e35-b91e-8e1ad9bfbbb2",
-    image: `${BASE_URL}/44-santos-frente.jpg`,
-    images: [`${BASE_URL}/44-santos-frente.jpg`, `${BASE_URL}/44-santos-verso.jpg`],
-    name: "Camiseta Santos 2026/27",
-    team: "Santos FC",
-    price: "R$ 109,93",
-    priceNum: 109.93,
-    category: ["brasileirão"],
-    sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Alvinegro Praiano que revelou Pelé. O mundo em branco e preto.",
-    externalCheckoutUrl: "/checkout?id=71af1982-f1ca-4e35-b91e-8e1ad9bfbbb2"
-  },
-  {
-    id: "f37a513c-743a-4933-875b-017646554552",
-    image: `${BASE_URL}/45-flamengo-frente.jpg`,
-    images: [`${BASE_URL}/45-flamengo-frente.jpg`, `${BASE_URL}/45-flamengo-verso.jpg`],
-    name: "Camiseta Flamengo 2026/27",
-    team: "Flamengo",
-    price: "R$ 109,93",
-    priceNum: 109.93,
-    category: ["brasileirão"],
-    sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "O Manto Sagrado rubro-negro. A maior torcida do mundo em campo.",
-    externalCheckoutUrl: "/checkout?id=f37a513c-743a-4933-875b-017646554552"
-  },
-  {
-    id: "46820241-1123-4155-987a-b5ff7927be2e",
+    id: "c2d3e4f5-bbbb-cccc-dddd-222233334444",
     image: `${BASE_URL}/44-vasco-frente.png`,
     images: [`${BASE_URL}/44-vasco-frente.png`, `${BASE_URL}/44-vasco-verso.png`],
     name: "Camiseta Vasco da Gama 2026/27",
@@ -612,12 +593,25 @@ export const allProducts: Product[] = [
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
     description: "A Cruz de Malta no peito. História de luta e glória do Gigante.",
-    externalCheckoutUrl: "/checkout?id=46820241-1123-4155-987a-b5ff7927be2e"
+    externalCheckoutUrl: "/checkout?id=c2d3e4f5-bbbb-cccc-dddd-222233334444"
   },
   {
-    id: "71af1982-f1ca-4e35-b91e-8e1ad9bfbbb2",
-    image: `${BASE_URL}/47-fluminense-frente.jpg`,
-    images: [`${BASE_URL}/47-fluminense-frente.jpg`, `${BASE_URL}/47-fluminense-verso.jpg`],
+    id: "f37a513c-743a-4933-875b-017646554553",
+    image: `${BASE_URL}/40-flamengo-frente.jpg`,
+    images: [`${BASE_URL}/40-flamengo-frente.jpg`, `${BASE_URL}/40-flamengo-verso.jpg`],
+    name: "Camiseta Flamengo 2026/27",
+    team: "Flamengo",
+    price: "R$ 109,93",
+    priceNum: 109.93,
+    category: ["brasileirão"],
+    sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
+    description: "O Manto Sagrado rubro-negro. A maior torcida do mundo em campo.",
+    externalCheckoutUrl: "/checkout?id=f37a513c-743a-4933-875b-017646554553"
+  },
+  {
+    id: "c3d4e5f6-cccc-dddd-eeee-333344445555",
+    image: `${BASE_URL}/50-frente.png`,
+    images: [`${BASE_URL}/50-frente.png`, `${BASE_URL}/50-verso.png`],
     name: "Camiseta Fluminense 2026/27",
     team: "Fluminense",
     price: "R$ 109,93",
@@ -625,12 +619,12 @@ export const allProducts: Product[] = [
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
     description: "As cores das Laranjeiras em design tricolor impecável. Guerreiro.",
-    externalCheckoutUrl: "/checkout?id=71af1982-f1ca-4e35-b91e-8e1ad9bfbbb2"
+    externalCheckoutUrl: "/checkout?id=c3d4e5f6-cccc-dddd-eeee-333344445555"
   },
   {
-    id: "3e812368-f2e2-4f45-9fb8-38377d74d038",
-    image: `${BASE_URL}/48-botafogo-frente.jpg`,
-    images: [`${BASE_URL}/48-botafogo-frente.jpg`, `${BASE_URL}/48-botafogo-verso.jpg`],
+    id: "c4d5e6f7-dddd-eeee-ffff-444455556666",
+    image: `${BASE_URL}/53-botafogo-sp-frente.png`,
+    images: [`${BASE_URL}/53-botafogo-sp-frente.png`, `${BASE_URL}/53-botafogo-sp-verso.png`],
     name: "Camiseta Botafogo 2026/27",
     team: "Botafogo",
     price: "R$ 109,93",
@@ -638,10 +632,10 @@ export const allProducts: Product[] = [
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
     description: "A Estrela Solitária que guia o Glorioso. Tradição alvinegra.",
-    externalCheckoutUrl: "/checkout?id=3e812368-f2e2-4f45-9fb8-38377d74d038"
+    externalCheckoutUrl: "/checkout?id=c4d5e6f7-dddd-eeee-ffff-444455556666"
   },
   {
-    id: "1e2ced50-987a-48f7-96d6-1ff800ca30bd",
+    id: "1e2ced50-987a-48f7-96d6-1ff800ca30bc",
     image: `${BASE_URL}/46-gremio-frente.png`,
     images: [`${BASE_URL}/46-gremio-frente.png`, `${BASE_URL}/46-gremio-verso.png`],
     name: "Camiseta Grêmio 2026/27",
@@ -651,10 +645,10 @@ export const allProducts: Product[] = [
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
     description: "O Imortal Tricolor em suas listras celestes, pretas e brancas.",
-    externalCheckoutUrl: "/checkout?id=1e2ced50-987a-48f7-96d6-1ff800ca30bd"
+    externalCheckoutUrl: "/checkout?id=1e2ced50-987a-48f7-96d6-1ff800ca30bc"
   },
   {
-    id: "d66eef0e-5566-4591-882c-6adb14c77f10",
+    id: "d5e6f7a8-eeee-ffff-0000-555566667777",
     image: `${BASE_URL}/45-internacional-frente.png`,
     images: [`${BASE_URL}/45-internacional-frente.png`, `${BASE_URL}/45-internacional-verso.png`],
     name: "Camiseta Internacional 2026/27",
@@ -664,10 +658,10 @@ export const allProducts: Product[] = [
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
     description: "O Colorado Gaúcho em vermelho vibrante. Paixão do Beira-Rio.",
-    externalCheckoutUrl: "/checkout?id=d66eef0e-5566-4591-882c-6adb14c77f10"
+    externalCheckoutUrl: "/checkout?id=d5e6f7a8-eeee-ffff-0000-555566667777"
   },
   {
-    id: "7f27a433-69a0-4a9c-9ff3-5a158d797ca0",
+    id: "d6e7f8a9-ffff-0000-1111-666677778888",
     image: `${BASE_URL}/48-atleticomg-frente.png`,
     images: [`${BASE_URL}/48-atleticomg-frente.png`, `${BASE_URL}/48-atleticomg-verso.png`],
     name: "Camiseta Atlético Mineiro 2026/27",
@@ -677,10 +671,10 @@ export const allProducts: Product[] = [
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
     description: "O Galo Forte e Vingador em suas listras alvinegras clássicas.",
-    externalCheckoutUrl: "/checkout?id=7f27a433-69a0-4a9c-9ff3-5a158d797ca0"
+    externalCheckoutUrl: "/checkout?id=d6e7f8a9-ffff-0000-1111-666677778888"
   },
   {
-    id: "8a43c8a2-152e-4a96-a9f1-b91db4ab4c07",
+    id: "d7e8f9a0-0000-1111-2222-777788889999",
     image: `${BASE_URL}/47-cruzeiro-frente.png`,
     images: [`${BASE_URL}/47-cruzeiro-frente.png`, `${BASE_URL}/47-cruzeiro-verso.png`],
     name: "Camiseta Cruzeiro 2026/27",
@@ -690,64 +684,12 @@ export const allProducts: Product[] = [
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
     description: "A Raposa em azul estrelado. Tradição e conquistas de Minas.",
-    externalCheckoutUrl: "/checkout?id=8a43c8a2-152e-4a96-a9f1-b91db4ab4c07"
+    externalCheckoutUrl: "/checkout?id=d7e8f9a0-0000-1111-2222-777788889999"
   },
   {
-    id: "b143af80-1395-41ea-b960-5dffb7bf95b3",
-    image: `${BASE_URL}/53-bahia-frente.jpg`,
-    images: [`${BASE_URL}/53-bahia-frente.jpg`, `${BASE_URL}/53-bahia-verso.jpg`],
-    name: "Camiseta Bahia 2026/27",
-    team: "Bahia",
-    price: "R$ 109,93",
-    priceNum: 109.93,
-    category: ["brasileirão"],
-    sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Esquadrão de Aço em branco com detalhes em azul e vermelho.",
-    externalCheckoutUrl: "/checkout?id=b143af80-1395-41ea-b960-5dffb7bf95b3"
-  },
-  {
-    id: "f0f3386b-df33-49b8-9af0-57cb918db34a",
-    image: `${BASE_URL}/54-vitoria-frente.jpg`,
-    images: [`${BASE_URL}/54-vitoria-frente.jpg`, `${BASE_URL}/54-vitoria-verso.jpg`],
-    name: "Camiseta Vitória 2026/27",
-    team: "Vitória",
-    price: "R$ 109,93",
-    priceNum: 109.93,
-    category: ["brasileirão"],
-    sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Leão da Barra em suas cores rubro-negras. Tradição baiana.",
-    externalCheckoutUrl: "/checkout?id=f0f3386b-df33-49b8-9af0-57cb918db34a"
-  },
-  {
-    id: "7424482f-317c-42d4-8fed-086b128eb1d5",
-    image: `${BASE_URL}/55-fortaleza-frente.jpg`,
-    images: [`${BASE_URL}/55-fortaleza-frente.jpg`, `${BASE_URL}/55-fortaleza-verso.jpg`],
-    name: "Camiseta Fortaleza 2026/27",
-    team: "Fortaleza",
-    price: "R$ 109,93",
-    priceNum: 109.93,
-    category: ["brasileirão"],
-    sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "O Leão do Pici em suas listras tricolores. Orgulho cearense.",
-    externalCheckoutUrl: "/checkout?id=7424482f-317c-42d4-8fed-086b128eb1d5"
-  },
-  {
-    id: "9781385c-152e-4a96-a9f1-b91db4ab4c07",
-    image: `${BASE_URL}/56-ceara-frente.jpg`,
-    images: [`${BASE_URL}/56-ceara-frente.jpg`, `${BASE_URL}/56-ceara-verso.jpg`],
-    name: "Camiseta Ceará 2026/27",
-    team: "Ceará",
-    price: "R$ 109,93",
-    priceNum: 109.93,
-    category: ["brasileirão"],
-    sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Vozão em preto e branco. Paixão que move o estado do Ceará.",
-    externalCheckoutUrl: "/checkout?id=9781385c-152e-4a96-a9f1-b91db4ab4c07"
-  },
-  {
-    id: "ce318ad5-6e24-455b-9a98-4b84fc26c476",
-    image: `${BASE_URL}/57-athletico-frente.jpg`,
-    images: [`${BASE_URL}/57-athletico-frente.jpg`, `${BASE_URL}/57-athletico-verso.jpg`],
+    id: "d8e9f0a1-1111-2222-3333-888899990000",
+    image: `${BASE_URL}/51-athletico-frente.png`,
+    images: [`${BASE_URL}/51-athletico-frente.png`, `${BASE_URL}/51-athletico-verso.png`],
     name: "Camiseta Athletico Paranaense 2026/27",
     team: "Athletico Paranaense",
     price: "R$ 109,93",
@@ -755,12 +697,12 @@ export const allProducts: Product[] = [
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
     description: "O Furacão em design arrojado e moderno. Força do Paraná.",
-    externalCheckoutUrl: "/checkout?id=ce318ad5-6e24-455b-9a98-4b84fc26c476"
+    externalCheckoutUrl: "/checkout?id=d8e9f0a1-1111-2222-3333-888899990000"
   },
   {
-    id: "8a43c8a2-152e-4a96-a9f1-b91db4ab4c07",
-    image: `${BASE_URL}/58-coritiba-frente.jpg`,
-    images: [`${BASE_URL}/58-coritiba-frente.jpg`, `${BASE_URL}/58-coritiba-verso.jpg`],
+    id: "d9e0f1a2-2222-3333-4444-999900001111",
+    image: `${BASE_URL}/52-coritiba-frente.png`,
+    images: [`${BASE_URL}/52-coritiba-frente.png`, `${BASE_URL}/52-coritiba-verso.png`],
     name: "Camiseta Coritiba 2026/27",
     team: "Coritiba",
     price: "R$ 109,93",
@@ -768,25 +710,90 @@ export const allProducts: Product[] = [
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
     description: "O Coxa-Branca em suas listras horizontais verdes e brancas.",
-    externalCheckoutUrl: "/checkout?id=8a43c8a2-152e-4a96-a9f1-b91db4ab4c07"
+    externalCheckoutUrl: "/checkout?id=d9e0f1a2-2222-3333-4444-999900001111"
   },
   {
-    id: "7609f213-55d2-4115-aadd-dc2f92301a4d",
-    image: `${BASE_URL}/49-frente.png`,
-    images: [`${BASE_URL}/49-frente.png`, `${BASE_URL}/49-verso.png`],
-    name: "Camiseta Seleção Palestina 2026",
-    team: "Seleção Palestina",
+    id: "e0f1a2b3-3333-4444-5555-000011112222",
+    image: `${BASE_URL}/54-bragantino-frente.png`,
+    images: [`${BASE_URL}/54-bragantino-frente.png`, `${BASE_URL}/54-bragantino-verso.png`],
+    name: "Camiseta Red Bull Bragantino 2026/27",
+    team: "Red Bull Bragantino",
     price: "R$ 109,93",
     priceNum: 109.93,
-    category: ["seleções"],
+    category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "Vista o orgulho e a resistência da Palestina. Camiseta oficial 2026 com design exclusivo que honra a história e a cultura do país.",
-    externalCheckoutUrl: "/checkout?id=7609f213-55d2-4115-aadd-dc2f92301a4d"
+    description: "O Massa Bruta em branco e vermelho. Força do interior paulista.",
+    externalCheckoutUrl: "/checkout?id=e0f1a2b3-3333-4444-5555-000011112222"
+  },
+  {
+    id: "e1f2a3b4-4444-5555-6666-111122223333",
+    image: `${BASE_URL}/55-frente.png`,
+    images: [`${BASE_URL}/55-frente.png`, `${BASE_URL}/55-verso.png`],
+    name: "Camiseta Fortaleza 2026/27",
+    team: "Fortaleza",
+    price: "R$ 109,93",
+    priceNum: 109.93,
+    category: ["brasileirão"],
+    sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
+    description: "O Leão do Pici em suas listras tricolores. Orgulho cearense.",
+    externalCheckoutUrl: "/checkout?id=e1f2a3b4-4444-5555-6666-111122223333"
+  },
+  {
+    id: "e2f3a4b5-5555-6666-7777-222233334444",
+    image: `${BASE_URL}/56-frente.png`,
+    images: [`${BASE_URL}/56-frente.png`, `${BASE_URL}/56-verso.png`],
+    name: "Camiseta Ceará 2026/27",
+    team: "Ceará",
+    price: "R$ 109,93",
+    priceNum: 109.93,
+    category: ["brasileirão"],
+    sizes: ["P", "M", "G", "GG", "XXL"],
+    description: "O Vozão em preto e branco. Paixão que move o estado do Ceará.",
+    externalCheckoutUrl: "/checkout?id=e2f3a4b5-5555-6666-7777-222233334444"
+  },
+  {
+    id: "e3f4a5b6-6666-7777-8888-333344445555",
+    image: `${BASE_URL}/57-chape-frente.png`,
+    images: [`${BASE_URL}/57-chape-frente.png`, `${BASE_URL}/57-chape-verso.png`],
+    name: "Camiseta Chapecoense 2026/27",
+    team: "Chapecoense",
+    price: "R$ 109,93",
+    priceNum: 109.93,
+    category: ["brasileirão"],
+    sizes: ["P", "M", "G", "GG", "XXL"],
+    description: "A Chape em verde e branco. Renascimento e força do futebol catarinense.",
+    externalCheckoutUrl: "/checkout?id=e3f4a5b6-6666-7777-8888-333344445555"
+  },
+  {
+    id: "e4f5a6b7-7777-8888-9999-444455556666",
+    image: `${BASE_URL}/58-remo-frente.png`,
+    images: [`${BASE_URL}/58-remo-frente.png`, `${BASE_URL}/58-remo-verso.png`],
+    name: "Camiseta Remo 2026/27",
+    team: "Clube do Remo",
+    price: "R$ 109,93",
+    priceNum: 109.93,
+    category: ["brasileirão"],
+    sizes: ["P", "M", "G", "GG", "XXL"],
+    description: "O Leão Azul do Pará. Orgulho do futebol paraense.",
+    externalCheckoutUrl: "/checkout?id=e4f5a6b7-7777-8888-9999-444455556666"
+  },
+  {
+    id: "e5f6a7b8-8888-9999-0000-555566667777",
+    image: `${BASE_URL}/59-mirassol-frente.png`,
+    images: [`${BASE_URL}/59-mirassol-frente.png`, `${BASE_URL}/59-mirassol-verso.png`],
+    name: "Camiseta Mirassol 2026/27",
+    team: "Mirassol FC",
+    price: "R$ 109,93",
+    priceNum: 109.93,
+    category: ["brasileirão"],
+    sizes: ["P", "M", "G", "GG", "XXL"],
+    description: "O Leão do Interior em amarelo e azul. A surpresa do futebol paulista.",
+    externalCheckoutUrl: "/checkout?id=e5f6a7b8-8888-9999-0000-555566667777"
   },
   {
     id: "9adab132-ac18-479f-bde3-aa1d2a82471c",
-    image: `${BASE_URL}/45-internacional-frente.png`,
-    images: [`${BASE_URL}/45-internacional-frente.png`, `${BASE_URL}/45-internacional-verso.png`],
+    image: `${BASE_URL}/62-inter-frente.png`,
+    images: [`${BASE_URL}/62-inter-frente.png`, `${BASE_URL}/62-inter-verso.png`],
     name: "Camiseta Internacional Manga Longa Branca 2026",
     team: "Internacional",
     price: "R$ 109,93",
