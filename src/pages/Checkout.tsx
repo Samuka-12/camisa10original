@@ -58,6 +58,7 @@ export default function Checkout() {
     };
 
     if (id) {
+      // Prioridade 1: Buscar no banco de dados (Supabase)
       supabase
         .from('produtos')
         .select('*')
@@ -68,9 +69,10 @@ export default function Checkout() {
             setProduto({
               nome: data.nome,
               preco: parsePrice(data.preco) * qty,
-              imagens: [data.imagem_url || data.image].filter(img => img && !img.includes('placeholder')) as string[]
+              imagens: [data.imagem_url || data.image].filter(img => img) as string[]
             });
           } else {
+            // Prioridade 2: Buscar no arquivo local (allProducts)
             const localProd = allProducts.find(p => p.id === id);
             if (localProd) {
               setProduto({
@@ -78,20 +80,28 @@ export default function Checkout() {
                 preco: localProd.priceNum * qty,
                 imagens: [localProd.image].filter(img => img) as string[]
               });
+            } else {
+              // Se não encontrou em lugar nenhum, não permite checkout fake
+              setProduto({
+                nome: 'Produto não encontrado',
+                preco: 0,
+                imagens: []
+              });
             }
           }
         });
     } else if (cartItems.length > 0) {
-      // Se não tem ID, mas tem itens no carrinho, usa o total do carrinho
+      // Prioridade 3: Se veio do carrinho sem ID específico (múltiplos itens)
       setProduto({
         nome: `CARRINHO (${totalItems} ITENS)`,
         preco: Number(cartTotal) || 0,
         imagens: []
       });
-    } else if (cartItems.length > 0) {
+    } else {
+      // Bloqueio: Não permite gerar checkout sem itens ou ID válido
       setProduto({
-        nome: `CARRINHO (${totalItems} ITENS)`,
-        preco: Number(cartTotal) || 0,
+        nome: 'Checkout Inválido',
+        preco: 0,
         imagens: []
       });
     }
@@ -311,14 +321,25 @@ export default function Checkout() {
         <div style={{ padding: '20px' }}>
           {/* RESUMO DO PRODUTO */}
           <div style={productBox}>
-            {produto.imagens.length === 1 && produto.imagens[0] && !produto.imagens[0].includes('placeholder') ? (
+            {produto.imagens.length === 1 && produto.imagens[0] ? (
               <img 
                 src={produto.imagens[0]} 
                 style={imgStyle} 
                 alt="produto" 
-                onError={(e) => (e.currentTarget.style.display = 'none')}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  if (target.src !== "/placeholder.svg") {
+                    target.src = "/placeholder.svg";
+                  }
+                }}
               />
-            ) : null}
+            ) : (
+              <img 
+                src="/placeholder.svg" 
+                style={imgStyle} 
+                alt="produto" 
+              />
+            )}
             <div style={{ flex: 1, marginLeft: (produto.imagens.length === 1 && produto.imagens[0] && !produto.imagens[0].includes('placeholder')) ? '10px' : '0' }}>
               <div style={{ fontWeight: '900', fontSize: '14px', color: '#000', lineHeight: '1.2' }}>
                 {produto.imagens.length > 1 ? `CARRINHO (${produto.imagens.length} ITENS)` : produto.nome}

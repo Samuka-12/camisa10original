@@ -144,19 +144,11 @@ const SideCart = () => {
 
     if (totalItems === 1) {
       const item = items[0];
-      if (item.product.externalCheckoutUrl) {
-        const target = item.product.externalCheckoutUrl.startsWith("http")
-          ? item.product.externalCheckoutUrl
-          : origin + item.product.externalCheckoutUrl;
-        window.location.href = getUrlWithUtm(target);
-        return;
-      }
+      // Redireciona para o checkout seguro usando apenas o ID e a quantidade
       window.location.href = getUrlWithUtm(`${origin}/checkout?id=${item.product.id}&qty=${item.quantity}`);
     } else {
-      // totalPrice já vem com o desconto da Tríplice Coroa e do cupom aplicados.
-      const precoLimpo = Number(totalPrice) || 0;
-      const nomeCarrinho = encodeURIComponent(`Carrinho (${totalItems} itens)`);
-      window.location.href = getUrlWithUtm(`${origin}/checkout?nome=${nomeCarrinho}&preco=${precoLimpo.toFixed(2)}`);
+      // Para múltiplos itens, o checkout.tsx agora prioriza o total do carrinho se não houver ID
+      window.location.href = getUrlWithUtm(`${origin}/checkout`);
     }
   };
 
@@ -247,9 +239,15 @@ const SideCart = () => {
                   >
                     <div style={{ position: "relative" }}>
                       <img
-                        src={item.product.image}
+                        src={item.product.image || "/placeholder.svg"}
                         alt={item.product.name}
                         className="w-16 h-16 object-cover rounded-md"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          if (target.src !== "/placeholder.svg") {
+                            target.src = "/placeholder.svg";
+                          }
+                        }}
                       />
                       {/* Badge "GRÁTIS" sobre a imagem do item gratuito */}
                       {hasDiscount && (
