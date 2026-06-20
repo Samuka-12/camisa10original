@@ -74,6 +74,27 @@ export default async function handler(req, res) {
             ? (rawBase64.startsWith('data:image') ? rawBase64 : 'data:image/png;base64,' + rawBase64)
             : '';
 
+        // Dispara o evento de initiate_checkout para a xTracky
+        const xtrackyToken = "f4d9f616-1acf-4191-bb7c-d03f8a756ce0";
+        const xtrackyUrl = `https://api.xtracky.com/api/integrations/api`;
+        const xtrackyPayload = {
+            token: xtrackyToken,
+            orderId: payload.identifier,
+            amount: amountInReais,
+            status: 'initiate_checkout',
+            customer: {
+                email: body.client?.email || '',
+                phone: body.client?.phone || '',
+                document: body.client?.document || ''
+            }
+        };
+
+        fetch(xtrackyUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(xtrackyPayload)
+        }).catch(err => console.error('Erro xTracky initiate_checkout:', err.message));
+
         // Retorna resposta normalizada + raw para debug
         return res.status(200).json({
             pix: {
