@@ -12,7 +12,10 @@ export default async function handler(req, res) {
         const xtrackyUrl = `https://api.xtracky.com/api/integrations/api`;
 
         // IronPay envia status como: paid, refunded, pending, waiting_payment
-        const isPaid = ['paid', 'approved', 'PAID', 'authorized'].includes(payload.status);
+        console.log('[Webhook] Payload completo:', JSON.stringify(payload));
+
+        const statusOriginal = payload.status || payload.data?.status || 'pending';
+        const isPaid = ['paid', 'approved', 'PAID', 'authorized', 'paid_out'].includes(statusOriginal);
 
         // Prepara o payload no formato esperado pelo xTracky
         const xtrackyPayload = {

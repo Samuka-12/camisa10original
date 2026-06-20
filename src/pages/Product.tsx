@@ -47,9 +47,15 @@ const Product = () => {
           <div className="space-y-4">
             <div className="aspect-square rounded-2xl overflow-hidden bg-secondary border border-border group cursor-zoom-in">
               <img
-                src={product.images[selectedImage]}
+                src={product.images[selectedImage] || "/placeholder.svg"}
                 alt={product.name}
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  if (target.src !== "/placeholder.svg") {
+                    target.src = "/placeholder.svg";
+                  }
+                }}
               />
             </div>
             {product.images.length > 1 && (
@@ -62,7 +68,17 @@ const Product = () => {
                       i === selectedImage ? "border-primary" : "border-border hover:border-primary/50"
                     }`}
                   >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <img 
+                      src={img || "/placeholder.svg"} 
+                      alt="" 
+                      className="w-full h-full object-cover" 
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        if (target.src !== "/placeholder.svg") {
+                          target.src = "/placeholder.svg";
+                        }
+                      }}
+                    />
                   </button>
                 ))}
               </div>

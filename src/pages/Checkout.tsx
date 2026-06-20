@@ -66,32 +66,27 @@ export default function Checkout() {
         .then(({ data, error }) => {
           if (data && !error) {
             setProduto({
-              nome: overrideNome || data.nome,
-              preco: (overridePreco ? parsePrice(overridePreco) : parsePrice(data.preco)) * qty,
-              imagens: [overrideImg || data.imagem_url || data.image].filter(img => img && !img.includes('placeholder')) as string[]
+              nome: data.nome,
+              preco: parsePrice(data.preco) * qty,
+              imagens: [data.imagem_url || data.image].filter(img => img && !img.includes('placeholder')) as string[]
             });
           } else {
             const localProd = allProducts.find(p => p.id === id);
             if (localProd) {
               setProduto({
-                nome: overrideNome || localProd.name,
-                preco: (overridePreco ? parsePrice(overridePreco) : localProd.priceNum) * qty,
-                imagens: [overrideImg || localProd.image].filter(img => img) as string[]
-              });
-            } else if (overrideNome && overridePreco) {
-              setProduto({
-                nome: overrideNome,
-                preco: parsePrice(overridePreco) * qty,
-                imagens: overrideImg ? [overrideImg] : []
+                nome: localProd.name,
+                preco: localProd.priceNum * qty,
+                imagens: [localProd.image].filter(img => img) as string[]
               });
             }
           }
         });
-    } else if (overrideNome && overridePreco) {
+    } else if (cartItems.length > 0) {
+      // Se não tem ID, mas tem itens no carrinho, usa o total do carrinho
       setProduto({
-        nome: overrideNome,
-        preco: parsePrice(overridePreco),
-        imagens: (overrideNome.includes('Carrinho') || overrideNome.includes('CARRINHO')) ? [] : (overrideImg ? [overrideImg] : [])
+        nome: `CARRINHO (${totalItems} ITENS)`,
+        preco: Number(cartTotal) || 0,
+        imagens: []
       });
     } else if (cartItems.length > 0) {
       setProduto({
