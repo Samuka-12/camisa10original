@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Instagram } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -40,8 +41,17 @@ const Footer = () => {
           <div>
             <h4 className="font-semibold text-sm uppercase tracking-wider mb-4">Contato</h4>
             <ul className="space-y-2.5 text-sm text-background/60">
-              <li>contato@camisa10.com.br</li>
-              <li>(11) 99999-9999</li>
+              <li className="flex items-center gap-2">
+                <Instagram size={16} />
+                <a 
+                  href="https://www.instagram.com/camisa10_og_store" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hover:text-accent transition-colors"
+                >
+                  @camisa10_og_store
+                </a>
+              </li>
             </ul>
             <h4 className="font-semibold text-sm uppercase tracking-wider mt-6 mb-3">Pagamento</h4>
             <p className="text-sm text-background/60">Pix • Cartão de Crédito • Boleto</p>

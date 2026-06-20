@@ -2,6 +2,7 @@ import { Search, X } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { searchProducts, type Product } from "@/data/products";
+import { getUrlWithUtm } from "@/utils/utm";
 
 const SearchBar = () => {
   const [query, setQuery] = useState("");
@@ -31,7 +32,7 @@ const SearchBar = () => {
   const goToProduct = (id: string) => {
     setQuery("");
     setOpen(false);
-    navigate(`/produto/${id}`);
+    navigate(getUrlWithUtm(`/produto/${id}`));
   };
 
   return (

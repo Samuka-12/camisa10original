@@ -1,6 +1,7 @@
 import { X, Minus, Plus, Trash2, Tag, Crown, Truck, Gift } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { getUrlWithUtm } from "@/utils/utm";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -147,15 +148,15 @@ const SideCart = () => {
         const target = item.product.externalCheckoutUrl.startsWith("http")
           ? item.product.externalCheckoutUrl
           : origin + item.product.externalCheckoutUrl;
-        window.location.href = target;
+        window.location.href = getUrlWithUtm(target);
         return;
       }
-      window.location.href = `${origin}/checkout?id=${item.product.id}&qty=${item.quantity}`;
+      window.location.href = getUrlWithUtm(`${origin}/checkout?id=${item.product.id}&qty=${item.quantity}`);
     } else {
       // totalPrice já vem com o desconto da Tríplice Coroa e do cupom aplicados.
       const precoLimpo = Number(totalPrice) || 0;
       const nomeCarrinho = encodeURIComponent(`Carrinho (${totalItems} itens)`);
-      window.location.href = `${origin}/checkout?nome=${nomeCarrinho}&preco=${precoLimpo.toFixed(2)}`;
+      window.location.href = getUrlWithUtm(`${origin}/checkout?nome=${nomeCarrinho}&preco=${precoLimpo.toFixed(2)}`);
     }
   };
 
