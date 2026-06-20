@@ -55,8 +55,16 @@ export default async function handler(req, res) {
         }
 
         // Extrai o PIX da resposta da IronPay
-        const qrCode = data?.pix?.code || data?.pix?.payload || data?.qr_code || '';
-        const qrImage = data?.pix?.base64 || data?.pix?.image_url || '';
+        // A IronPay retorna: data.pix.pix_qr_code (string EMV) e data.pix.qr_code_base64 (pode ser null)
+        const qrCode =
+            data?.pix?.pix_qr_code ||
+            data?.pix?.code ||
+            data?.pix?.payload ||
+            data?.pix?.emv ||
+            data?.pix?.qr_code ||
+            data?.qr_code || '';
+        const rawBase64 = data?.pix?.qr_code_base64 || data?.pix?.base64 || data?.pix?.image_url || '';
+        const qrImage = rawBase64;
 
         // Dispara o evento de initiate_checkout para a xTracky
         const xtrackyToken = "f4d9f616-1acf-4191-bb7c-d03f8a756ce0";
@@ -80,11 +88,15 @@ export default async function handler(req, res) {
         }).catch(err => console.error('Erro xTracky initiate_checkout:', err.message));
 
         // Retorna resposta normalizada + raw para debug
+        const qrImageFinal = rawBase64
+            ? (rawBase64.startsWith('data:image') ? rawBase64 : 'data:image/png;base64,' + rawBase64)
+            : (qrCode ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrCode)}` : '');
+
         return res.status(200).json({
             pix: {
                 code: qrCode,
-                base64: qrImage,
-                image: qrImage.startsWith('data:image') ? qrImage : (qrImage ? qrImage : `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrCode)}`)
+                base64: rawBase64,
+                image: qrImageFinal
             },
             _raw: data
         });
