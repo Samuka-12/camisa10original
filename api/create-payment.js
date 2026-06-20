@@ -10,12 +10,12 @@ export default async function handler(req, res) {
         const SIGILO_PUBLIC_KEY = 'samuelcab444_fd963j9ub7kpwenl';
         const SIGILO_API = 'https://app.sigilopay.com.br/api/v1/gateway/pix/receive';
 
-        // SigiloPay espera amount em centavos (inteiro)
-        const amountInCents = Math.round(Number(body.amount) * 100);
+        // SigiloPay espera o valor em Reais (float/decimal), ex: 139.90
+        const amountInReais = Number(body.amount);
 
         const payload = {
             identifier: body.identifier || 'camisa10_' + Date.now(),
-            amount: amountInCents,
+            amount: amountInReais,
             client: body.client
         };
 
