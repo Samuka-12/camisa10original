@@ -36,7 +36,17 @@ exports.handler = async (event, context) => {
                 email: body.client?.email || 'cliente@email.com',
                 phone_number: (body.client?.phone || '11999999999').replace(/\D/g, ''),
                 document: (body.client?.document || '00000000000').replace(/\D/g, '')
-            }
+            },
+            cart: [
+                {
+                    product_hash: body.offer_hash || 'default_offer',
+                    title: body.product_name || 'Camiseta',
+                    price: amountInCents,
+                    quantity: 1,
+                    operation_type: 1,
+                    tangible: true
+                }
+            ]
         };
 
         console.log('[create-payment] Enviando para IronPay:', JSON.stringify(payload));

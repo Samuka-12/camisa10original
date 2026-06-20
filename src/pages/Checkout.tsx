@@ -120,6 +120,7 @@ export default function Checkout() {
         identifier,
         amount: produto.preco,
         offer_hash: searchParams.get('id') || 'default_offer',
+        product_name: produto.nome || 'Camiseta',
         client: {
           name: formData.nome || 'Cliente',
           email: formData.email || 'cliente@email.com',
