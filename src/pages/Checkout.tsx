@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useCart } from '../contexts/CartContext';
+import { allProducts } from '../data/products';
 import { User, Mail, CreditCard, MapPin, Phone, Calendar, Hash, Lock, ShieldCheck, QrCode, Copy, CheckCheck, Clock } from 'lucide-react';
 
 // =====================================================
@@ -47,6 +48,15 @@ export default function Checkout() {
     const overrideImg = searchParams.get('img');
     const qty = parseInt(searchParams.get('qty') || '1');
 
+    const parsePrice = (val: any) => {
+      if (typeof val === 'number' && !isNaN(val)) return val;
+      if (typeof val === 'string') {
+        const clean = val.replace(/[^\d,.]/g, '').replace(',', '.');
+        return parseFloat(clean) || 0;
+      }
+      return 0;
+    };
+
     if (id) {
       supabase
         .from('produtos')
@@ -54,27 +64,33 @@ export default function Checkout() {
         .eq('id', id)
         .single()
         .then(({ data, error }) => {
-          if (data) {
-            const parsePrice = (val: any) => {
-              if (typeof val === 'number') return val;
-              if (typeof val === 'string') {
-                const clean = val.replace(/[^\d,.]/g, '').replace(',', '.');
-                return parseFloat(clean) || 0;
-              }
-              return 0;
-            };
-
+          if (data && !error) {
             setProduto({
               nome: overrideNome || data.nome,
-              preco: (overridePreco ? Number(overridePreco) : parsePrice(data.preco)) * qty,
+              preco: (overridePreco ? parsePrice(overridePreco) : parsePrice(data.preco)) * qty,
               imagens: [overrideImg || data.imagem_url || data.image].filter(img => img && !img.includes('placeholder')) as string[]
             });
+          } else {
+            const localProd = allProducts.find(p => p.id === id);
+            if (localProd) {
+              setProduto({
+                nome: overrideNome || localProd.name,
+                preco: (overridePreco ? parsePrice(overridePreco) : localProd.priceNum) * qty,
+                imagens: [overrideImg || localProd.image].filter(img => img) as string[]
+              });
+            } else if (overrideNome && overridePreco) {
+              setProduto({
+                nome: overrideNome,
+                preco: parsePrice(overridePreco) * qty,
+                imagens: overrideImg ? [overrideImg] : []
+              });
+            }
           }
         });
     } else if (overrideNome && overridePreco) {
       setProduto({
         nome: overrideNome,
-        preco: Number(overridePreco) || 0,
+        preco: parsePrice(overridePreco),
         imagens: (overrideNome.includes('Carrinho') || overrideNome.includes('CARRINHO')) ? [] : (overrideImg ? [overrideImg] : [])
       });
     } else if (cartItems.length > 0) {
