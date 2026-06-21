@@ -26,11 +26,16 @@ exports.handler = async (event, context) => {
         // IronPay espera o amount em centavos (inteiro)
         const amountInCents = Math.round(Number(body.amount) * 100);
 
+        // Determinar o método de pagamento
+        const paymentMethod = body.payment_method || 'pix';
+        const installments = body.installments || 1;
+
+        // Construir o payload base
         const payload = {
             amount: amountInCents,
             offer_hash: body.offer_hash || 'default_offer',
-            payment_method: 'pix',
-            installments: 1,
+            payment_method: paymentMethod,
+            installments: installments,
             customer: {
                 name: body.client?.name || 'Cliente',
                 email: body.client?.email || 'cliente@email.com',
@@ -49,7 +54,21 @@ exports.handler = async (event, context) => {
             ]
         };
 
-        console.log('[create-payment] Enviando para IronPay:', JSON.stringify(payload));
+        // Se for pagamento com cartão, adicionar os dados do cartão
+        if (paymentMethod === 'credit_card' && body.card) {
+            payload.card = {
+                number: body.card.number?.replace(/\s/g, ''),
+                holder_name: body.card.holder_name,
+                expiry_month: body.card.expiry_month,
+                expiry_year: body.card.expiry_year,
+                cvv: body.card.cvv
+            };
+        }
+
+        console.log('[create-payment] Enviando para IronPay:', JSON.stringify({
+            ...payload,
+            card: payload.card ? { ...payload.card, number: '****', cvv: '***' } : undefined
+        }));
 
         const response = await fetch(`${IRONPAY_API_URL}?api_token=${IRONPAY_TOKEN}`, {
             method: 'POST',
@@ -72,19 +91,42 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // Extrai o PIX da resposta da IronPay
-        // A IronPay retorna: data.pix.pix_qr_code (string EMV) e data.pix.qr_code_base64 (pode ser null)
-        const qrCode =
-            data?.pix?.pix_qr_code ||
-            data?.pix?.code ||
-            data?.pix?.payload ||
-            data?.pix?.emv ||
-            data?.pix?.qr_code ||
-            data?.qr_code || '';
-        const rawBase64 = data?.pix?.qr_code_base64 || data?.pix?.base64 || data?.pix?.image_url || '';
-        const qrImage = rawBase64
-            ? (rawBase64.startsWith('data:image') ? rawBase64 : 'data:image/png;base64,' + rawBase64)
-            : (qrCode ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrCode)}` : '');
+        // Construir resposta normalizada
+        let responseData = {
+            status: 'success',
+            transaction_id: data?.id || data?.transaction_id || null,
+            payment_method: paymentMethod
+        };
+
+        // Se for PIX, incluir dados do QR Code
+        if (paymentMethod === 'pix') {
+            const qrCode =
+                data?.pix?.pix_qr_code ||
+                data?.pix?.code ||
+                data?.pix?.payload ||
+                data?.pix?.emv ||
+                data?.pix?.qr_code ||
+                data?.qr_code || '';
+            const rawBase64 = data?.pix?.qr_code_base64 || data?.pix?.base64 || data?.pix?.image_url || '';
+            const qrImage = rawBase64
+                ? (rawBase64.startsWith('data:image') ? rawBase64 : 'data:image/png;base64,' + rawBase64)
+                : (qrCode ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrCode)}` : '');
+
+            responseData.pix = {
+                code: qrCode,
+                base64: rawBase64,
+                image: qrImage
+            };
+        }
+
+        // Se for cartão de crédito, incluir status da transação
+        if (paymentMethod === 'credit_card') {
+            responseData.card = {
+                status: data?.status || 'pending',
+                authorization_code: data?.authorization_code || null,
+                last_four: body.card?.number?.slice(-4) || null
+            };
+        }
 
         // Dispara o evento initiate_checkout para a xTracky
         const xtrackyPayload = {
@@ -92,6 +134,7 @@ exports.handler = async (event, context) => {
             orderId: body.identifier || 'camisa10_' + Date.now(),
             amount: Number(body.amount),
             status: 'initiate_checkout',
+            payment_method: paymentMethod,
             customer: {
                 email: body.client?.email || '',
                 phone: body.client?.phone || '',
@@ -117,7 +160,7 @@ exports.handler = async (event, context) => {
             statusCode: 200,
             headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                pix: { code: qrCode, base64: rawBase64, image: qrImage },
+                ...responseData,
                 _raw: data
             })
         };
