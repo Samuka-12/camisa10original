@@ -27,7 +27,7 @@ export default function Checkout() {
   const [pixErro, setPixErro] = useState('');
   const [copiado, setCopiado] = useState(false);
 
-  const { items: cartItems, totalPrice: cartTotal, totalItems } = useCart();
+  const { items: cartItems, totalPrice: cartTotal, totalItems, subtotal, tripleCrown } = useCart();
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutos em segundos
   const [produto, setProduto] = useState({
     nome: 'Buscando camisa...',
@@ -92,10 +92,11 @@ export default function Checkout() {
         });
     } else if (cartItems.length > 0) {
       // Prioridade 3: Se veio do carrinho sem ID específico (múltiplos itens)
+      // Usa o totalPrice do CartContext que já inclui descontos da Tríplice Coroa
       setProduto({
         nome: `CARRINHO (${totalItems} ITENS)`,
         preco: Number(cartTotal) || 0,
-        imagens: []
+        imagens: cartItems.slice(0, 3).map(item => item.product.image).filter(img => img) as string[]
       });
     } else {
       // Bloqueio: Não permite gerar checkout sem itens ou ID válido
@@ -121,11 +122,15 @@ export default function Checkout() {
     try {
       const identifier = 'camisa10_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
 
+      // Se houver múltiplos itens no carrinho, enviar o totalPrice com descontos
+      const finalAmount = cartItems.length > 0 ? cartTotal : produto.preco;
+      const productName = cartItems.length > 0 ? `CARRINHO (${totalItems} ITENS)` : (produto.nome || 'Camiseta');
+
       const payload = {
         identifier,
-        amount: produto.preco,
+        amount: finalAmount,
         offer_hash: searchParams.get('id') || 'default_offer',
-        product_name: produto.nome || 'Camiseta',
+        product_name: productName,
         client: {
           name: formData.nome || 'Cliente',
           email: formData.email || 'cliente@email.com',
@@ -293,12 +298,16 @@ export default function Checkout() {
         const [month, year] = formData.validade.split('/');
         const fullYear = '20' + year;
 
+        // Se houver múltiplos itens no carrinho, enviar o totalPrice com descontos
+        const finalAmount = cartItems.length > 0 ? cartTotal : produto.preco;
+        const productName = cartItems.length > 0 ? `CARRINHO (${totalItems} ITENS)` : (produto.nome || 'Camiseta');
+
         const payload = {
           identifier,
-          amount: produto.preco,
+          amount: finalAmount,
           payment_method: 'credit_card',
           offer_hash: searchParams.get('id') || 'default_offer',
-          product_name: produto.nome || 'Camiseta',
+          product_name: productName,
           installments: 1,
           client: {
             name: formData.nome || 'Cliente',

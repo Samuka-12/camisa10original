@@ -17,6 +17,27 @@ export default async function handler(req, res) {
         const installments = body.installments || 1;
 
         // Construir o payload base
+        // Se houver cart items (múltiplos produtos), construir array de cart items
+        const cartItems = body.cart_items && Array.isArray(body.cart_items) ? body.cart_items : [];
+        
+        const cart = cartItems.length > 0 
+          ? cartItems.map((item: any, index: number) => ({
+              product_hash: item.product_hash || `product_${index}`,
+              title: item.title || 'Produto',
+              price: Math.round(Number(item.price) * 100),
+              quantity: item.quantity || 1,
+              operation_type: 1,
+              tangible: true
+            }))
+          : [{
+              product_hash: body.offer_hash || 'default_offer',
+              title: body.product_name || 'Camiseta',
+              price: amountInCents,
+              quantity: 1,
+              operation_type: 1,
+              tangible: true
+            }];
+
         const payload = {
             amount: amountInCents,
             offer_hash: body.offer_hash || 'default_offer',
@@ -28,16 +49,7 @@ export default async function handler(req, res) {
                 phone_number: (body.client?.phone || '11999999999').replace(/\D/g, ''),
                 document: (body.client?.document || '00000000000').replace(/\D/g, '')
             },
-            cart: [
-                {
-                    product_hash: body.offer_hash || 'default_offer',
-                    title: body.product_name || 'Camiseta',
-                    price: amountInCents,
-                    quantity: 1,
-                    operation_type: 1,
-                    tangible: true
-                }
-            ]
+            cart: cart
         };
 
         // Se for pagamento com cartão, adicionar os dados do cartão
