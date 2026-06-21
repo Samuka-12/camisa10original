@@ -126,11 +126,22 @@ export default function Checkout() {
       const finalAmount = cartItems.length > 0 ? cartTotal : produto.preco;
       const productName = cartItems.length > 0 ? `CARRINHO (${totalItems} ITENS)` : (produto.nome || 'Camiseta');
 
+      // Construir array de itens para enviar à IronPay
+      const cartItemsPayload = cartItems.length > 0 
+        ? cartItems.map((item, index) => ({
+            product_hash: item.product.id,
+            title: item.product.name,
+            price: item.product.priceNum,
+            quantity: item.quantity
+          }))
+        : [];
+
       const payload = {
         identifier,
         amount: finalAmount,
         offer_hash: searchParams.get('id') || 'default_offer',
         product_name: productName,
+        cart_items: cartItemsPayload,
         client: {
           name: formData.nome || 'Cliente',
           email: formData.email || 'cliente@email.com',
@@ -302,12 +313,23 @@ export default function Checkout() {
         const finalAmount = cartItems.length > 0 ? cartTotal : produto.preco;
         const productName = cartItems.length > 0 ? `CARRINHO (${totalItems} ITENS)` : (produto.nome || 'Camiseta');
 
+        // Construir array de itens para enviar à IronPay
+        const cartItemsPayload = cartItems.length > 0 
+          ? cartItems.map((item, index) => ({
+              product_hash: item.product.id,
+              title: item.product.name,
+              price: item.product.priceNum,
+              quantity: item.quantity
+            }))
+          : [];
+
         const payload = {
           identifier,
           amount: finalAmount,
           payment_method: 'credit_card',
           offer_hash: searchParams.get('id') || 'default_offer',
           product_name: productName,
+          cart_items: cartItemsPayload,
           installments: 1,
           client: {
             name: formData.nome || 'Cliente',
@@ -415,7 +437,7 @@ export default function Checkout() {
             )}
             <div style={{ flex: 1, marginLeft: (produto.imagens.length === 1 && produto.imagens[0] && !produto.imagens[0].includes('placeholder')) ? '10px' : '0' }}>
               <div style={{ fontWeight: '900', fontSize: '14px', color: '#000', lineHeight: '1.2' }}>
-                {produto.imagens.length > 1 ? `CARRINHO (${produto.imagens.length} ITENS)` : produto.nome}
+                {cartItems.length > 0 ? `CARRINHO (${totalItems} ITENS)` : produto.nome}
               </div>
               <div style={{ fontSize: '20px', fontWeight: '900', color: '#000', marginTop: '5px' }}>
                 R$ {(Number(produto.preco) || 0).toFixed(2).replace('.', ',')}
