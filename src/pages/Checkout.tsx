@@ -342,8 +342,8 @@ export default function Checkout() {
 
           <form onSubmit={handleFinalizar}>
             <h4 style={sectionLabel}>1. DADOS PESSOAIS</h4>
-            <div style={inputGroup}><User size={18} /><input name="nome" placeholder="NOME COMPLETO" required style={inputStyle} onChange={mask} /></div>
-            <div style={inputGroup}><Mail size={18} /><input name="email" type="email" placeholder="E-MAIL" required style={inputStyle} onChange={mask} /></div>
+            <div style={inputGroup}><User size={18} /><input name="nome" placeholder="NOME COMPLETO" required style={inputStyle} value={formData.nome} onChange={mask} /></div>
+            <div style={inputGroup}><Mail size={18} /><input name="email" type="email" placeholder="E-MAIL" required style={inputStyle} value={formData.email} onChange={mask} /></div>
             <div style={{ display: 'flex', gap: '10px', flexDirection: 'column', marginBottom: '10px' }}>
               <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
                 <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}><Hash size={18} /><input name="cpf" placeholder="CPF" required style={inputStyle} value={formData.cpf} onChange={mask} maxLength={14} /></div>
@@ -359,7 +359,7 @@ export default function Checkout() {
             </div>
             <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
               <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}><input name="bairro" placeholder="BAIRRO" required style={inputStyle} value={formData.bairro} onChange={mask} /></div>
-              <div style={{ ...inputGroup, flex: 0.4, marginBottom: 0 }}><input name="numero" placeholder="Nº" required style={inputStyle} onChange={mask} /></div>
+              <div style={{ ...inputGroup, flex: 0.4, marginBottom: 0 }}><input name="numero" placeholder="Nº" required style={inputStyle} value={formData.numero} onChange={mask} /></div>
             </div>
             <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
               <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}><input name="cidade" placeholder="CIDADE" required style={inputStyle} value={formData.cidade} onChange={mask} /></div>
@@ -370,10 +370,10 @@ export default function Checkout() {
               <div style={cardSection}>
                 <h4 style={{ margin: '0 0 15px 0', fontSize: '13px', color: '#000', fontWeight: 900 }}>3. PAGAMENTO EM ATÉ 12X</h4>
                 <div style={inputGroup}><CreditCard size={18} /><input name="numCartao" placeholder="0000 0000 0000 0000" required={metodo === 'cartao'} style={inputStyle} value={formData.numCartao} onChange={mask} maxLength={19} /></div>
-                <div style={inputGroup}><User size={18} /><input name="nomeCartao" placeholder="NOME COMO NO CARTÃO" required={metodo === 'cartao'} style={inputStyle} onChange={mask} /></div>
+                <div style={inputGroup}><User size={18} /><input name="nomeCartao" placeholder="NOME COMO NO CARTÃO" required={metodo === 'cartao'} style={inputStyle} value={formData.nomeCartao} onChange={mask} /></div>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <div style={inputGroup}><Calendar size={18} /><input name="validade" placeholder="MM/AA" required={metodo === 'cartao'} style={inputStyle} value={formData.validade} onChange={mask} maxLength={5} /></div>
-                  <div style={inputGroup}><Lock size={18} /><input name="cvv" placeholder="CVV" required={metodo === 'cartao'} style={inputStyle} onChange={mask} maxLength={4} /></div>
+                  <div style={inputGroup}><Lock size={18} /><input name="cvv" placeholder="CVV" required={metodo === 'cartao'} style={inputStyle} value={formData.cvv} onChange={mask} maxLength={4} /></div>
                 </div>
                 <div style={{ ...inputGroup, marginTop: '10px' }}>
                   <CreditCard size={18} />
