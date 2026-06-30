@@ -26,7 +26,6 @@
     <!-- ═══════════════════════════════════════════════════════════════════════
          Meta Pixel — ID: 4980340808962720
          Rastreamento estratégico: Meta Ads → Site → WhatsApp X1
-         API de Conversões ativa via /.netlify/functions/meta-capi
     ════════════════════════════════════════════════════════════════════════ -->
     <script>
       !function(f,b,e,v,n,t,s)
@@ -40,14 +39,16 @@
       fbq('init', '4980340808962720');
       fbq('track', 'PageView');
     </script>
-    <noscript>
-      <img height="1" width="1" style="display:none"
-        src="https://www.facebook.com/tr?id=4980340808962720&ev=PageView&noscript=1" />
-    </noscript>
     <!-- End Meta Pixel Code -->
   </head>
 
   <body>
+    <!-- Meta Pixel (Fallback para navegadores sem JS) -->
+    <noscript>
+      <img height="1" width="1" style="display:none"
+        src="https://www.facebook.com/tr?id=4980340808962720&ev=PageView&noscript=1" />
+    </noscript>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
