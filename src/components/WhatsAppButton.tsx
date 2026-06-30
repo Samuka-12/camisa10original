@@ -13,7 +13,7 @@ import { MessageCircle } from 'lucide-react';
 import { trackWhatsAppContact, getFbc, getFbp } from '@/lib/metaPixel';
 
 // Número do WhatsApp X1 — altere aqui se necessário
-const WHATSAPP_NUMBER = '5511999999999';
+const WHATSAPP_NUMBER = '5547983174463';
 const WHATSAPP_MESSAGE = encodeURIComponent(
   'Olá! Vim pelo site da Camisa10 e gostaria de mais informações sobre os produtos.'
 );
