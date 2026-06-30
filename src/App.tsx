@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/contexts/CartContext";
 import SideCart from "@/components/SideCart";
+import MetaPixelTracker from "@/components/MetaPixelTracker";
+import WhatsAppButton from "@/components/WhatsAppButton";
 import Index from "./pages/Index";
 import Category from "./pages/Category";
 import Product from "./pages/Product";
@@ -21,6 +23,10 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          {/* Rastreamento automático de PageView em toda troca de rota */}
+          <MetaPixelTracker />
+          {/* Botão flutuante WhatsApp X1 com rastreamento Meta Pixel */}
+          <WhatsAppButton />
           <SideCart />
           <Routes>
             <Route path="/" element={<Index />} />

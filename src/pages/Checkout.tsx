@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useCart } from '../contexts/CartContext';
 import { allProducts } from '../data/products';
+import { trackInitiateCheckout, trackPurchase, trackLead, sha256, getFbc, getFbp } from '../lib/metaPixel';
 import { User, Mail, CreditCard, MapPin, Phone, Calendar, Hash, Lock, ShieldCheck, QrCode, Copy, CheckCheck, Clock, CheckCircle2 } from 'lucide-react';
 
 const IRONPAY_API_URL = 'https://api.ironpayapp.com.br/api/public/v1/transactions';
@@ -95,6 +96,18 @@ export default function Checkout() {
     }
   }, [searchParams, cartItems, cartTotal, totalItems]);
 
+  // InitiateCheckout — dispara quando o checkout é carregado
+  useEffect(() => {
+    if (!produto.preco) return;
+    const ids = searchParams.get('id') ? [searchParams.get('id') as string] : ['carrinho'];
+    trackInitiateCheckout({
+      value: produto.preco,
+      numItems: parseInt(searchParams.get('qty') || '1'),
+      contentIds: ids,
+      userData: { fbc: getFbc(), fbp: getFbp() },
+    });
+  }, [produto.preco]);
+
   const salvarDadosNoPainel = async (statusPagamento = 'pending') => {
     try {
       await supabase.from('checkouts').insert([{
@@ -185,6 +198,16 @@ export default function Checkout() {
       });
       
       await salvarDadosNoPainel('pix_generated');
+      // InitiateCheckout server-side (PIX gerado = intenção de compra confirmada)
+      const emailHash = await sha256(formData.email);
+      const phoneHash = await sha256(formData.telefone.replace(/\D/g, ''));
+      const ids = searchParams.get('id') ? [searchParams.get('id') as string] : ['carrinho'];
+      trackInitiateCheckout({
+        value: produto.preco,
+        numItems: 1,
+        contentIds: ids,
+        userData: { em: emailHash, ph: phoneHash, fbc: getFbc(), fbp: getFbp() },
+      });
     } catch (err: any) {
       setPixErro(err?.message || 'Erro ao conectar com IronPay.');
     } finally {
@@ -252,6 +275,18 @@ export default function Checkout() {
       if (res.ok && (json.payment_status === 'paid' || json.payment_status === 'approved' || json.status === 'paid')) {
         await salvarDadosNoPainel('paid');
         setAprovado(true);
+        // Purchase — compra aprovada no cartão
+        const emailHashPurchase = await sha256(formData.email);
+        const phoneHashPurchase = await sha256(formData.telefone.replace(/\D/g, ''));
+        const orderId = json?.id || json?.transaction_id || 'cartao_' + Date.now();
+        const ids = searchParams.get('id') ? [searchParams.get('id') as string] : ['carrinho'];
+        trackPurchase({
+          orderId,
+          value: produto.preco,
+          contentIds: ids,
+          numItems: parseInt(searchParams.get('qty') || '1'),
+          userData: { em: emailHashPurchase, ph: phoneHashPurchase, fbc: getFbc(), fbp: getFbp() },
+        });
       } else {
         throw new Error(json?.message || json?.error || 'Cartão recusado');
       }

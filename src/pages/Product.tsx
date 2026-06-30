@@ -1,10 +1,11 @@
 import { useParams, Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, ShoppingCart, Check } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getProductById } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
+import { trackViewContent, trackAddToCart, getFbc, getFbp } from "@/lib/metaPixel";
 
 const Product = () => {
   const { id } = useParams<{ id: string }>();
@@ -27,11 +28,30 @@ const Product = () => {
     );
   }
 
+  // ViewContent — dispara quando o produto é visualizado
+  useEffect(() => {
+    if (!product) return;
+    trackViewContent({
+      productId: product.id,
+      productName: product.name,
+      price: product.priceNum,
+      userData: { fbc: getFbc(), fbp: getFbp() },
+    });
+  }, [product?.id]);
+
   const handleAdd = () => {
     if (!selectedSize) return;
     addItem(product, selectedSize);
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
+    // AddToCart — dispara ao adicionar ao carrinho
+    trackAddToCart({
+      productId: product.id,
+      productName: product.name,
+      price: product.priceNum,
+      quantity: 1,
+      userData: { fbc: getFbc(), fbp: getFbp() },
+    });
   };
 
   return (
