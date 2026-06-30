@@ -121,10 +121,18 @@ export async function sendCapiEvent(payload: MetaEventData): Promise<void> {
       },
     };
 
-    await fetch('/.netlify/functions/meta-capi', {
+    // Tenta primeiro /api/meta-capi (Vercel) e depois /.netlify/functions/meta-capi (Netlify)
+    const apiUrl = '/api/meta-capi';
+    await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
+    }).catch(async () => {
+       await fetch('/.netlify/functions/meta-capi', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify(body),
+       });
     });
   } catch (err) {
     console.warn('[MetaPixel] CAPI error:', err);
