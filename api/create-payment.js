@@ -21,7 +21,7 @@ export default async function handler(req, res) {
         const cartItems = body.cart_items && Array.isArray(body.cart_items) ? body.cart_items : [];
         
         const cart = cartItems.length > 0 
-          ? cartItems.map((item: any, index: number) => ({
+          ? cartItems.map((item, index) => ({
               product_hash: item.product_hash || `product_${index}`,
               title: item.title || 'Produto',
               price: Math.round(Number(item.price) * 100),
