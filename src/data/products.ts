@@ -160,6 +160,19 @@ export const allProducts: Product[] = [
     description: "Vista o orgulho e a resistência da Palestina. Camiseta oficial 2026 com design exclusivo que honra a história e a cultura do país.",
     externalCheckoutUrl: "/checkout?id=7609f213-55d2-4115-aadd-dc2f92301a4d"
   },
+  {
+    id: "paraguai-2026-home",
+    image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663805848653/FNXNEZyIaTYMgjdh.png",
+    images: ["https://files.manuscdn.com/user_upload_by_module/session_file/310519663805848653/FNXNEZyIaTYMgjdh.png"],
+    name: "Camiseta Seleção Paraguaia Home 2026",
+    team: "Seleção Paraguaia",
+    price: "R$ 109,93",
+    priceNum: 109.93,
+    category: ["seleções"],
+    sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
+    description: "A garra guarani em forma de camisa. Listras vermelhas e brancas clássicas com detalhes em azul royal. Edição oficial 2026.",
+    externalCheckoutUrl: "/checkout?id=paraguai-2026-home"
+  },
 
   // ===================== RETRÔ =====================
   {
