@@ -163,7 +163,10 @@ export const allProducts: Product[] = [
   {
     id: "paraguai-2026-home",
     image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663805848653/FNXNEZyIaTYMgjdh.png",
-    images: ["https://files.manuscdn.com/user_upload_by_module/session_file/310519663805848653/FNXNEZyIaTYMgjdh.png"],
+    images: [
+      "https://files.manuscdn.com/user_upload_by_module/session_file/310519663805848653/FNXNEZyIaTYMgjdh.png",
+      "https://files.manuscdn.com/user_upload_by_module/session_file/310519663805848653/xwKYKKzElSbJpQAa.png"
+    ],
     name: "Camiseta Seleção Paraguaia Home 2026",
     team: "Seleção Paraguaia",
     price: "R$ 109,93",
