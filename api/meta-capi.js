@@ -93,7 +93,7 @@ export default async function handler(req, res) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           data: [capiEvent],
-          test_event_code: process.env.META_TEST_EVENT_CODE || undefined,
+          test_event_code: 'TEST93083', // Código de teste solicitado pelo usuário
         }),
       });
       capiResult = await fbRes.json();
