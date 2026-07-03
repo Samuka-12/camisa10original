@@ -187,14 +187,24 @@ export default function Checkout() {
       const json = await res.json();
       if (!res.ok) throw new Error(json?.message || json?.error || 'Erro na IronPay');
 
-      const qrCode = json?.pix?.pix_qr_code || json?.pix?.code || '';
-      const qrImage = json?.pix?.pix_url || '';
+      const qrCode = 
+        json?.pix?.pix_qr_code || 
+        json?.pix?.code || 
+        json?.pix?.payload || 
+        json?.pix?.emv || 
+        json?.pix?.qr_code || 
+        json?.qr_code || '';
+      
+      const rawBase64 = json?.pix?.qr_code_base64 || json?.pix?.base64 || json?.pix?.image_url || '';
+      const qrImage = rawBase64
+        ? (rawBase64.startsWith('data:image') ? rawBase64 : 'data:image/png;base64,' + rawBase64)
+        : (qrCode ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrCode)}` : '');
 
       if (!qrCode) throw new Error('PIX gerado sem código pela IronPay.');
 
       setPixData({ 
         qrCode, 
-        qrImage: qrImage && qrImage.startsWith('http') ? qrImage : `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrCode)}`
+        qrImage
       });
       
       await salvarDadosNoPainel('pix_generated');
