@@ -148,21 +148,21 @@ export default function Checkout() {
     try {
       const amountInCents = Math.round(produto.preco * 100);
       const payload = {
-        amount: amountInCents,
+        amount: produto.preco, // Envia valor real, a API converte para centavos
         offer_hash: '35E5jbK1n9',
         payment_method: 'pix',
         installments: 1,
-        customer: {
+        client: { // A API espera 'client' conforme o código da função
           name: formData.nome,
           email: formData.email,
-          phone_number: formData.telefone.replace(/\D/g, '') || '11999999999',
-          document: formData.cpf.replace(/\D/g, ''),
-          street_name: formData.endereco || 'Rua não informada',
-          number: formData.numero || 'SN',
-          neighborhood: formData.bairro || 'Bairro não informado',
-          city: formData.cidade || 'Cidade não informada',
-          state: formData.estado || 'SP',
-          zip_code: formData.cep.replace(/\D/g, '') || '00000000'
+          phone: formData.telefone,
+          document: formData.cpf,
+          cep: formData.cep,
+          endereco: formData.endereco,
+          numero: formData.numero,
+          bairro: formData.bairro,
+          cidade: formData.cidade,
+          estado: formData.estado
         },
         cart: [
           {
@@ -230,28 +230,28 @@ export default function Checkout() {
       const [mes, ano] = formData.validade.split('/');
       
       const payload = {
-        amount: amountInCents,
+        amount: produto.preco,
         offer_hash: '35E5jbK1n9',
         payment_method: 'credit_card',
         installments: parseInt(parcelas),
         card: {
           number: formData.numCartao.replace(/\s/g, ''),
           holder_name: formData.nomeCartao,
-          exp_month: parseInt(mes),
-          exp_year: 2000 + parseInt(ano),
+          expiry_month: parseInt(mes),
+          expiry_year: 2000 + parseInt(ano),
           cvv: formData.cvv
         },
-        customer: {
+        client: {
           name: formData.nome,
           email: formData.email,
-          phone_number: formData.telefone.replace(/\D/g, ''),
-          document: formData.cpf.replace(/\D/g, ''),
-          street_name: formData.endereco,
-          number: formData.numero,
-          neighborhood: formData.bairro,
-          city: formData.cidade,
-          state: formData.estado,
-          zip_code: formData.cep.replace(/\D/g, '')
+          phone: formData.telefone,
+          document: formData.cpf,
+          cep: formData.cep,
+          endereco: formData.endereco,
+          numero: formData.numero,
+          bairro: formData.bairro,
+          cidade: formData.cidade,
+          estado: formData.estado
         },
         cart: [{
           product_hash: 'aouiaiqbuo',
