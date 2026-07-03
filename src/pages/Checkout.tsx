@@ -356,6 +356,13 @@ export default function Checkout() {
 
         <div style={{ padding: '20px' }}>
           <div style={productBox}>
+            {produto.imagens && produto.imagens.length > 0 && (
+              <img 
+                src={produto.imagens[0]} 
+                alt={produto.nome} 
+                style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #ddd' }} 
+              />
+            )}
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: '900', fontSize: '14px', color: '#000', lineHeight: '1.2', textTransform: 'uppercase' }}>
                 {produto.nome}
