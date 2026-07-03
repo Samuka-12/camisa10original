@@ -91,7 +91,7 @@ export default function Checkout() {
       setProduto({
         nome: `CARRINHO (${totalItems} ITENS)`,
         preco: Number(cartTotal) || 0,
-        imagens: []
+        imagens: cartItems.map(item => item.product.image).filter(img => img)
       });
     }
   }, [searchParams, cartItems, cartTotal, totalItems]);
@@ -367,11 +367,21 @@ export default function Checkout() {
         <div style={{ padding: '20px' }}>
           <div style={productBox}>
             {produto.imagens && produto.imagens.length > 0 && (
-              <img 
-                src={produto.imagens[0]} 
-                alt={produto.nome} 
-                style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #ddd' }} 
-              />
+              <div style={{ display: 'flex', gap: '5px', overflowX: 'auto', maxWidth: '180px' }}>
+                {produto.imagens.slice(0, 3).map((img, idx) => (
+                  <img 
+                    key={idx}
+                    src={img} 
+                    alt={`${produto.nome} ${idx}`} 
+                    style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #ddd', flexShrink: 0 }} 
+                  />
+                ))}
+                {produto.imagens.length > 3 && (
+                  <div style={{ width: '60px', height: '60px', background: '#eee', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold', flexShrink: 0 }}>
+                    +{produto.imagens.length - 3}
+                  </div>
+                )}
+              </div>
             )}
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: '900', fontSize: '14px', color: '#000', lineHeight: '1.2', textTransform: 'uppercase' }}>
