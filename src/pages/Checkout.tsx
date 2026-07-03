@@ -178,27 +178,17 @@ export default function Checkout() {
         transaction_origin: 'api'
       };
 
-      const res = await fetch(`${IRONPAY_API_URL}?api_token=${IRONPAY_TOKEN}`, {
+      const res = await fetch('/api/create-payment', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
       const json = await res.json();
-      if (!res.ok) throw new Error(json?.message || json?.error || 'Erro na IronPay');
+      if (!res.ok) throw new Error(json?.error || 'Erro ao gerar PIX');
 
-      const qrCode = 
-        json?.pix?.pix_qr_code || 
-        json?.pix?.code || 
-        json?.pix?.payload || 
-        json?.pix?.emv || 
-        json?.pix?.qr_code || 
-        json?.qr_code || '';
-      
-      const rawBase64 = json?.pix?.qr_code_base64 || json?.pix?.base64 || json?.pix?.image_url || '';
-      const qrImage = rawBase64
-        ? (rawBase64.startsWith('data:image') ? rawBase64 : 'data:image/png;base64,' + rawBase64)
-        : (qrCode ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrCode)}` : '');
+      const qrCode = json?.pix?.code || '';
+      const qrImage = json?.pix?.image || '';
 
       if (!qrCode) throw new Error('PIX gerado sem código pela IronPay.');
 
@@ -274,15 +264,16 @@ export default function Checkout() {
         transaction_origin: 'api'
       };
 
-      const res = await fetch(`${IRONPAY_API_URL}?api_token=${IRONPAY_TOKEN}`, {
+      const res = await fetch('/api/create-payment', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
       const json = await res.json();
       
-      if (res.ok && (json.payment_status === 'paid' || json.payment_status === 'approved' || json.status === 'paid')) {
+      const status = json?.card?.status || json?._raw?.payment_status || json?._raw?.status;
+      if (res.ok && (status === 'paid' || status === 'approved')) {
         await salvarDadosNoPainel('paid');
         setAprovado(true);
         // Purchase — compra aprovada no cartão
