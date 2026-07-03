@@ -443,16 +443,50 @@ export default function Checkout() {
 
             {metodo === 'pix' && (
               <div style={pixSection}>
-                <div style={{ color: '#1da154', fontWeight: '900', marginBottom: '15px', fontSize: '15px', textAlign: 'center', width: '100%', display: 'block', lineHeight: '1' }}>PIX COM RECEBIMENTO IMEDIATO</div>
-                {pixLoading && <div style={{ padding: '20px 0' }}><div style={spinnerStylePix} /><span style={{ fontSize: '13px', color: '#555', fontWeight: '700' }}>Gerando QR Code...</span></div>}
-                {pixErro && !pixLoading && <div style={errorBanner}>{pixErro}<br /><button type="button" onClick={gerarPix} style={{ marginTop: '8px', padding: '8px 16px', background: '#000', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '900' }}>Tentar novamente</button></div>}
+                <div style={{ color: '#1da154', border: '2px dashed #1da154', borderRadius: '12px', padding: '15px', fontWeight: '900', marginBottom: '15px', fontSize: '15px', textAlign: 'center', width: '100%', display: 'block' }}>
+                  PIX COM RECEBIMENTO IMEDIATO
+                </div>
+                
+                {!pixData && !pixLoading && (
+                  <button type="submit" style={btnPagar}>FINALIZAR COMPRA E GERAR PIX</button>
+                )}
+
+                {pixLoading && (
+                  <div style={{ padding: '20px 0', textAlign: 'center' }}>
+                    <div style={{ ...spinnerStyle, margin: '0 auto' }} />
+                    <p style={{ marginTop: '15px', fontWeight: '900', color: '#000' }}>Gerando seu QR Code...</p>
+                  </div>
+                )}
+
+                {pixErro && !pixLoading && (
+                  <div style={errorBanner}>
+                    {pixErro}<br />
+                    <button type="button" onClick={gerarPix} style={{ marginTop: '8px', padding: '8px 16px', background: '#000', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '900' }}>Tentar novamente</button>
+                  </div>
+                )}
+
                 {pixData && !pixLoading && (
-                  <>
-                    <div style={{ textAlign: 'center', marginBottom: '10px', color: timeLeft < 60 ? '#ef4444' : '#666', fontWeight: 'bold', fontSize: '14px' }}>Expira em: {formatTime(timeLeft)}</div>
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}><div style={{ padding: '8px', background: '#fff', borderRadius: '12px', border: '2px dashed #1da154' }}><img src={pixData.qrImage} alt="QR" style={{ width: '200px', height: '200px' }} /></div></div>
-                    <div style={pixCodeBox}>{pixData.qrCode}</div>
-                    <button type="button" onClick={() => { navigator.clipboard.writeText(pixData.qrCode); setCopiado(true); setTimeout(() => setCopiado(false), 2000); }} style={{ ...btnPagar, background: copiado ? '#1da154' : '#000' }}>{copiado ? 'COPIADO!' : 'COPIAR CÓDIGO PIX'}</button>
-                  </>
+                  <div style={{ textAlign: 'center', animation: 'fadeIn 0.5s ease-in' }}>
+                    <div style={{ marginBottom: '10px', color: '#ef4444', fontWeight: 'bold', fontSize: '14px' }}>
+                      Pague agora para garantir sua reserva!
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+                      <div style={{ padding: '12px', background: '#fff', borderRadius: '16px', border: '3px solid #1da154', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                        <img src={pixData.qrImage} alt="QR Code PIX" style={{ width: '220px', height: '220px' }} />
+                      </div>
+                    </div>
+                    <div style={{ ...pixCodeBox, wordBreak: 'break-all', fontSize: '12px', padding: '12px', background: '#f8f9fa', borderRadius: '8px', marginBottom: '10px', border: '1px solid #ddd' }}>
+                      {pixData.qrCode}
+                    </div>
+                    <button 
+                      type="button" 
+                      onClick={() => { navigator.clipboard.writeText(pixData.qrCode); setCopiado(true); setTimeout(() => setCopiado(false), 2000); }} 
+                      style={{ ...btnPagar, background: copiado ? '#1da154' : '#000', marginBottom: '10px' }}
+                    >
+                      {copiado ? '✅ CÓDIGO COPIADO!' : 'COPIAR CÓDIGO PIX'}
+                    </button>
+                    <p style={{ fontSize: '12px', color: '#666' }}>Após o pagamento, o seu pedido será processado automaticamente.</p>
+                  </div>
                 )}
               </div>
             )}
