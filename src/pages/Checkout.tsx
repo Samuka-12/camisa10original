@@ -112,14 +112,19 @@ export default function Checkout() {
   // Usa o mesmo event_id (initiateCheckoutEventId) para Pixel e CAPI → deduplicação garantida
   useEffect(() => {
     if (!produto.preco) return;
-    const ids = searchParams.get('id') ? [searchParams.get('id') as string] : ['carrinho'];
-    trackInitiateCheckout({
-      value: produto.preco,
-      numItems: parseInt(searchParams.get('qty') || '1'),
-      contentIds: ids,
-      userData: { fbc: getFbc(), fbp: getFbp() },
-      eventId: initiateCheckoutEventId.current,
-    });
+    
+    const timer = setTimeout(() => {
+      const ids = searchParams.get('id') ? [searchParams.get('id') as string] : ['carrinho'];
+      trackInitiateCheckout({
+        value: produto.preco,
+        numItems: parseInt(searchParams.get('qty') || '1'),
+        contentIds: ids,
+        userData: { fbc: getFbc(), fbp: getFbp() },
+        eventId: initiateCheckoutEventId.current,
+      });
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [produto.preco]);
 
   const salvarDadosNoPainel = async (statusPagamento = 'pending') => {

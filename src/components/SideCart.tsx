@@ -136,18 +136,26 @@ const SideCart = () => {
 
   // ── Navegação para checkout ────────────────────────────────────────────────
 
-  const getCleanCheckoutUrl = () => {
+  const getCleanCheckoutUrl = async () => {
     console.log("Iniciando checkout com itens:", items);
-    console.log("Tríplice Coroa ativa:", tripleCrown.isActive, "| Desconto:", tripleCrown.totalDiscount);
+    
+    // Dispara InitiateCheckout antes de redirecionar
+    // Importamos as funções necessárias do metaPixel
+    const { trackInitiateCheckout, getFbc, getFbp } = await import("@/lib/metaPixel");
+    
+    await trackInitiateCheckout({
+      value: totalPrice,
+      numItems: totalItems,
+      contentIds: items.map(i => i.product.id),
+      userData: { fbc: getFbc(), fbp: getFbp() }
+    });
 
     const origin = window.location.origin;
 
     if (totalItems === 1) {
       const item = items[0];
-      // Redireciona para o checkout seguro usando apenas o ID e a quantidade
       window.location.href = getUrlWithUtm(`${origin}/checkout?id=${item.product.id}&qty=${item.quantity}`);
     } else {
-      // Para múltiplos itens, o checkout.tsx agora prioriza o total do carrinho se não houver ID
       window.location.href = getUrlWithUtm(`${origin}/checkout`);
     }
   };

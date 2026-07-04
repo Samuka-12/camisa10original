@@ -30,13 +30,19 @@ const Product = () => {
 
   // ViewContent — dispara quando o produto é visualizado
   useEffect(() => {
-    if (!product) return;
-    trackViewContent({
-      productId: product.id,
-      productName: product.name,
-      price: product.priceNum,
-      userData: { fbc: getFbc(), fbp: getFbp() },
-    });
+    if (!product?.id) return;
+    
+    // Pequeno delay para garantir que o PageView já foi disparado e cookies estão prontos
+    const timer = setTimeout(() => {
+      trackViewContent({
+        productId: product.id,
+        productName: product.name,
+        price: product.priceNum,
+        userData: { fbc: getFbc(), fbp: getFbp() },
+      });
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [product?.id]);
 
   const handleAdd = () => {
