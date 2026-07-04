@@ -1,9 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useCart } from '../contexts/CartContext';
 import { allProducts } from '../data/products';
-import { trackInitiateCheckout, trackPurchase, trackLead, sha256, getFbc, getFbp } from '../lib/metaPixel';
+import {
+  trackInitiateCheckout,
+  trackPurchase,
+  trackLead,
+  sha256,
+  getFbc,
+  getFbp,
+  generateEventId,
+} from '../lib/metaPixel';
 import { User, Mail, CreditCard, MapPin, Phone, Calendar, Hash, Lock, ShieldCheck, QrCode, Copy, CheckCheck, Clock, CheckCircle2 } from 'lucide-react';
 
 const IRONPAY_API_URL = 'https://api.ironpayapp.com.br/api/public/v1/transactions';
@@ -26,6 +34,10 @@ export default function Checkout() {
   const [copiado, setCopiado] = useState(false);
   const [aprovado, setAprovado] = useState(false);
   const [parcelas, setParcelas] = useState('1');
+
+  // event_id gerado uma única vez por sessão de checkout para deduplicação
+  // InitiateCheckout: mesmo ID usado no Pixel e na CAPI
+  const initiateCheckoutEventId = useRef<string>(generateEventId('InitiateCheckout'));
 
   const { items: cartItems, totalPrice: cartTotal, totalItems } = useCart();
   const [timeLeft, setTimeLeft] = useState(300);
@@ -96,7 +108,8 @@ export default function Checkout() {
     }
   }, [searchParams, cartItems, cartTotal, totalItems]);
 
-  // InitiateCheckout — dispara quando o checkout é carregado
+  // InitiateCheckout — dispara quando o checkout é carregado com preço definido
+  // Usa o mesmo event_id (initiateCheckoutEventId) para Pixel e CAPI → deduplicação garantida
   useEffect(() => {
     if (!produto.preco) return;
     const ids = searchParams.get('id') ? [searchParams.get('id') as string] : ['carrinho'];
@@ -105,6 +118,7 @@ export default function Checkout() {
       numItems: parseInt(searchParams.get('qty') || '1'),
       contentIds: ids,
       userData: { fbc: getFbc(), fbp: getFbp() },
+      eventId: initiateCheckoutEventId.current,
     });
   }, [produto.preco]);
 
@@ -198,7 +212,9 @@ export default function Checkout() {
       });
       
       await salvarDadosNoPainel('pix_generated');
-      // InitiateCheckout server-side (PIX gerado = intenção de compra confirmada)
+
+      // InitiateCheckout com dados do usuário (PIX gerado = intenção de compra confirmada)
+      // Reutiliza o mesmo event_id da sessão de checkout para deduplicação
       const emailHash = await sha256(formData.email);
       const phoneHash = await sha256(formData.telefone.replace(/\D/g, ''));
       const ids = searchParams.get('id') ? [searchParams.get('id') as string] : ['carrinho'];
@@ -207,6 +223,7 @@ export default function Checkout() {
         numItems: 1,
         contentIds: ids,
         userData: { em: emailHash, ph: phoneHash, fbc: getFbc(), fbp: getFbp() },
+        eventId: initiateCheckoutEventId.current,
       });
     } catch (err: any) {
       setPixErro(err?.message || 'Erro ao conectar com IronPay.');
@@ -229,6 +246,10 @@ export default function Checkout() {
       const amountInCents = Math.round(produto.preco * 100);
       const [mes, ano] = formData.validade.split('/');
       
+      // Gera event_id único para Purchase (cartão) — será enviado ao webhook via metadata
+      // para que o servidor possa usar o mesmo ID na CAPI e evitar dupla contagem
+      const purchaseEventId = generateEventId('Purchase');
+
       const payload = {
         amount: produto.preco,
         offer_hash: '35E5jbK1n9',
@@ -261,7 +282,9 @@ export default function Checkout() {
           operation_type: 1,
           tangible: true
         }],
-        transaction_origin: 'api'
+        transaction_origin: 'api',
+        // Passa o event_id para o servidor poder usar na CAPI (deduplicação)
+        meta_event_id: purchaseEventId,
       };
 
       const res = await fetch('/api/create-payment', {
@@ -276,7 +299,9 @@ export default function Checkout() {
       if (res.ok && (status === 'paid' || status === 'approved')) {
         await salvarDadosNoPainel('paid');
         setAprovado(true);
+
         // Purchase — compra aprovada no cartão
+        // Usa o mesmo event_id enviado ao servidor para deduplicação Pixel ↔ CAPI
         const emailHashPurchase = await sha256(formData.email);
         const phoneHashPurchase = await sha256(formData.telefone.replace(/\D/g, ''));
         const orderId = json?.id || json?.transaction_id || 'cartao_' + Date.now();
@@ -287,6 +312,7 @@ export default function Checkout() {
           contentIds: ids,
           numItems: parseInt(searchParams.get('qty') || '1'),
           userData: { em: emailHashPurchase, ph: phoneHashPurchase, fbc: getFbc(), fbp: getFbp() },
+          eventId: purchaseEventId,
         });
       } else {
         throw new Error(json?.message || json?.error || 'Cartão recusado');

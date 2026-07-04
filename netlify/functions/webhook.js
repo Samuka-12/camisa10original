@@ -4,6 +4,20 @@
  *  1. Encaminha para xTracky (rastreamento existente)
  *  2. Dispara Purchase na API de Conversões do Meta (CAPI) quando pago
  *  3. Persiste na tabela meta_events do Supabase
+ *
+ * Deduplicação:
+ *   O frontend gera um `event_id` único para o evento Purchase e o envia
+ *   ao criar o pagamento via `meta_event_id` no payload. Esse ID é retornado
+ *   pela IronPay nos metadados da transação e usado aqui na CAPI, garantindo
+ *   que o Meta deduplique corretamente com o evento disparado via Pixel (fbq).
+ *
+ *   Fluxo de deduplicação para Purchase:
+ *     1. Frontend gera purchaseEventId = generateEventId('Purchase')
+ *     2. Frontend envia purchaseEventId ao criar pagamento (meta_event_id)
+ *     3. Frontend dispara fbq('track', 'Purchase', params, { eventID: purchaseEventId })
+ *     4. IronPay confirma pagamento → webhook recebe meta_event_id
+ *     5. Webhook envia CAPI Purchase com event_id = meta_event_id
+ *     6. Meta deduplica: Pixel + CAPI com mesmo event_id = 1 evento contabilizado
  */
 
 const PIXEL_ID     = process.env.META_PIXEL_ID     || '4980340808962720';
@@ -28,6 +42,7 @@ async function saveEventToSupabase(eventName, capiEvent, capiResponse) {
       },
       body: JSON.stringify({
         event_name:    eventName,
+        event_id:      capiEvent.event_id    || null,
         event_time:    capiEvent.event_time,
         source_url:    capiEvent.event_source_url || null,
         email_hash:    capiEvent.user_data && capiEvent.user_data.em ? capiEvent.user_data.em : null,
@@ -43,10 +58,18 @@ async function saveEventToSupabase(eventName, capiEvent, capiResponse) {
   }
 }
 
-async function sendCapiPurchase(payload, isPaid) {
+/**
+ * Envia evento Purchase para a CAPI do Meta.
+ *
+ * @param {object} payload  - Payload completo do webhook da IronPay
+ * @param {boolean} isPaid  - Se o pagamento foi confirmado
+ * @param {string|null} metaEventId - event_id gerado pelo frontend (para deduplicação)
+ */
+async function sendCapiPurchase(payload, isPaid, metaEventId) {
   if (!ACCESS_TOKEN || !isPaid) return null;
   const amount  = payload.amount ? payload.amount / 100 : 0;
   const orderId = payload.id || payload.transaction_id || 'IRONPAY-' + Date.now();
+
   const capiEvent = {
     event_name:       'Purchase',
     event_time:       Math.floor(Date.now() / 1000),
@@ -64,7 +87,22 @@ async function sendCapiPurchase(payload, isPaid) {
       num_items:   1,
     },
   };
+
+  // Usa o event_id gerado pelo frontend para deduplicação com o Pixel (fbq)
+  // Se não disponível, gera um ID server-side (sem deduplicação com o Pixel)
+  if (metaEventId) {
+    capiEvent.event_id = metaEventId;
+    console.log(`[webhook] Purchase deduplicação ativa — event_id: ${metaEventId}`);
+  } else {
+    // Fallback: gera event_id server-side (sem deduplicação com Pixel)
+    const ts   = Date.now();
+    const rand = Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0');
+    capiEvent.event_id = `Purchase_${ts}_${rand}`;
+    console.warn(`[webhook] meta_event_id não recebido — usando event_id server-side: ${capiEvent.event_id}`);
+  }
+
   Object.keys(capiEvent.user_data).forEach(k => { if (!capiEvent.user_data[k]) delete capiEvent.user_data[k]; });
+
   try {
     const res    = await fetch(`${CAPI_URL}?access_token=${ACCESS_TOKEN}`, {
       method: 'POST',
@@ -92,6 +130,12 @@ exports.handler = async (event, context) => {
     const statusOriginal = payload.status || (payload.data && payload.data.status) || 'pending';
     const isPaid = ['paid', 'approved', 'PAID', 'authorized', 'paid_out'].includes(statusOriginal);
 
+    // Extrai o event_id gerado pelo frontend (enviado via meta_event_id no payload de criação)
+    // A IronPay pode retornar metadados customizados no campo metadata ou diretamente no payload
+    const metaEventId = payload.meta_event_id
+      || (payload.metadata && payload.metadata.meta_event_id)
+      || null;
+
     // 1. xTracky
     const xtrackyPayload = {
       token:   xtrackyToken,
@@ -112,9 +156,9 @@ exports.handler = async (event, context) => {
       body: JSON.stringify(xtrackyPayload),
     }).catch(err => console.error('Erro ao enviar para xTracky:', err.message));
 
-    // 2. Meta CAPI Purchase (server-side)
+    // 2. Meta CAPI Purchase (server-side) com deduplicação via event_id
     if (isPaid) {
-      await sendCapiPurchase(payload, isPaid);
+      await sendCapiPurchase(payload, isPaid, metaEventId);
       console.log('[webhook] Evento Purchase enviado ao Meta CAPI');
     }
 

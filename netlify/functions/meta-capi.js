@@ -5,6 +5,11 @@
  * Também persiste cada evento na tabela `meta_events` do Supabase para
  * análise estratégica de funil (entrada via Meta Ads → site → WhatsApp X1).
  *
+ * Deduplicação:
+ *   O campo `event_id` recebido do frontend é repassado integralmente à CAPI.
+ *   O Meta usa esse ID para deduplicar eventos recebidos via Pixel (browser) e
+ *   via CAPI (server-side), evitando dupla contagem nas campanhas.
+ *
  * Variáveis de ambiente necessárias no Netlify:
  *   META_PIXEL_ID         = 4980340808962720
  *   META_ACCESS_TOKEN     = EAAShZBr3MwJsBR1DcfngA17838taRRTl67baJJdapxJARjZBrdFMYxZCVBGo4v8KxZAfSG6GwZAPWb98fJyG7O9a4ZB7MZCw1lotpZBsn6U6e9zGypWy6bOa1TReh6fNaa5NBHz10ZBXGZCzmZBLZCb7AITZB7wZCiOfSbQNPZC1RHm17ZAHxGsFDckbVOhM1QvIFUAj6gZDZD
@@ -35,6 +40,7 @@ async function saveEventToSupabase(eventName, payload, capiResponse) {
       },
       body: JSON.stringify({
         event_name:    eventName,
+        event_id:      payload.event_id      || null,
         event_time:    payload.event_time,
         source_url:    payload.event_source_url || null,
         fbc:           payload.user_data?.fbc   || null,
@@ -85,6 +91,8 @@ exports.handler = async (event) => {
   }
 
   // Monta o evento no formato exigido pela CAPI do Meta
+  // O campo `event_id` é propagado do frontend para garantir deduplicação
+  // com o evento disparado via fbq (Pixel browser) com o mesmo ID
   const capiEvent = {
     event_name:        eventName,
     event_time:        payload.event_time        || Math.floor(Date.now() / 1000),
@@ -105,6 +113,11 @@ exports.handler = async (event) => {
     custom_data: payload.custom_data || {},
   };
 
+  // Inclui event_id apenas se fornecido pelo frontend (campo obrigatório para deduplicação)
+  if (payload.event_id) {
+    capiEvent.event_id = payload.event_id;
+  }
+
   // Remove campos vazios do user_data para não poluir o payload
   Object.keys(capiEvent.user_data).forEach(k => {
     if (!capiEvent.user_data[k]) delete capiEvent.user_data[k];
@@ -124,7 +137,7 @@ exports.handler = async (event) => {
         }),
       });
       capiResult = await res.json();
-      console.log(`[meta-capi] ${eventName} →`, JSON.stringify(capiResult));
+      console.log(`[meta-capi] ${eventName} (event_id: ${capiEvent.event_id || 'n/a'}) →`, JSON.stringify(capiResult));
     } catch (err) {
       console.error('[meta-capi] CAPI send error:', err.message);
     }
@@ -133,11 +146,11 @@ exports.handler = async (event) => {
   }
 
   // Persiste no Supabase (banco de dados do site)
-  await saveEventToSupabase(eventName, capiEvent, capiResult);
+  await saveEventToSupabase(eventName, { ...capiEvent, event_id: payload.event_id }, capiResult);
 
   return {
     statusCode: 200,
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ok: true, event: eventName, capi: capiResult }),
+    body: JSON.stringify({ ok: true, event: eventName, event_id: capiEvent.event_id || null, capi: capiResult }),
   };
 };

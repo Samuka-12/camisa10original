@@ -6,13 +6,18 @@
  * prepara os payloads para a API de Conversões (server-side via Netlify Function).
  *
  * Estratégia de rastreamento:
- *  - PageView       → toda troca de rota (Index, Categoria, Produto)
- *  - ViewContent    → página de produto visualizada
- *  - AddToCart      → produto adicionado ao carrinho
+ *  - PageView         → toda troca de rota (Index, Categoria, Produto)
+ *  - ViewContent      → página de produto visualizada
+ *  - AddToCart        → produto adicionado ao carrinho
  *  - InitiateCheckout → entrada na página de checkout
- *  - Purchase       → pagamento confirmado (Pix pago / Cartão aprovado)
- *  - Contact        → clique no botão WhatsApp (X1)
- *  - Lead           → cadastro / registro de usuário
+ *  - Purchase         → pagamento confirmado (Pix pago / Cartão aprovado)
+ *  - Contact          → clique no botão WhatsApp (X1)
+ *  - Lead             → cadastro / registro de usuário
+ *
+ * Deduplicação:
+ *  Cada evento gera um `event_id` único que é enviado tanto para o fbq (Pixel)
+ *  quanto para a CAPI. O Meta usa esse ID para deduplicar eventos recebidos
+ *  por ambos os canais, evitando dupla contagem nas campanhas.
  */
 
 export const META_PIXEL_ID = '4980340808962720';
@@ -21,6 +26,7 @@ export const META_PIXEL_ID = '4980340808962720';
 
 export interface MetaEventData {
   event_name: string;
+  event_id?: string;
   event_time?: number;
   event_source_url?: string;
   user_data?: {
@@ -48,6 +54,17 @@ export interface MetaEventData {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Gera um event_id único para deduplicação entre Pixel (browser) e CAPI (server).
+ * Formato: {eventName}_{timestamp}_{random6hex}
+ * Exemplo: "ViewContent_1720000000000_a3f9c2"
+ */
+export function generateEventId(eventName: string): string {
+  const ts = Date.now();
+  const rand = Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0');
+  return `${eventName}_${ts}_${rand}`;
+}
 
 /** Lê o cookie _fbp gerado pelo Pixel do Meta */
 export function getFbp(): string {
@@ -77,11 +94,22 @@ export async function sha256(value: string): Promise<string> {
 
 // ─── Client-side (fbq) ────────────────────────────────────────────────────────
 
-/** Dispara evento via fbq (browser Pixel) */
-export function fbqTrack(eventName: string, params?: Record<string, unknown>): void {
+/**
+ * Dispara evento via fbq (browser Pixel).
+ * O terceiro parâmetro `{ eventID }` é obrigatório para deduplicação com a CAPI.
+ */
+export function fbqTrack(
+  eventName: string,
+  params?: Record<string, unknown>,
+  eventId?: string,
+): void {
   try {
     if (typeof window !== 'undefined' && (window as any).fbq) {
-      (window as any).fbq('track', eventName, params || {});
+      if (eventId) {
+        (window as any).fbq('track', eventName, params || {}, { eventID: eventId });
+      } else {
+        (window as any).fbq('track', eventName, params || {});
+      }
     }
   } catch (err) {
     console.warn('[MetaPixel] fbq error:', err);
@@ -89,10 +117,18 @@ export function fbqTrack(eventName: string, params?: Record<string, unknown>): v
 }
 
 /** Dispara evento customizado via fbq */
-export function fbqTrackCustom(eventName: string, params?: Record<string, unknown>): void {
+export function fbqTrackCustom(
+  eventName: string,
+  params?: Record<string, unknown>,
+  eventId?: string,
+): void {
   try {
     if (typeof window !== 'undefined' && (window as any).fbq) {
-      (window as any).fbq('trackCustom', eventName, params || {});
+      if (eventId) {
+        (window as any).fbq('trackCustom', eventName, params || {}, { eventID: eventId });
+      } else {
+        (window as any).fbq('trackCustom', eventName, params || {});
+      }
     }
   } catch (err) {
     console.warn('[MetaPixel] fbq custom error:', err);
@@ -105,6 +141,9 @@ export function fbqTrackCustom(eventName: string, params?: Record<string, unknow
  * Envia evento para a API de Conversões do Meta via Netlify Function.
  * A função server-side adiciona o access_token e faz o POST para
  * https://graph.facebook.com/v19.0/{pixel_id}/events
+ *
+ * O campo `event_id` é obrigatório para deduplicação: deve ser o mesmo
+ * valor passado ao fbq no lado cliente.
  */
 export async function sendCapiEvent(payload: MetaEventData): Promise<void> {
   try {
@@ -143,8 +182,9 @@ export async function sendCapiEvent(payload: MetaEventData): Promise<void> {
 
 /** PageView — dispara em toda troca de rota */
 export async function trackPageView(userData?: MetaEventData['user_data']): Promise<void> {
-  fbqTrack('PageView');
-  await sendCapiEvent({ event_name: 'PageView', user_data: userData });
+  const eventId = generateEventId('PageView');
+  fbqTrack('PageView', {}, eventId);
+  await sendCapiEvent({ event_name: 'PageView', event_id: eventId, user_data: userData });
 }
 
 /** ViewContent — produto visualizado */
@@ -155,6 +195,7 @@ export async function trackViewContent(opts: {
   currency?: string;
   userData?: MetaEventData['user_data'];
 }): Promise<void> {
+  const eventId = generateEventId('ViewContent');
   const params = {
     content_ids: [opts.productId],
     content_name: opts.productName,
@@ -162,9 +203,10 @@ export async function trackViewContent(opts: {
     value: opts.price,
     currency: opts.currency || 'BRL',
   };
-  fbqTrack('ViewContent', params);
+  fbqTrack('ViewContent', params, eventId);
   await sendCapiEvent({
     event_name: 'ViewContent',
+    event_id: eventId,
     user_data: opts.userData,
     custom_data: params,
   });
@@ -179,6 +221,7 @@ export async function trackAddToCart(opts: {
   currency?: string;
   userData?: MetaEventData['user_data'];
 }): Promise<void> {
+  const eventId = generateEventId('AddToCart');
   const params = {
     content_ids: [opts.productId],
     content_name: opts.productName,
@@ -187,9 +230,10 @@ export async function trackAddToCart(opts: {
     currency: opts.currency || 'BRL',
     contents: [{ id: opts.productId, quantity: opts.quantity || 1, item_price: opts.price }],
   };
-  fbqTrack('AddToCart', params);
+  fbqTrack('AddToCart', params, eventId);
   await sendCapiEvent({
     event_name: 'AddToCart',
+    event_id: eventId,
     user_data: opts.userData,
     custom_data: params,
   });
@@ -202,16 +246,19 @@ export async function trackInitiateCheckout(opts: {
   contentIds: string[];
   currency?: string;
   userData?: MetaEventData['user_data'];
+  eventId?: string;
 }): Promise<void> {
+  const eventId = opts.eventId || generateEventId('InitiateCheckout');
   const params = {
     value: opts.value,
     num_items: opts.numItems,
     content_ids: opts.contentIds,
     currency: opts.currency || 'BRL',
   };
-  fbqTrack('InitiateCheckout', params);
+  fbqTrack('InitiateCheckout', params, eventId);
   await sendCapiEvent({
     event_name: 'InitiateCheckout',
+    event_id: eventId,
     user_data: opts.userData,
     custom_data: params,
   });
@@ -225,7 +272,9 @@ export async function trackPurchase(opts: {
   numItems: number;
   currency?: string;
   userData?: MetaEventData['user_data'];
+  eventId?: string;
 }): Promise<void> {
+  const eventId = opts.eventId || generateEventId('Purchase');
   const params = {
     order_id: opts.orderId,
     value: opts.value,
@@ -233,9 +282,10 @@ export async function trackPurchase(opts: {
     content_ids: opts.contentIds,
     currency: opts.currency || 'BRL',
   };
-  fbqTrack('Purchase', params);
+  fbqTrack('Purchase', params, eventId);
   await sendCapiEvent({
     event_name: 'Purchase',
+    event_id: eventId,
     user_data: opts.userData,
     custom_data: params,
   });
@@ -246,9 +296,11 @@ export async function trackWhatsAppContact(opts?: {
   source?: string;
   userData?: MetaEventData['user_data'];
 }): Promise<void> {
-  fbqTrack('Contact', { source: opts?.source || 'whatsapp_x1' });
+  const eventId = generateEventId('Contact');
+  fbqTrack('Contact', { source: opts?.source || 'whatsapp_x1' }, eventId);
   await sendCapiEvent({
     event_name: 'Contact',
+    event_id: eventId,
     user_data: opts?.userData,
     custom_data: { source: opts?.source || 'whatsapp_x1' },
   });
@@ -258,9 +310,11 @@ export async function trackWhatsAppContact(opts?: {
 export async function trackLead(opts?: {
   userData?: MetaEventData['user_data'];
 }): Promise<void> {
-  fbqTrack('Lead');
+  const eventId = generateEventId('Lead');
+  fbqTrack('Lead', {}, eventId);
   await sendCapiEvent({
     event_name: 'Lead',
+    event_id: eventId,
     user_data: opts?.userData,
   });
 }

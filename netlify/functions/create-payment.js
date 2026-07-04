@@ -104,10 +104,13 @@ exports.handler = async (event, context) => {
         }
 
         // Construir resposta normalizada
+        // Inclui meta_event_id na resposta para que o frontend confirme o event_id
+        // usado na deduplicação entre Pixel (fbq) e CAPI (webhook)
         let responseData = {
             status: 'success',
             transaction_id: data?.id || data?.transaction_id || null,
-            payment_method: paymentMethod
+            payment_method: paymentMethod,
+            meta_event_id: body.meta_event_id || null,
         };
 
         // Se for PIX, incluir dados do QR Code
