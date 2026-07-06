@@ -54,30 +54,21 @@ export default function Checkout() {
     numCartao: '', nomeCartao: '', validade: '', cvv: ''
   });
 
-  // Aplica desconto de 10% no PIX apenas para o produto específico
-  useEffect(() => {
-    const targetId = '0dce4ece-6f41-4914-8e37-6100956c9613';
-    const currentId = searchParams.get('id');
-    
-    if (currentId === targetId && metodo === 'pix') {
-      setProduto(prev => ({
-        ...prev,
-        preco: prev.precoOriginal * 0.9 // 10% de desconto
-      }));
-    } else {
-      setProduto(prev => ({
-        ...prev,
-        preco: prev.precoOriginal
-      }));
-    }
-  }, [metodo, searchParams]);
-
+  // Unifica carregamento e desconto para evitar sobrescrita de estado
   useEffect(() => {
     const id = searchParams.get('id');
     const overrideNome = searchParams.get('nome');
     const overridePreco = searchParams.get('preco');
     const overrideImg = searchParams.get('img');
     const qty = parseInt(searchParams.get('qty') || '1');
+    const targetId = '0dce4ece-6f41-4914-8e37-6100956c9613';
+
+    const applyDiscount = (basePrice: number) => {
+      if (id === targetId && metodo === 'pix') {
+        return basePrice * 0.9;
+      }
+      return basePrice;
+    };
 
     if (id) {
       supabase
@@ -99,7 +90,7 @@ export default function Checkout() {
             const basePrice = (overridePreco ? Number(overridePreco) : parsePrice(data.preco)) * qty;
             setProduto({
               nome: overrideNome || data.nome,
-              preco: basePrice,
+              preco: applyDiscount(basePrice),
               precoOriginal: basePrice,
               imagens: [overrideImg || data.imagem_url || data.image].filter(img => img && !img.includes('placeholder')) as string[]
             });
@@ -109,7 +100,7 @@ export default function Checkout() {
               const basePrice = (overridePreco ? Number(overridePreco) : localProd.priceNum) * qty;
               setProduto({
                 nome: overrideNome || localProd.name,
-                preco: basePrice,
+                preco: applyDiscount(basePrice),
                 precoOriginal: basePrice,
                 imagens: [overrideImg || localProd.image].filter(img => img) as string[]
               });
@@ -120,7 +111,7 @@ export default function Checkout() {
       const basePrice = Number(overridePreco) || 0;
       setProduto({
         nome: overrideNome,
-        preco: basePrice,
+        preco: applyDiscount(basePrice),
         precoOriginal: basePrice,
         imagens: (overrideNome.includes('Carrinho') || overrideNome.includes('CARRINHO')) ? [] : (overrideImg ? [overrideImg] : [])
       });
@@ -128,12 +119,12 @@ export default function Checkout() {
       const basePrice = Number(cartTotal) || 0;
       setProduto({
         nome: `CARRINHO (${totalItems} ITENS)`,
-        preco: basePrice,
+        preco: applyDiscount(basePrice),
         precoOriginal: basePrice,
         imagens: cartItems.map(item => item.product.image).filter(img => img)
       });
     }
-  }, [searchParams, cartItems, cartTotal, totalItems]);
+  }, [searchParams, cartItems, cartTotal, totalItems, metodo]);
 
   // InitiateCheckout — dispara quando o checkout é carregado com preço definido
   // Usa o mesmo event_id (initiateCheckoutEventId) para Pixel e CAPI → deduplicação garantida
