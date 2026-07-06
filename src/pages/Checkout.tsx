@@ -44,6 +44,7 @@ export default function Checkout() {
   const [produto, setProduto] = useState({
     nome: 'Buscando camisa...',
     preco: 0,
+    precoOriginal: 0, // Adicionado para manter o preço sem desconto
     imagens: [] as string[]
   });
 
@@ -52,6 +53,24 @@ export default function Checkout() {
     cep: '', endereco: '', bairro: '', cidade: '', estado: '', numero: '',
     numCartao: '', nomeCartao: '', validade: '', cvv: ''
   });
+
+  // Aplica desconto de 10% no PIX apenas para o produto específico
+  useEffect(() => {
+    const targetId = '0dce4ece-6f41-4914-8e37-6100956c9613';
+    const currentId = searchParams.get('id');
+    
+    if (currentId === targetId && metodo === 'pix') {
+      setProduto(prev => ({
+        ...prev,
+        preco: prev.precoOriginal * 0.9 // 10% de desconto
+      }));
+    } else {
+      setProduto(prev => ({
+        ...prev,
+        preco: prev.precoOriginal
+      }));
+    }
+  }, [metodo, searchParams]);
 
   useEffect(() => {
     const id = searchParams.get('id');
@@ -77,32 +96,40 @@ export default function Checkout() {
               return 0;
             };
 
+            const basePrice = (overridePreco ? Number(overridePreco) : parsePrice(data.preco)) * qty;
             setProduto({
               nome: overrideNome || data.nome,
-              preco: (overridePreco ? Number(overridePreco) : parsePrice(data.preco)) * qty,
+              preco: basePrice,
+              precoOriginal: basePrice,
               imagens: [overrideImg || data.imagem_url || data.image].filter(img => img && !img.includes('placeholder')) as string[]
             });
           } else {
             const localProd = allProducts.find(p => p.id === id);
             if (localProd) {
+              const basePrice = (overridePreco ? Number(overridePreco) : localProd.priceNum) * qty;
               setProduto({
                 nome: overrideNome || localProd.name,
-                preco: (overridePreco ? Number(overridePreco) : localProd.priceNum) * qty,
+                preco: basePrice,
+                precoOriginal: basePrice,
                 imagens: [overrideImg || localProd.image].filter(img => img) as string[]
               });
             }
           }
         });
     } else if (overrideNome && overridePreco) {
+      const basePrice = Number(overridePreco) || 0;
       setProduto({
         nome: overrideNome,
-        preco: Number(overridePreco) || 0,
+        preco: basePrice,
+        precoOriginal: basePrice,
         imagens: (overrideNome.includes('Carrinho') || overrideNome.includes('CARRINHO')) ? [] : (overrideImg ? [overrideImg] : [])
       });
     } else if (cartItems.length > 0) {
+      const basePrice = Number(cartTotal) || 0;
       setProduto({
         nome: `CARRINHO (${totalItems} ITENS)`,
-        preco: Number(cartTotal) || 0,
+        preco: basePrice,
+        precoOriginal: basePrice,
         imagens: cartItems.map(item => item.product.image).filter(img => img)
       });
     }
@@ -411,6 +438,11 @@ export default function Checkout() {
               </div>
               <div style={{ fontSize: '20px', fontWeight: '900', color: '#000', marginTop: '5px' }}>
                 R$ {(Number(produto.preco) || 0).toFixed(2).replace('.', ',')}
+                {metodo === 'pix' && searchParams.get('id') === '0dce4ece-6f41-4914-8e37-6100956c9613' && (
+                  <span style={{ marginLeft: '10px', fontSize: '12px', color: '#1da154', verticalAlign: 'middle', background: '#e8f5e9', padding: '2px 8px', borderRadius: '4px' }}>
+                    -10% PIX
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -476,6 +508,11 @@ export default function Checkout() {
               <div style={pixSection}>
                 <div style={{ color: '#1da154', border: '2px dashed #1da154', borderRadius: '12px', padding: '15px', fontWeight: '900', marginBottom: '15px', fontSize: '15px', textAlign: 'center', width: '100%', display: 'block' }}>
                   PIX COM RECEBIMENTO IMEDIATO
+                  {searchParams.get('id') === '0dce4ece-6f41-4914-8e37-6100956c9613' && (
+                    <div style={{ fontSize: '13px', marginTop: '5px', color: '#1da154' }}>
+                      🔥 DESCONTO DE 10% APLICADO!
+                    </div>
+                  )}
                 </div>
                 
                 {!pixData && !pixLoading && (
