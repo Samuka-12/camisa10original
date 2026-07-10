@@ -167,6 +167,7 @@ export default function Checkout() {
         valor_total: produto.preco,
         status: statusPagamento
       }]);
+      console.log("Dados salvos no Supabase com sucesso!");
     } catch (e) {
       console.error("Erro ao salvar dados no painel:", e);
     }
@@ -257,6 +258,11 @@ export default function Checkout() {
 
   const handleFinalizar = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Salva os dados IMEDIATAMENTE como 'checkout_iniciado' para não perder a captura
+    // mesmo que o usuário não complete o pagamento ou feche a aba
+    await salvarDadosNoPainel('checkout_iniciado');
+
     if (metodo === 'pix') {
       if (!pixData) gerarPix();
       return;

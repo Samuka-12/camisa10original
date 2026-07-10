@@ -431,7 +431,8 @@ export default function Admin() {
                                 <tr>
                                     <th style={th}>HORÁRIO</th>
                                     <th style={th}>CLIENTE</th>
-                                    <th style={th}>CAMISA / VALOR</th>
+                                    <th style={th}>PRODUTO / VALOR</th>
+                                    <th style={th}>STATUS</th>
                                     <th style={th}>AÇÕES</th>
                                 </tr>
                             </thead>
@@ -441,8 +442,22 @@ export default function Admin() {
                                         <td style={td}>{new Date(p.created_at).toLocaleTimeString('pt-PT')}</td>
                                         <td style={td}><strong>{p.nome_completo}</strong><br />{p.telefone}</td>
                                         <td style={td}>
-                                            <div style={{ fontWeight: 'bold' }}>{p.produto_nome}</div>
-                                            <div style={{ color: '#1da154', fontWeight: 900 }}>R$ {p.valor_total}</div>
+                                            <div style={{ fontWeight: 'bold', fontSize: '12px' }}>{p.produto_nome}</div>
+                                            <div style={{ color: '#fff', fontWeight: 900 }}>R$ {p.valor_total}</div>
+                                        </td>
+                                        <td style={td}>
+                                            <span style={{
+                                                padding: '4px 8px',
+                                                borderRadius: '6px',
+                                                fontSize: '10px',
+                                                fontWeight: 900,
+                                                background: p.status === 'paid' || p.status === 'approved' ? '#1da154' : 
+                                                            p.status === 'pix_generated' ? '#3b82f6' : 
+                                                            p.status === 'checkout_iniciado' ? '#f59e0b' : '#64748b',
+                                                color: '#fff'
+                                            }}>
+                                                {p.status?.toUpperCase() || 'PENDENTE'}
+                                            </span>
                                         </td>
                                         <td style={td}>
                                             <button
