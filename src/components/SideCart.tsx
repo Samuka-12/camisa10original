@@ -152,12 +152,14 @@ const SideCart = () => {
 
     const origin = window.location.origin;
 
-    if (totalItems === 1) {
-      const item = items[0];
-      window.location.href = getUrlWithUtm(`${origin}/checkout?id=${item.product.id}&qty=${item.quantity}`);
-    } else {
-      window.location.href = getUrlWithUtm(`${origin}/checkout`);
-    }
+    const checkoutUrl = totalItems === 1 
+      ? getUrlWithUtm(`${origin}/checkout?id=${items[0].product.id}&qty=${items[0].quantity}`)
+      : getUrlWithUtm(`${origin}/checkout`);
+
+    // Pequeno delay para garantir que o evento de tracking seja enviado antes do redirecionamento
+    setTimeout(() => {
+      window.location.href = checkoutUrl;
+    }, 100);
   };
 
   // ── Utilitário: verifica se um item tem unidades gratuitas ─────────────────

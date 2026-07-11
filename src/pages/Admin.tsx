@@ -206,11 +206,13 @@ export default function Admin() {
 
     const cadastrarProduto = async (e: React.FormEvent) => {
         e.preventDefault();
+        const precoNumerico = parseFloat(precoProd.replace(',', '.'));
         const { error } = await supabase
             .from('produtos')
             .insert([{
                 nome: nomeProd,
-                preco: parseFloat(precoProd.replace(',', '.')),
+                preco: precoNumerico,
+                priceNum: precoNumerico, // Garante compatibilidade com o tipo Product do storefront
                 imagem_url: imgProd
             }]);
 
