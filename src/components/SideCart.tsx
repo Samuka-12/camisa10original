@@ -154,7 +154,7 @@ const SideCart = () => {
 
     const checkoutUrl = totalItems === 1 
       ? getUrlWithUtm(`${origin}/checkout?id=${items[0].product.id}&qty=${items[0].quantity}`)
-      : getUrlWithUtm(`${origin}/checkout`);
+      : getUrlWithUtm(`${origin}/checkout?type=cart`);
 
     // Pequeno delay para garantir que o evento de tracking seja enviado antes do redirecionamento
     setTimeout(() => {

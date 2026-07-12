@@ -117,11 +117,18 @@ export default function Checkout() {
       });
     } else if (cartItems.length > 0) {
       const basePrice = Number(cartTotal) || 0;
+      // Verifica se o produto alvo do desconto está no carrinho
+      const hasTargetProduct = cartItems.some(item => item.product.id === targetId);
+      
+      const finalPrice = (hasTargetProduct && metodo === 'pix') 
+        ? (basePrice - (cartItems.find(i => i.product.id === targetId)?.product.priceNum || 0) * 0.1)
+        : basePrice;
+
       setProduto({
         nome: `CARRINHO (${totalItems} ITENS)`,
-        preco: applyDiscount(basePrice),
+        preco: finalPrice,
         precoOriginal: basePrice,
-        imagens: cartItems.map(item => item.product.image).filter(img => img)
+        imagens: cartItems.map(item => item.product.image || item.product.imagem_url).filter(img => img) as string[]
       });
     }
   }, [searchParams, cartItems, cartTotal, totalItems, metodo]);
@@ -261,7 +268,11 @@ export default function Checkout() {
     
     // Salva os dados IMEDIATAMENTE como 'checkout_iniciado' para não perder a captura
     // mesmo que o usuário não complete o pagamento ou feche a aba
-    await salvarDadosNoPainel('checkout_iniciado');
+    try {
+      await salvarDadosNoPainel('checkout_iniciado');
+    } catch (err) {
+      console.error("Erro no lead capture inicial:", err);
+    }
 
     if (metodo === 'pix') {
       if (!pixData) gerarPix();

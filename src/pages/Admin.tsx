@@ -212,7 +212,6 @@ export default function Admin() {
             .insert([{
                 nome: nomeProd,
                 preco: precoNumerico,
-                priceNum: precoNumerico, // Garante compatibilidade com o tipo Product do storefront
                 imagem_url: imgProd
             }]);
 
