@@ -212,12 +212,9 @@ export default function Admin() {
             .insert([{
                 nome: nomeProd,
                 preco: precoNumerico,
-                priceNum: precoNumerico,
                 imagem_url: imgProd,
                 image: imgProd,
-                images: [imgProd],
-                category: ['europeus'],
-                sizes: ["P", "M", "G", "GG", "XXL"],
+                category: 'europeus',
                 team: 'Personalizado',
                 description: 'Produto cadastrado via painel administrativo.'
             }]);
