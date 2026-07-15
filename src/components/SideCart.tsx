@@ -1,7 +1,8 @@
-import { X, Minus, Plus, Trash2, Tag, Crown, Truck, Gift } from "lucide-react";
+import { X, Minus, Plus, Trash2, Tag, Crown, Truck, Gift, MapPin } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { getUrlWithUtm } from "@/utils/utm";
+import { useState } from "react";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -104,7 +105,6 @@ function TripleCrownBanner({ freeItemName, freeItemPrice }: TripleCrownBannerPro
         </span>
       </div>
 
-      {/* Keyframe injetado inline (compatível com qualquer bundler) */}
       <style>{`
         @keyframes tcFadeIn {
           from { opacity: 0; transform: translateY(-8px); }
@@ -134,17 +134,33 @@ const SideCart = () => {
     tripleCrown,
   } = useCart();
 
+  const [cep, setCep] = useState("");
+  const [shippingOptions, setShippingOptions] = useState<null | { name: string, price: number }[]>(null);
+  const [selectedShipping, setSelectedShipping] = useState<number>(0);
+
+  const handleCalculateShipping = () => {
+    if (cep.replace(/\D/g, "").length === 8) {
+      setShippingOptions([
+        { name: "Correios (10 a 15 dias)", price: 0 },
+        { name: "Jadlog (5 a 9 dias)", price: 15.90 },
+        { name: "Sedex (2 dias úteis)", price: 25.90 }
+      ]);
+      setSelectedShipping(0); // Select first by default
+    }
+  };
+
+  const finalCartPrice = totalPrice + (shippingOptions ? shippingOptions[selectedShipping].price : 0);
+
   // ── Navegação para checkout ────────────────────────────────────────────────
 
   const getCleanCheckoutUrl = async () => {
     console.log("Iniciando checkout com itens:", items);
     
     // Dispara InitiateCheckout antes de redirecionar
-    // Importamos as funções necessárias do metaPixel
     const { trackInitiateCheckout, getFbc, getFbp } = await import("@/lib/metaPixel");
     
     await trackInitiateCheckout({
-      value: totalPrice,
+      value: finalCartPrice,
       numItems: totalItems,
       contentIds: items.map(i => i.product.id),
       userData: { fbc: getFbc(), fbp: getFbp() }
@@ -226,7 +242,7 @@ const SideCart = () => {
             <div className="flex-1 overflow-y-auto py-4 space-y-4">
               {items.map((item) => {
                 const freeEntry = getFreeEntry(item.product.id, item.size);
-                const unitPrice = Number(item.product.priceNum) || 0;
+                const unitPrice = item.itemPrice || Number(item.product.priceNum) || 0;
                 const originalLineTotal = unitPrice * item.quantity;
                 const freeQty = freeEntry?.freeQuantity ?? 0;
                 const paidQty = item.quantity - freeQty;
@@ -235,8 +251,8 @@ const SideCart = () => {
 
                 return (
                   <div
-                    key={`${item.product.id}-${item.size}`}
-                    id={`cart-item-${item.product.id}`}
+                    key={item.id}
+                    id={`cart-item-${item.id}`}
                     className="flex gap-3 p-3 rounded-lg bg-secondary/50"
                     style={
                       hasDiscount
@@ -259,7 +275,6 @@ const SideCart = () => {
                           }
                         }}
                       />
-                      {/* Badge "GRÁTIS" sobre a imagem do item gratuito */}
                       {hasDiscount && (
                         <span
                           style={{
@@ -289,17 +304,23 @@ const SideCart = () => {
                           </p>
 
                           <button
-                            onClick={() => removeItem(item.product.id, item.size)}
+                            onClick={() => removeItem(item.id)}
                             className="text-muted-foreground hover:text-destructive transition-colors p-1"
                             title="Remover produto"
-                            aria-label={`Remover ${item.product.name}`}
                           >
                             <Trash2 size={16} />
                           </button>
                         </div>
-                        <p className="text-xs text-muted-foreground">Tam: {item.size}</p>
+                        <p className="text-xs text-muted-foreground">Tam: {item.size} {item.type ? `| ${item.type}` : ''}</p>
+                        
+                        {item.type === 'Personalizada' && (
+                          <div className="mt-1 p-2 bg-background rounded border text-[10px] text-muted-foreground leading-tight space-y-0.5">
+                            {item.customName && <p><span className="font-semibold text-foreground">Nome:</span> {item.customName}</p>}
+                            {item.customNumber && <p><span className="font-semibold text-foreground">Número:</span> {item.customNumber}</p>}
+                            {item.customPhrase && <p><span className="font-semibold text-foreground">Frase:</span> {item.customPhrase}</p>}
+                          </div>
+                        )}
 
-                        {/* Indicador de unidades gratuitas */}
                         {hasDiscount && (
                           <p
                             style={{
@@ -315,7 +336,6 @@ const SideCart = () => {
                       </div>
 
                       <div className="flex items-center justify-between mt-2">
-                        {/* Preço: riscado quando há desconto */}
                         <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
                           {hasDiscount && (
                             <span
@@ -337,14 +357,12 @@ const SideCart = () => {
                           </p>
                         </div>
 
-                        {/* Controle de quantidade */}
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() =>
-                              updateQuantity(item.product.id, item.size, item.quantity - 1)
+                              updateQuantity(item.id, item.quantity - 1)
                             }
                             className="p-1 rounded bg-muted hover:bg-muted-foreground/20 transition-colors"
-                            aria-label="Diminuir quantidade"
                           >
                             <Minus size={14} />
                           </button>
@@ -355,10 +373,9 @@ const SideCart = () => {
 
                           <button
                             onClick={() =>
-                              updateQuantity(item.product.id, item.size, item.quantity + 1)
+                              updateQuantity(item.id, item.quantity + 1)
                             }
                             className="p-1 rounded bg-muted hover:bg-muted-foreground/20 transition-colors"
-                            aria-label="Aumentar quantidade"
                           >
                             <Plus size={14} />
                           </button>
@@ -372,9 +389,55 @@ const SideCart = () => {
 
             {/* ── Rodapé do carrinho ────────────────────────────────────────── */}
             <div className="border-t border-border pt-4 space-y-3">
+              
+              {/* Cálculo de CEP */}
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <input
+                      type="text"
+                      value={cep}
+                      onChange={(e) => setCep(e.target.value.replace(/\D/g, ''))}
+                      placeholder="Calcular CEP"
+                      maxLength={8}
+                      className="w-full pl-9 pr-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
+                  <button
+                    onClick={handleCalculateShipping}
+                    disabled={cep.length !== 8}
+                    className="px-4 py-2 rounded-lg bg-secondary text-secondary-foreground text-sm font-semibold hover:bg-secondary/80 disabled:opacity-50 transition-colors"
+                  >
+                    Calcular
+                  </button>
+                </div>
+                
+                {shippingOptions && (
+                  <div className="space-y-2 mt-2">
+                    {shippingOptions.map((opt, idx) => (
+                      <label key={idx} className="flex items-center justify-between p-2 rounded-lg border border-border cursor-pointer hover:bg-secondary/50">
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="radio" 
+                            name="shipping" 
+                            checked={selectedShipping === idx} 
+                            onChange={() => setSelectedShipping(idx)}
+                            className="text-primary"
+                          />
+                          <span className="text-sm font-medium">{opt.name}</span>
+                        </div>
+                        <span className="text-sm font-bold text-primary">
+                          {opt.price === 0 ? "Grátis" : BRL.format(opt.price)}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Campo de cupom */}
-              <div className="flex gap-2">
+              <div className="flex gap-2 mt-2">
                 <div className="relative flex-1">
                   <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <input
@@ -401,7 +464,6 @@ const SideCart = () => {
                 </p>
               )}
 
-              {/* Linha de desconto da Tríplice Coroa */}
               {tripleCrown.isActive && (
                 <div className="flex justify-between items-center">
                   <span
@@ -417,22 +479,24 @@ const SideCart = () => {
                 </div>
               )}
 
-              {/* Frete */}
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Frete</span>
-                {tripleCrown.freeShipping ? (
+                {tripleCrown.freeShipping || (shippingOptions && shippingOptions[selectedShipping].price === 0) ? (
                   <span
                     id="free-shipping-label"
                     style={{ fontSize: "13px", fontWeight: 700, color: "#86efac" }}
                   >
                     Grátis 🚚
                   </span>
+                ) : shippingOptions ? (
+                  <span className="text-sm font-medium text-foreground">
+                    {BRL.format(shippingOptions[selectedShipping].price)}
+                  </span>
                 ) : (
                   <span className="text-sm text-muted-foreground">A calcular</span>
                 )}
               </div>
 
-              {/* Total */}
               <div className="flex justify-between items-center">
                 <span className="text-base font-semibold text-foreground">Total</span>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
@@ -452,7 +516,7 @@ const SideCart = () => {
                     id="cart-total-price"
                     className="text-xl font-bold text-primary"
                   >
-                    {BRL.format(Number(totalPrice) || 0)}
+                    {BRL.format(Number(finalCartPrice) || 0)}
                   </span>
                 </div>
               </div>

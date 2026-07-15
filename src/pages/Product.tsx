@@ -1,11 +1,13 @@
 import { useParams, Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ArrowLeft, ShoppingCart, Check } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getProductById } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
 import { trackViewContent, trackAddToCart, getFbc, getFbp } from "@/lib/metaPixel";
+
+type JerseyType = 'Torcedor' | 'Jogador' | 'Personalizada';
 
 const Product = () => {
   const { id } = useParams<{ id: string }>();
@@ -14,6 +16,11 @@ const Product = () => {
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedImage, setSelectedImage] = useState(0);
   const [added, setAdded] = useState(false);
+
+  const [selectedType, setSelectedType] = useState<JerseyType>('Torcedor');
+  const [customName, setCustomName] = useState("");
+  const [customNumber, setCustomNumber] = useState("");
+  const [customPhrase, setCustomPhrase] = useState("");
 
   if (!product) {
     return (
@@ -32,7 +39,6 @@ const Product = () => {
   useEffect(() => {
     if (!product?.id) return;
     
-    // Pequeno delay para garantir que o PageView já foi disparado e cookies estão prontos
     const timer = setTimeout(() => {
       trackViewContent({
         productId: product.id,
@@ -45,16 +51,28 @@ const Product = () => {
     return () => clearTimeout(timer);
   }, [product?.id]);
 
+  const displayPrice = useMemo(() => {
+    let base = product.priceNum;
+    if (selectedType === 'Personalizada') {
+      base += 15;
+    }
+    return `R$ ${base.toFixed(2).replace('.', ',')}`;
+  }, [product.priceNum, selectedType]);
+
   const handleAdd = () => {
     if (!selectedSize) return;
-    addItem(product, selectedSize);
+    addItem(product, selectedSize, {
+      type: selectedType,
+      customName: selectedType === 'Personalizada' ? customName : undefined,
+      customNumber: selectedType === 'Personalizada' ? customNumber : undefined,
+      customPhrase: selectedType === 'Personalizada' ? customPhrase : undefined
+    });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
-    // AddToCart — dispara ao adicionar ao carrinho
     trackAddToCart({
       productId: product.id,
       productName: product.name,
-      price: product.priceNum,
+      price: selectedType === 'Personalizada' ? product.priceNum + 15 : product.priceNum,
       quantity: 1,
       userData: { fbc: getFbc(), fbp: getFbp() },
     });
@@ -122,8 +140,57 @@ const Product = () => {
               {product.oldPrice && (
                 <span className="text-lg text-muted-foreground line-through">{product.oldPrice}</span>
               )}
-              <span className="text-3xl font-bold text-primary">{product.price}</span>
+              <span className="text-3xl font-bold text-primary">{displayPrice}</span>
             </div>
+
+            {/* Type selector */}
+            <div>
+              <p className="text-sm font-semibold text-foreground mb-3">Versão da Camisa</p>
+              <div className="flex gap-2 flex-wrap">
+                {(['Torcedor', 'Jogador', 'Personalizada'] as JerseyType[]).map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setSelectedType(type)}
+                    className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-all flex flex-col items-start ${
+                      selectedType === type
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border text-foreground hover:border-primary/50 hover:bg-secondary"
+                    }`}
+                  >
+                    <span>{type}</span>
+                    {type === 'Personalizada' && <span className="text-xs opacity-80">+ R$ 15,00</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Customization Inputs */}
+            {selectedType === 'Personalizada' && (
+              <div className="space-y-3 bg-secondary/50 p-4 rounded-xl border border-border">
+                <p className="text-sm font-semibold text-foreground">Detalhes da Personalização</p>
+                <input
+                  type="text"
+                  placeholder="Nome nas costas"
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
+                />
+                <input
+                  type="text"
+                  placeholder="Número (Ex: 10)"
+                  value={customNumber}
+                  onChange={(e) => setCustomNumber(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
+                />
+                <input
+                  type="text"
+                  placeholder="Frase opcional"
+                  value={customPhrase}
+                  onChange={(e) => setCustomPhrase(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
+                />
+              </div>
+            )}
 
             {/* Size selector */}
             <div>
