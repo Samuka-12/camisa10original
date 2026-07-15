@@ -191,19 +191,7 @@ export const allProducts: Product[] = [
     description: "O Diavolo em sua era dourada. Camisa manga longa vestida por lendas como Kaká.",
     externalCheckoutUrl: "/checkout?id=8efd9895-60a9-4268-9512-a5ff7927be2e"
   },
-  {
-    id: "3e812368-f2e2-4f45-9fb8-38377d74d038",
-    image: `${BASE_URL}/12-inter-frente.jpg`,
-    images: [`${BASE_URL}/12-inter-frente.jpg`, `${BASE_URL}/12-inter-verso.jpg`],
-    name: "Camiseta Inter de Milão 1998/99 2026/27",
-    team: "Inter de Milão",
-    price: "R$ 90,93",
-    priceNum: 90.93,
-    category: ["retrô"],
-    sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "A Nerazzurri na era Ronaldo Fenômeno. Pura nostalgia e poder.",
-    externalCheckoutUrl: "/checkout?id=3e812368-f2e2-4f45-9fb8-38377d74d038"
-  },
+
   {
     id: "82e720a7-a5d3-4c62-ad8c-d03b4e0a2f43",
     image: `${BASE_URL}/13-juventus-frente.jpg`,
@@ -271,19 +259,7 @@ export const allProducts: Product[] = [
     description: "O Diavolo rossonero em sua versão moderna. DNA do Milan vivo.",
     externalCheckoutUrl: "/checkout?id=7424482f-317c-42d4-8fed-086b128eb1d5"
   },
-  {
-    id: "f0f3386b-df33-49b8-9af0-57cb918db34a",
-    image: `${BASE_URL}/18-inter-frente.jpg`,
-    images: [`${BASE_URL}/18-inter-frente.jpg`, `${BASE_URL}/18-inter-verso.jpg`],
-    name: "Camiseta Inter de Milão 2026/27",
-    team: "Inter de Milão",
-    price: "R$ 90,93",
-    priceNum: 90.93,
-    category: ["europeus"],
-    sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "A Nerazzurri com listras onduladas. Design arrojado e tradição.",
-    externalCheckoutUrl: "/checkout?id=f0f3386b-df33-49b8-9af0-57cb918db34a"
-  },
+
   {
     id: "b143af80-1395-41ea-b960-5dffb7bf95b3",
     image: `${BASE_URL}/19-juventus-frente.jpg`,
@@ -598,19 +574,7 @@ export const allProducts: Product[] = [
     description: "O Tricolor Paulista com suas listras horizontais clássicas. Soberano.",
     externalCheckoutUrl: "/checkout?id=c1d2e3f4-aaaa-bbbb-cccc-111122223333"
   },
-  {
-    id: "c2d3e4f5-bbbb-cccc-dddd-222233334444",
-    image: `${BASE_URL}/44-vasco-frente.png`,
-    images: [`${BASE_URL}/44-vasco-frente.png`, `${BASE_URL}/44-vasco-verso.png`],
-    name: "Camiseta Vasco da Gama 2026/27",
-    team: "Vasco da Gama",
-    price: "R$ 90,93",
-    priceNum: 90.93,
-    category: ["brasileirão"],
-    sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "A Cruz de Malta no peito. História de luta e glória do Gigante.",
-    externalCheckoutUrl: "/checkout?id=c2d3e4f5-bbbb-cccc-dddd-222233334444"
-  },
+
   {
     id: "f37a513c-743a-4933-875b-017646554553",
     image: `${BASE_URL}/40-flamengo-frente.jpg`,
@@ -925,8 +889,8 @@ export const allProducts: Product[] = [
   },
   {
     id: "c9d0e1f2-0000-0000-0000-japao0000000",
-    image: `${BASE_URL}/japao-verso.jpg`,
-    images: [`${BASE_URL}/japao-verso.jpg`, `${BASE_URL}/japao-frente.jpg`, `${BASE_URL}/japao-detalhe.jpg`],
+    image: `${BASE_URL}/japao-detalhe.jpg`,
+    images: [`${BASE_URL}/japao-detalhe.jpg`, `${BASE_URL}/japao-frente.jpg`, `${BASE_URL}/japao-verso.jpg`],
     name: "Camiseta Seleção Japonesa 2026/27",
     team: "Seleção Japonesa",
     price: "R$ 90,93",
@@ -935,6 +899,19 @@ export const allProducts: Product[] = [
     sizes: ["P", "M", "G", "GG", "XXL"],
     description: "O azul samurai em sua versão mais moderna. Estampa de linhas onduladas, escudo JFA com o lendário Yatagarasu e bandeira do Japão na gola. Adidas com tecnologia de alto desempenho.",
     externalCheckoutUrl: "/checkout?id=c9d0e1f2-0000-0000-0000-japao0000000"
+  },
+  {
+    id: "c9d0e1f2-0000-0000-0000-japao0000001",
+    image: `/produtos/japao-branco-frente.jpg`,
+    images: [`/produtos/japao-branco-frente.jpg`, `/produtos/japao-branco-verso.jpg`],
+    name: "Camiseta Seleção Japonesa Branca Especial 2026/27",
+    team: "Seleção Japonesa",
+    price: "R$ 90,93",
+    priceNum: 90.93,
+    category: ["seleções"],
+    sizes: ["P", "M", "G", "GG", "XXL"],
+    description: "Edição especial da Seleção do Japão pela Adidas Originals. Fundo branco com listras verticais coloridas multicoloridas e gola em V com detalhes pretos. Escudo JFA e logotipo do trevo Adidas. Design retrô e vibrante.",
+    externalCheckoutUrl: "/checkout?id=c9d0e1f2-0000-0000-0000-japao0000001"
   },
   {
     id: "d0e1f2a3-0000-0000-0000-flamres00000",
@@ -964,8 +941,8 @@ export const allProducts: Product[] = [
   },
   {
     id: "f2a3b4c5-0000-0000-0000-spfcres00000",
-    image: `${BASE_URL}/saopaulo-reserva-verso.jpg`,
-    images: [`${BASE_URL}/saopaulo-reserva-verso.jpg`, `${BASE_URL}/saopaulo-reserva-frente.jpg`, `${BASE_URL}/saopaulo-reserva-detalhe.jpg`],
+    image: `/produtos/saopaulo-reserva-detalhe.jpg`,
+    images: [`/produtos/saopaulo-reserva-detalhe.jpg`, `${BASE_URL}/saopaulo-reserva-frente.jpg`, `${BASE_URL}/saopaulo-reserva-verso.jpg`],
     name: "Camiseta São Paulo Reserva Tricolor 2026/27",
     team: "São Paulo",
     price: "R$ 90,93",
