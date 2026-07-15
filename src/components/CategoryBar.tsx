@@ -14,7 +14,7 @@ const CategoryBar = () => {
   return (
     <div className="bg-primary relative z-40">
       <div className="container mx-auto px-4 overflow-x-auto no-scrollbar">
-        <div className="flex items-center justify-center gap-0 min-w-max">
+        <div className="flex items-center justify-start md:justify-center gap-0 min-w-max">
           {categories.map((cat) => {
             const isActive = location.pathname === `/categoria/${cat.slug}`;
             return (
