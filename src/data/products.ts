@@ -834,8 +834,8 @@ export const allProducts: Product[] = [
   },
   {
     id: "b2c3d4e5-0000-0000-0000-argres000000",
-    image: `${BASE_URL}/argentina-reserva-frente.jpg`,
-    images: [`${BASE_URL}/argentina-reserva-frente.jpg`, `${BASE_URL}/argentina-reserva-verso.jpg`, `${BASE_URL}/argentina-reserva-detalhe.jpg`],
+    image: `${BASE_URL}/argentina-reserva-verso.jpg`,
+    images: [`${BASE_URL}/argentina-reserva-verso.jpg`, `${BASE_URL}/argentina-reserva-frente.jpg`, `${BASE_URL}/argentina-reserva-detalhe.jpg`],
     name: "Camiseta Seleção Argentina Reserva Preta Ornamental 2026/27",
     team: "Seleção Argentina",
     price: "R$ 90,93",
@@ -951,8 +951,8 @@ export const allProducts: Product[] = [
   },
   {
     id: "e1f2a3b4-0000-0000-0000-corires00000",
-    image: `${BASE_URL}/corinthians-reserva-frente.jpg`,
-    images: [`${BASE_URL}/corinthians-reserva-frente.jpg`, `${BASE_URL}/corinthians-reserva-verso.jpg`, `${BASE_URL}/corinthians-reserva-detalhe.jpg`],
+    image: `${BASE_URL}/corinthians-reserva-verso.jpg`,
+    images: [`${BASE_URL}/corinthians-reserva-verso.jpg`, `${BASE_URL}/corinthians-reserva-frente.jpg`, `${BASE_URL}/corinthians-reserva-detalhe.jpg`],
     name: "Camiseta Corinthians Reserva Preta 2026/27",
     team: "Corinthians",
     price: "R$ 90,93",
@@ -964,8 +964,8 @@ export const allProducts: Product[] = [
   },
   {
     id: "f2a3b4c5-0000-0000-0000-spfcres00000",
-    image: `${BASE_URL}/saopaulo-reserva-frente.jpg`,
-    images: [`${BASE_URL}/saopaulo-reserva-frente.jpg`, `${BASE_URL}/saopaulo-reserva-verso.jpg`, `${BASE_URL}/saopaulo-reserva-detalhe.jpg`],
+    image: `${BASE_URL}/saopaulo-reserva-verso.jpg`,
+    images: [`${BASE_URL}/saopaulo-reserva-verso.jpg`, `${BASE_URL}/saopaulo-reserva-frente.jpg`, `${BASE_URL}/saopaulo-reserva-detalhe.jpg`],
     name: "Camiseta São Paulo Reserva Tricolor 2026/27",
     team: "São Paulo",
     price: "R$ 90,93",
