@@ -628,19 +628,6 @@ export const allProducts: Product[] = [
     externalCheckoutUrl: "/checkout?id=1e2ced50-987a-48f7-96d6-1ff800ca30bc"
   },
   {
-    id: "d5e6f7a8-eeee-ffff-0000-555566667777",
-    image: `${BASE_URL}/45-internacional-frente.png`,
-    images: [`${BASE_URL}/45-internacional-frente.png`, `${BASE_URL}/45-internacional-verso.png`],
-    name: "Camiseta Internacional 2026/27",
-    team: "Internacional",
-    price: "R$ 90,93",
-    priceNum: 90.93,
-    category: ["brasileirão"],
-    sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Colorado Gaúcho em vermelho vibrante. Paixão do Beira-Rio.",
-    externalCheckoutUrl: "/checkout?id=d5e6f7a8-eeee-ffff-0000-555566667777"
-  },
-  {
     id: "d6e7f8a9-ffff-0000-1111-666677778888",
     image: `${BASE_URL}/48-atleticomg-frente.png`,
     images: [`${BASE_URL}/48-atleticomg-frente.png`, `${BASE_URL}/48-atleticomg-verso.png`],
@@ -769,19 +756,6 @@ export const allProducts: Product[] = [
     sizes: ["P", "M", "G", "GG", "XXL"],
     description: "O Leão do Interior em amarelo e azul. A surpresa do futebol paulista.",
     externalCheckoutUrl: "/checkout?id=e5f6a7b8-8888-9999-0000-555566667777"
-  },
-  {
-    id: "9adab132-ac18-479f-bde3-aa1d2a82471c",
-    image: `${BASE_URL}/62-inter-frente.png`,
-    images: [`${BASE_URL}/62-inter-frente.png`, `${BASE_URL}/62-inter-verso.png`],
-    name: "Camiseta Internacional Manga Longa Branca 2026/27",
-    team: "Internacional",
-    price: "R$ 90,93",
-    priceNum: 90.93,
-    category: ["brasileirão"],
-    sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "Elegância e conforto na versão manga longa do Colorado. Design branco clássico com detalhes em dourado.",
-    externalCheckoutUrl: "/checkout?id=9adab132-ac18-479f-bde3-aa1d2a82471c"
   },
   {
     id: "a1b2c3d4-0000-0000-0000-noruega00000",
