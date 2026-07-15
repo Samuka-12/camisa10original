@@ -940,8 +940,8 @@ export const allProducts: Product[] = [
   },
   {
     id: "f2a3b4c5-0000-0000-0000-spfcres00000",
-    image: `/produtos/saopaulo-reserva-detalhe.jpg`,
-    images: [`/produtos/saopaulo-reserva-detalhe.jpg`, `${BASE_URL}/saopaulo-reserva-frente.jpg`, `${BASE_URL}/saopaulo-reserva-verso.jpg`],
+    image: `${BASE_URL}/saopaulo-reserva-detalhe.jpg`,
+    images: [`${BASE_URL}/saopaulo-reserva-detalhe.jpg`, `${BASE_URL}/saopaulo-reserva-frente.jpg`, `${BASE_URL}/saopaulo-reserva-verso.jpg`],
     name: "Camiseta São Paulo Reserva Tricolor 2026/27",
     team: "São Paulo",
     price: "R$ 90,93",
