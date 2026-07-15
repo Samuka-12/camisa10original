@@ -873,15 +873,15 @@ export const allProducts: Product[] = [
   },
   {
     id: "e5f6a7b8-0000-0000-0000-cverderes0000",
-    image: `${BASE_URL}/caboverde-reserva-frente.jpg`,
-    images: [`${BASE_URL}/caboverde-reserva-frente.jpg`, `${BASE_URL}/caboverde-reserva-verso.jpg`],
-    name: "Camiseta Seleção Cabo Verde Reserva Amarela",
+    image: `${BASE_URL}/caboverde-goleiro-frente.jpg`,
+    images: [`${BASE_URL}/caboverde-goleiro-frente.jpg`, `${BASE_URL}/caboverde-goleiro-verso.jpg`],
+    name: "Camiseta Seleção Cabo Verde Goleiro Amarela",
     team: "Seleção Cabo Verde",
     price: "R$ 109,93",
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "Os Tubarões Azuis em sua versão reserva exclusiva. Amarelo vibrante com detalhes em preto e estampa camuflada sutil. Escudo FCF bordado e tecnologia CS-DRY para máximo conforto.",
+    description: "Os Tubarões Azuis em sua versão de goleiro. Amarelo vibrante com detalhes em preto e estampa camuflada sutil. Escudo FCF bordado e tecnologia CS-DRY para máximo conforto.",
     externalCheckoutUrl: "/checkout?id=e5f6a7b8-0000-0000-0000-cverderes0000"
   },
   {
