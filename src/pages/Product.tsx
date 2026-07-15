@@ -35,8 +35,10 @@ const Product = () => {
     );
   }
 
-  // ViewContent — dispara quando o produto é visualizado
+  // Scroll to top and tracking
   useEffect(() => {
+    window.scrollTo(0, 0);
+    
     if (!product?.id) return;
     
     const timer = setTimeout(() => {
@@ -93,6 +95,8 @@ const Product = () => {
               <img
                 src={product.images[selectedImage] || "/placeholder.svg"}
                 alt={product.name}
+                fetchPriority="high"
+                decoding="async"
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
@@ -115,6 +119,8 @@ const Product = () => {
                     <img 
                       src={img || "/placeholder.svg"} 
                       alt="" 
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover" 
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
