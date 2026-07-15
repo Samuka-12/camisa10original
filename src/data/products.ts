@@ -191,6 +191,19 @@ export const allProducts: Product[] = [
     description: "O Diavolo em sua era dourada. Camisa manga longa vestida por lendas como Kaká.",
     externalCheckoutUrl: "/checkout?id=8efd9895-60a9-4268-9512-a5ff7927be2e"
   },
+  {
+    id: "3e812368-f2e2-4f45-9fb8-38377d74d038",
+    image: `${BASE_URL}/12-inter-frente.jpg`,
+    images: [`${BASE_URL}/12-inter-frente.jpg`, `${BASE_URL}/12-inter-verso.jpg`],
+    name: "Camiseta Inter de Milão 1998/99 2026/27",
+    team: "Inter de Milão",
+    price: "R$ 90,93",
+    priceNum: 90.93,
+    category: ["retrô"],
+    sizes: ["P", "M", "G", "GG", "XXL"],
+    description: "A Nerazzurri na era Ronaldo Fenômeno. Pura nostalgia e poder.",
+    externalCheckoutUrl: "/checkout?id=3e812368-f2e2-4f45-9fb8-38377d74d038"
+  },
 
   {
     id: "82e720a7-a5d3-4c62-ad8c-d03b4e0a2f43",
@@ -259,7 +272,19 @@ export const allProducts: Product[] = [
     description: "O Diavolo rossonero em sua versão moderna. DNA do Milan vivo.",
     externalCheckoutUrl: "/checkout?id=7424482f-317c-42d4-8fed-086b128eb1d5"
   },
-
+  {
+    id: "f0f3386b-df33-49b8-9af0-57cb918db34a",
+    image: `${BASE_URL}/18-inter-frente.jpg`,
+    images: [`${BASE_URL}/18-inter-frente.jpg`, `${BASE_URL}/18-inter-verso.jpg`],
+    name: "Camiseta Inter de Milão 2026/27",
+    team: "Inter de Milão",
+    price: "R$ 90,93",
+    priceNum: 90.93,
+    category: ["europeus"],
+    sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
+    description: "A Nerazzurri com listras onduladas. Design arrojado e tradição.",
+    externalCheckoutUrl: "/checkout?id=f0f3386b-df33-49b8-9af0-57cb918db34a"
+  },
   {
     id: "b143af80-1395-41ea-b960-5dffb7bf95b3",
     image: `${BASE_URL}/19-juventus-frente.jpg`,
