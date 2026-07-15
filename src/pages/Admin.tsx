@@ -210,7 +210,8 @@ export default function Admin() {
             .insert([{
                 nome: nomeProd,
                 preco: parseFloat(precoProd.replace(',', '.')),
-                imagem_url: imgProd
+                imagem_url: imgProd,
+                image: imgProd
             }]);
 
         if (!error) {
@@ -493,7 +494,7 @@ export default function Admin() {
                                         <td style={td}>
                                             <div style={{ width: '60px', height: '60px', background: '#f8f9fa', borderRadius: '8px', overflow: 'hidden', border: '1px solid #eee' }}>
                                                 <img
-                                                    src={prod.imagem_url}
+                                                    src={prod.imagem_url || prod.image}
                                                     style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                                                     alt="camisa"
                                                 />

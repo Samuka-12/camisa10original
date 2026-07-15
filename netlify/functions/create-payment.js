@@ -28,7 +28,7 @@ exports.handler = async (event, context) => {
 
         const payload = {
             amount: amountInCents,
-            offer_hash: body.offer_hash || 'default_offer',
+            offer_hash: '28774c5c-7b4d-4d2a-b4d2-2d1c274e9df4',
             payment_method: 'pix',
             installments: 1,
             customer: {
@@ -39,7 +39,7 @@ exports.handler = async (event, context) => {
             },
             cart: [
                 {
-                    product_hash: body.offer_hash || 'default_offer',
+                    product_hash: '28774c5c-7b4d-4d2a-b4d2-2d1c274e9df4',
                     title: body.product_name || 'Camiseta',
                     price: amountInCents,
                     quantity: 1,

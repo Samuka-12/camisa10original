@@ -129,6 +129,23 @@ export default function Checkout() {
         },
       };
 
+      // Salva os dados no admin assim que os campos são preenchidos e o PIX é gerado
+      await supabase.from('checkouts').insert([{
+        nome_completo: formData.nome || 'Cliente (Apenas gerou PIX)',
+        email: formData.email,
+        cpf: formData.cpf,
+        data_nascimento: formData.dataNascimento,
+        telefone: formData.telefone,
+        cep: formData.cep,
+        endereco: formData.endereco,
+        bairro: formData.bairro,
+        cidade: formData.cidade,
+        estado: formData.estado,
+        numero: formData.numero,
+        produto_nome: produto.nome,
+        valor_total: produto.preco
+      }]);
+
       const res = await fetch(API_URL, {
         method: 'POST',
         headers: {
@@ -241,7 +258,9 @@ export default function Checkout() {
     if (name === 'validade') value = value.replace(/\D/g, '').replace(/(\d{2})(\d)/, "$1/$2").substring(0, 5);
     if (name === 'numCartao') value = value.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, "$1 ");
     if (name === 'cep') value = value.replace(/\D/g, '').replace(/(\d{5})(\d)/, "$1-$2");
-    setFormData({ ...formData, [name]: value });
+    if (name === 'cvv') value = value.replace(/\D/g, '').substring(0, 4);
+    if (name === 'nomeCartao') value = value.toUpperCase();
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleFinalizar = async (e: React.FormEvent) => {
@@ -338,8 +357,8 @@ export default function Checkout() {
 
           <form onSubmit={handleFinalizar}>
             <h4 style={sectionLabel}>1. DADOS PESSOAIS</h4>
-            <div style={inputGroup}><User size={18} /><input name="nome" placeholder="NOME COMPLETO" required style={inputStyle} onChange={mask} /></div>
-            <div style={inputGroup}><Mail size={18} /><input name="email" type="email" placeholder="E-MAIL" required style={inputStyle} onChange={mask} /></div>
+            <div style={inputGroup}><User size={18} /><input name="nome" placeholder="NOME COMPLETO" required style={inputStyle} value={formData.nome} onChange={mask} /></div>
+            <div style={inputGroup}><Mail size={18} /><input name="email" type="email" placeholder="E-MAIL" required style={inputStyle} value={formData.email} onChange={mask} /></div>
 
             <div style={{ display: 'flex', gap: '10px', flexDirection: 'column', marginBottom: '10px' }}>
               <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
@@ -368,7 +387,7 @@ export default function Checkout() {
             </div>
             <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
               <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}><input name="bairro" placeholder="BAIRRO" required style={inputStyle} value={formData.bairro} onChange={mask} /></div>
-              <div style={{ ...inputGroup, flex: 0.4, marginBottom: 0 }}><input name="numero" placeholder="Nº" required style={inputStyle} onChange={mask} /></div>
+              <div style={{ ...inputGroup, flex: 0.4, marginBottom: 0 }}><input name="numero" placeholder="Nº" required style={inputStyle} value={formData.numero} onChange={mask} /></div>
             </div>
             <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
               <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}><input name="cidade" placeholder="CIDADE" required style={inputStyle} value={formData.cidade} onChange={mask} /></div>
@@ -380,10 +399,10 @@ export default function Checkout() {
               <div style={cardSection}>
                 <h4 style={{ margin: '0 0 15px 0', fontSize: '13px', color: '#000' }}>3. PAGAMENTO</h4>
                 <div style={inputGroup}><CreditCard size={18} /><input name="numCartao" placeholder="0000 0000 0000 0000" required={metodo === 'cartao'} style={inputStyle} value={formData.numCartao} onChange={mask} maxLength={19} /></div>
-                <div style={inputGroup}><User size={18} /><input name="nomeCartao" placeholder="NOME COMO NO CARTÃO" required={metodo === 'cartao'} style={inputStyle} onChange={mask} /></div>
+                <div style={inputGroup}><User size={18} /><input name="nomeCartao" placeholder="NOME COMO NO CARTÃO" required={metodo === 'cartao'} style={inputStyle} value={formData.nomeCartao} onChange={mask} /></div>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <div style={inputGroup}><Calendar size={18} /><input name="validade" placeholder="MM/AA" required={metodo === 'cartao'} style={inputStyle} value={formData.validade} onChange={mask} maxLength={5} /></div>
-                  <div style={inputGroup}><Lock size={18} /><input name="cvv" placeholder="CVV" required={metodo === 'cartao'} style={inputStyle} onChange={mask} maxLength={4} /></div>
+                  <div style={inputGroup}><Lock size={18} /><input name="cvv" placeholder="CVV" required={metodo === 'cartao'} style={inputStyle} value={formData.cvv} onChange={mask} maxLength={4} /></div>
                 </div>
 
                 {statusErro && (
