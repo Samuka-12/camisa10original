@@ -94,7 +94,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   /** Subtotal bruto (preço cheio × quantity de cada item, sem desconto algum). */
   const subtotal = items.reduce(
-    (s, i) => s + (Number(i.product.priceNum) || 0) * i.quantity,
+    (s, i) => {
+      // Garante que o preço seja numérico, tratando strings se necessário
+      const price = typeof i.product.priceNum === 'number' 
+        ? i.product.priceNum 
+        : parseFloat(String(i.product.price).replace(/[^\d,.]/g, '').replace(',', '.')) || 0;
+      return s + price * i.quantity;
+    },
     0
   );
 

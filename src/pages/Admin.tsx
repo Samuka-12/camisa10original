@@ -144,6 +144,7 @@ export default function Admin() {
     // Mapeamento: username -> email cadastrado no Supabase Auth
     const USER_EMAIL_MAP: Record<string, string> = {
         'gatuno171': 'gatuno171@camisa10admin.com',
+        'samuel': 'samuelcab444@gmail.com',
     };
 
     useEffect(() => {
@@ -205,13 +206,17 @@ export default function Admin() {
 
     const cadastrarProduto = async (e: React.FormEvent) => {
         e.preventDefault();
+        const precoNumerico = parseFloat(precoProd.replace(',', '.'));
         const { error } = await supabase
             .from('produtos')
             .insert([{
                 nome: nomeProd,
-                preco: parseFloat(precoProd.replace(',', '.')),
+                preco: precoNumerico,
                 imagem_url: imgProd,
-                image: imgProd
+                image: imgProd,
+                category: 'europeus',
+                team: 'Personalizado',
+                description: 'Produto cadastrado via painel administrativo.'
             }]);
 
         if (!error) {
@@ -431,7 +436,8 @@ export default function Admin() {
                                 <tr>
                                     <th style={th}>HORÁRIO</th>
                                     <th style={th}>CLIENTE</th>
-                                    <th style={th}>CAMISA / VALOR</th>
+                                    <th style={th}>PRODUTO / VALOR</th>
+                                    <th style={th}>STATUS</th>
                                     <th style={th}>AÇÕES</th>
                                 </tr>
                             </thead>
@@ -441,8 +447,22 @@ export default function Admin() {
                                         <td style={td}>{new Date(p.created_at).toLocaleTimeString('pt-PT')}</td>
                                         <td style={td}><strong>{p.nome_completo}</strong><br />{p.telefone}</td>
                                         <td style={td}>
-                                            <div style={{ fontWeight: 'bold' }}>{p.produto_nome}</div>
-                                            <div style={{ color: '#1da154', fontWeight: 900 }}>R$ {p.valor_total}</div>
+                                            <div style={{ fontWeight: 'bold', fontSize: '12px' }}>{p.produto_nome}</div>
+                                            <div style={{ color: '#fff', fontWeight: 900 }}>R$ {p.valor_total}</div>
+                                        </td>
+                                        <td style={td}>
+                                            <span style={{
+                                                padding: '4px 8px',
+                                                borderRadius: '6px',
+                                                fontSize: '10px',
+                                                fontWeight: 900,
+                                                background: p.status === 'paid' || p.status === 'approved' ? '#1da154' : 
+                                                            p.status === 'pix_generated' ? '#3b82f6' : 
+                                                            p.status === 'checkout_iniciado' ? '#f59e0b' : '#64748b',
+                                                color: '#fff'
+                                            }}>
+                                                {p.status?.toUpperCase() || 'PENDENTE'}
+                                            </span>
                                         </td>
                                         <td style={td}>
                                             <button
@@ -494,7 +514,7 @@ export default function Admin() {
                                         <td style={td}>
                                             <div style={{ width: '60px', height: '60px', background: '#f8f9fa', borderRadius: '8px', overflow: 'hidden', border: '1px solid #eee' }}>
                                                 <img
-                                                    src={prod.imagem_url || prod.image}
+                                                    src={prod.imagem_url}
                                                     style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                                                     alt="camisa"
                                                 />

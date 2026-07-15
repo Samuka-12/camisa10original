@@ -12,30 +12,61 @@ export default async function handler(req, res) {
         // IronPay espera o valor em centavos (inteiro)
         const amountInCents = Math.round(Number(body.amount) * 100);
 
+        // Determinar o método de pagamento
+        const paymentMethod = body.payment_method || 'pix';
+        const installments = body.installments || 1;
+
+        // Construir o payload base
+        // Se houver cart items (múltiplos produtos), construir array de cart items
+        const cartItems = body.cart_items && Array.isArray(body.cart_items) ? body.cart_items : [];
+        
+        const cart = cartItems.length > 0 
+          ? cartItems.map((item, index) => ({
+              product_hash: item.product_hash || `product_${index}`,
+              title: item.title || 'Produto',
+              price: Math.round(Number(item.price) * 100),
+              quantity: item.quantity || 1,
+              operation_type: 1,
+              tangible: true
+            }))
+          : [{
+              product_hash: body.offer_hash || 'default_offer',
+              title: body.product_name || 'Camiseta',
+              price: amountInCents,
+              quantity: 1,
+              operation_type: 1,
+              tangible: true
+            }];
+
         const payload = {
             amount: amountInCents,
-            offer_hash: '28774c5c-7b4d-4d2a-b4d2-2d1c274e9df4',
-            payment_method: 'pix',
-            installments: 1,
+            offer_hash: body.offer_hash || 'default_offer',
+            payment_method: paymentMethod,
+            installments: installments,
             customer: {
                 name: body.client?.name || 'Cliente',
                 email: body.client?.email || 'cliente@email.com',
                 phone_number: (body.client?.phone || '11999999999').replace(/\D/g, ''),
                 document: (body.client?.document || '00000000000').replace(/\D/g, '')
             },
-            cart: [
-                {
-                    product_hash: '28774c5c-7b4d-4d2a-b4d2-2d1c274e9df4',
-                    title: body.product_name || 'Camiseta',
-                    price: amountInCents,
-                    quantity: 1,
-                    operation_type: 1,
-                    tangible: true
-                }
-            ]
+            cart: cart
         };
 
-        console.log('[create-payment] Enviando para IronPay:', JSON.stringify(payload));
+        // Se for pagamento com cartão, adicionar os dados do cartão
+        if (paymentMethod === 'credit_card' && body.card) {
+            payload.card = {
+                number: body.card.number?.replace(/\s/g, ''),
+                holder_name: body.card.holder_name,
+                expiry_month: body.card.expiry_month,
+                expiry_year: body.card.expiry_year,
+                cvv: body.card.cvv
+            };
+        }
+
+        console.log('[create-payment] Enviando para IronPay:', JSON.stringify({
+            ...payload,
+            card: payload.card ? { ...payload.card, number: '****', cvv: '***' } : undefined
+        }));
 
         const response = await fetch(`${IRONPAY_API_URL}?api_token=${IRONPAY_TOKEN}`, {
             method: 'POST',
@@ -54,9 +85,42 @@ export default async function handler(req, res) {
             return res.status(response.status).json({ error: errMsg, _raw: data });
         }
 
-        // Extrai o PIX da resposta da IronPay
-        const qrCode = data?.pix?.code || data?.pix?.payload || data?.qr_code || '';
-        const qrImage = data?.pix?.base64 || data?.pix?.image_url || '';
+        // Construir resposta normalizada
+        let responseData = {
+            status: 'success',
+            transaction_id: data?.id || data?.transaction_id || null,
+            payment_method: paymentMethod
+        };
+
+        // Se for PIX, incluir dados do QR Code
+        if (paymentMethod === 'pix') {
+            const qrCode =
+                data?.pix?.pix_qr_code ||
+                data?.pix?.code ||
+                data?.pix?.payload ||
+                data?.pix?.emv ||
+                data?.pix?.qr_code ||
+                data?.qr_code || '';
+            const rawBase64 = data?.pix?.qr_code_base64 || data?.pix?.base64 || data?.pix?.image_url || '';
+            const qrImage = rawBase64
+                ? (rawBase64.startsWith('data:image') ? rawBase64 : 'data:image/png;base64,' + rawBase64)
+                : (qrCode ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrCode)}` : '');
+
+            responseData.pix = {
+                code: qrCode,
+                base64: rawBase64,
+                image: qrImage
+            };
+        }
+
+        // Se for cartão de crédito, incluir status da transação
+        if (paymentMethod === 'credit_card') {
+            responseData.card = {
+                status: data?.status || 'pending',
+                authorization_code: data?.authorization_code || null,
+                last_four: body.card?.number?.slice(-4) || null
+            };
+        }
 
         // Dispara o evento de initiate_checkout para a xTracky
         const xtrackyToken = "f4d9f616-1acf-4191-bb7c-d03f8a756ce0";
@@ -66,10 +130,19 @@ export default async function handler(req, res) {
             orderId: body.identifier || 'camisa10_' + Date.now(),
             amount: Number(body.amount),
             status: 'initiate_checkout',
+            payment_method: paymentMethod,
             customer: {
                 email: body.client?.email || '',
                 phone: body.client?.phone || '',
                 document: body.client?.document || ''
+            },
+            tracking: {
+                fbclid: body.tracking?.fbclid || '',
+                utm_source: body.tracking?.utm_source || '',
+                utm_medium: body.tracking?.utm_medium || '',
+                utm_campaign: body.tracking?.utm_campaign || '',
+                utm_content: body.tracking?.utm_content || '',
+                utm_term: body.tracking?.utm_term || ''
             }
         };
 
@@ -79,13 +152,8 @@ export default async function handler(req, res) {
             body: JSON.stringify(xtrackyPayload)
         }).catch(err => console.error('Erro xTracky initiate_checkout:', err.message));
 
-        // Retorna resposta normalizada + raw para debug
         return res.status(200).json({
-            pix: {
-                code: qrCode,
-                base64: qrImage,
-                image: qrImage.startsWith('data:image') ? qrImage : (qrImage ? qrImage : `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrCode)}`)
-            },
+            ...responseData,
             _raw: data
         });
 

@@ -16,12 +16,18 @@ const ProductCard = ({ id, image, name, team, price, oldPrice }: ProductCardProp
       <div className="group bg-card rounded-xl border border-border overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
         <div className="aspect-square overflow-hidden bg-secondary flex items-center justify-center p-2">
           <img
-            src={image}
+            src={image || "/placeholder.svg"}
             alt={name}
             loading="lazy"
             width={512}
             height={512}
             className="max-w-[92%] max-h-[92%] object-contain group-hover:scale-105 transition-transform duration-500"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              if (target.src !== "/placeholder.svg") {
+                target.src = "/placeholder.svg";
+              }
+            }}
           />
         </div>
         <div className="p-4">

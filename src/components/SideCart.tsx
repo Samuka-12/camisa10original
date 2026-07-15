@@ -136,28 +136,30 @@ const SideCart = () => {
 
   // ── Navegação para checkout ────────────────────────────────────────────────
 
-  const getCleanCheckoutUrl = () => {
+  const getCleanCheckoutUrl = async () => {
     console.log("Iniciando checkout com itens:", items);
-    console.log("Tríplice Coroa ativa:", tripleCrown.isActive, "| Desconto:", tripleCrown.totalDiscount);
+    
+    // Dispara InitiateCheckout antes de redirecionar
+    // Importamos as funções necessárias do metaPixel
+    const { trackInitiateCheckout, getFbc, getFbp } = await import("@/lib/metaPixel");
+    
+    await trackInitiateCheckout({
+      value: totalPrice,
+      numItems: totalItems,
+      contentIds: items.map(i => i.product.id),
+      userData: { fbc: getFbc(), fbp: getFbp() }
+    });
 
     const origin = window.location.origin;
 
-    if (totalItems === 1) {
-      const item = items[0];
-      if (item.product.externalCheckoutUrl) {
-        const target = item.product.externalCheckoutUrl.startsWith("http")
-          ? item.product.externalCheckoutUrl
-          : origin + item.product.externalCheckoutUrl;
-        window.location.href = getUrlWithUtm(target);
-        return;
-      }
-      window.location.href = getUrlWithUtm(`${origin}/checkout?id=${item.product.id}&qty=${item.quantity}`);
-    } else {
-      // totalPrice já vem com o desconto da Tríplice Coroa e do cupom aplicados.
-      const precoLimpo = Number(totalPrice) || 0;
-      const nomeCarrinho = encodeURIComponent(`Carrinho (${totalItems} itens)`);
-      window.location.href = getUrlWithUtm(`${origin}/checkout?nome=${nomeCarrinho}&preco=${precoLimpo.toFixed(2)}`);
-    }
+    const checkoutUrl = totalItems === 1 
+      ? getUrlWithUtm(`${origin}/checkout?id=${items[0].product.id}&qty=${items[0].quantity}`)
+      : getUrlWithUtm(`${origin}/checkout?type=cart`);
+
+    // Pequeno delay para garantir que o evento de tracking seja enviado antes do redirecionamento
+    setTimeout(() => {
+      window.location.href = checkoutUrl;
+    }, 100);
   };
 
   // ── Utilitário: verifica se um item tem unidades gratuitas ─────────────────
@@ -247,9 +249,15 @@ const SideCart = () => {
                   >
                     <div style={{ position: "relative" }}>
                       <img
-                        src={item.product.image}
+                        src={item.product.image || "/placeholder.svg"}
                         alt={item.product.name}
                         className="w-16 h-16 object-cover rounded-md"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          if (target.src !== "/placeholder.svg") {
+                            target.src = "/placeholder.svg";
+                          }
+                        }}
                       />
                       {/* Badge "GRÁTIS" sobre a imagem do item gratuito */}
                       {hasDiscount && (
