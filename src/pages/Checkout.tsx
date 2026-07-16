@@ -60,7 +60,7 @@ export default function Checkout() {
     const overrideNome = searchParams.get('nome');
     const overridePreco = searchParams.get('preco');
     const overrideImg = searchParams.get('img');
-    const qty = parseInt(searchParams.get('qty') || '1');
+    const qty = Math.max(1, parseInt(searchParams.get('qty') || '1')); // Garante qty mínimo de 1
     const targetId = '0dce4ece-6f41-4914-8e37-6100956c9613';
 
     const applyDiscount = (basePrice: number) => {
@@ -68,6 +68,11 @@ export default function Checkout() {
         return basePrice * 0.9;
       }
       return basePrice;
+    };
+    
+    // Função auxiliar para garantir que o preço nunca seja zerado
+    const ensureValidPrice = (price: number) => {
+      return Math.max(0.01, price); // Mínimo de 0.01 para evitar valores zerados
     };
 
     if (id) {
@@ -87,20 +92,22 @@ export default function Checkout() {
               return 0;
             };
 
-            const basePrice = (overridePreco ? Number(overridePreco) : parsePrice(data.preco)) * qty;
+            const unitPrice = overridePreco ? Number(overridePreco) : parsePrice(data.preco);
+            const basePrice = ensureValidPrice(unitPrice * qty);
             setProduto({
               nome: overrideNome || data.nome,
-              preco: applyDiscount(basePrice),
+              preco: ensureValidPrice(applyDiscount(basePrice)),
               precoOriginal: basePrice,
               imagens: [overrideImg || data.imagem_url || data.image].filter(img => img && !img.includes('placeholder')) as string[]
             });
           } else {
             const localProd = allProducts.find(p => p.id === id);
             if (localProd) {
-              const basePrice = (overridePreco ? Number(overridePreco) : localProd.priceNum) * qty;
+              const unitPrice = overridePreco ? Number(overridePreco) : localProd.priceNum;
+              const basePrice = ensureValidPrice(unitPrice * qty);
               setProduto({
                 nome: overrideNome || localProd.name,
-                preco: applyDiscount(basePrice),
+                preco: ensureValidPrice(applyDiscount(basePrice)),
                 precoOriginal: basePrice,
                 imagens: [overrideImg || localProd.image].filter(img => img) as string[]
               });
@@ -108,20 +115,20 @@ export default function Checkout() {
           }
         });
     } else if (overrideNome && overridePreco) {
-      const basePrice = Number(overridePreco) || 0;
+      const basePrice = ensureValidPrice(Number(overridePreco) * qty);
       setProduto({
         nome: overrideNome,
-        preco: applyDiscount(basePrice),
+        preco: ensureValidPrice(applyDiscount(basePrice)),
         precoOriginal: basePrice,
         imagens: (overrideNome.includes('Carrinho') || overrideNome.includes('CARRINHO')) ? [] : (overrideImg ? [overrideImg] : [])
       });
     } else if (cartItems.length > 0) {
-      const basePrice = Number(cartTotal) || 0;
+      const basePrice = ensureValidPrice(Number(cartTotal) || 0.01);
       // Verifica se o produto alvo do desconto está no carrinho
       const hasTargetProduct = cartItems.some(item => item.product.id === targetId);
       
       const finalPrice = (hasTargetProduct && metodo === 'pix') 
-        ? (basePrice - (cartItems.find(i => i.product.id === targetId)?.product.priceNum || 0) * 0.1)
+        ? ensureValidPrice(basePrice - (cartItems.find(i => i.product.id === targetId)?.product.priceNum || 0) * 0.1)
         : basePrice;
 
       setProduto({

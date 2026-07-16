@@ -249,8 +249,8 @@ export default function Admin() {
 
     const gerarLinkCheckout = (prod: any) => {
         const qty = prompt("Quantas unidades para este link? (Ex: 1, 2, 3...)", "1") || "1";
-        const qtyNum = parseInt(qty) || 1;
-        const isCustom = confirm("Deseja personalizar o preco ou nome para este link especifico?");
+        const qtyNum = Math.max(1, parseInt(qty));
+        const isCustom = confirm("Deseja personalizar o preço ou nome para este link específico?");
 
         const baseUrl = window.location.origin;
         let url = `${baseUrl}/checkout?id=${prod.id}&qty=${qtyNum}`;
@@ -258,30 +258,31 @@ export default function Admin() {
 
         if (isCustom) {
             const novoNome = prompt("Nome personalizado:", prod.nome) || prod.nome;
-            const novoPrecoUnitario = prompt("Preco unitario personalizado (Ex: 129.90):", prod.preco) || prod.preco;
+            const novoPrecoUnitario = prompt("Preço unitário personalizado (Ex: 129.90):", prod.preco) || prod.preco;
             const novoPrecoUnitarioNum = parseFloat(String(novoPrecoUnitario).replace(',', '.')) || 0;
             
             if (!novoPrecoUnitarioNum || novoPrecoUnitarioNum <= 0) {
-                alert("Erro: Preco unitario invalido! Use um valor maior que zero.");
+                alert("Erro: Preço unitário inválido! Use um valor maior que zero.");
                 return;
             }
             
             precoTotal = novoPrecoUnitarioNum * qtyNum;
-            url += `&nome=${encodeURIComponent(novoNome)}&preco=${precoTotal}`;
+            url += `&nome=${encodeURIComponent(novoNome)}&preco=${precoTotal.toFixed(2)}`;
         } else {
             const precoOriginal = parseFloat(String(prod.preco).replace(',', '.')) || 0;
             if (precoOriginal <= 0) {
-                alert("Erro: Preco do produto invalido!");
+                alert("Erro: Preço do produto inválido!");
                 return;
             }
             precoTotal = precoOriginal * qtyNum;
             if (qtyNum > 1) {
-                url = `${baseUrl}/checkout?id=${prod.id}&qty=${qtyNum}&preco=${precoTotal}`;
+                url = `${baseUrl}/checkout?id=${prod.id}&qty=${qtyNum}&preco=${precoTotal.toFixed(2)}`;
             }
         }
 
         navigator.clipboard.writeText(url);
-        alert("Link de checkout copiado com sucesso! Valor total: R$ " + precoTotal.toFixed(2));
+        alert(`Link de checkout copiado com sucesso!\n\nQtd: ${qtyNum}\nValor Total: R$ ${precoTotal.toFixed(2).replace('.', ',')}`);
+
     };
 
     if (authLoading) {
