@@ -617,13 +617,13 @@ export const allProducts: Product[] = [
     id: "c3d4e5f6-cccc-dddd-eeee-333344445555",
     image: `${BASE_URL}/50-frente.png`,
     images: [`${BASE_URL}/50-frente.png`, `${BASE_URL}/50-verso.png`],
-    name: "Camiseta Fluminense 2026/27",
-    team: "Fluminense",
+    name: "Camiseta Bahia 2026/27",
+    team: "Bahia",
     price: "R$ 90,93",
     priceNum: 90.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "As cores das Laranjeiras em design tricolor impecável. Guerreiro.",
+    description: "O Tricolor Baiano em design elegante e moderno. Orgulho do Nordeste.",
     externalCheckoutUrl: "/checkout?id=c3d4e5f6-cccc-dddd-eeee-333344445555"
   },
   {
@@ -638,6 +638,19 @@ export const allProducts: Product[] = [
     sizes: ["P", "M", "G", "GG", "XXL"],
     description: "A Estrela Solitária que guia o Glorioso. Tradição alvinegra.",
     externalCheckoutUrl: "/checkout?id=c4d5e6f7-dddd-eeee-ffff-444455556666"
+  },
+  {
+    id: "d4e5f6a7-eeee-ffff-0000-555566667777",
+    image: `https://files.manuscdn.com/user_upload_by_module/session_file/310519663835790628/UHxvkgPwaQcCYZay.jpg`,
+    images: [`https://files.manuscdn.com/user_upload_by_module/session_file/310519663835790628/UHxvkgPwaQcCYZay.jpg`],
+    name: "Camiseta Fluminense 2026/27",
+    team: "Fluminense",
+    price: "R$ 90,93",
+    priceNum: 90.93,
+    category: ["brasileirão"],
+    sizes: ["P", "M", "G", "GG", "XXL"],
+    description: "O Tricolor das Laranjeiras em design moderno com listras vermelhas, verde e branca. Paixão do Fluminense.",
+    externalCheckoutUrl: "/checkout?id=d4e5f6a7-eeee-ffff-0000-555566667777"
   },
   {
     id: "1e2ced50-987a-48f7-96d6-1ff800ca30bc",
