@@ -59,12 +59,15 @@ export default function Checkout() {
         return 0;
       };
 
+      // FORÇAR PREÇO PADRÃO DE 90.93 NO CHECKOUT PARA TODOS OS PRODUTOS
+      const basePrice = 90.93;
+      const finalPrice = (basePrice + (searchParams.get('type') === 'Personalizada' ? 15 : 0)) * qty;
+      const precoComDesconto = discount > 0 ? finalPrice * (1 - discount) : finalPrice;
+
       if (localProd) {
-        const basePrice = localProd.priceNum;
-        const finalPrice = (basePrice + (searchParams.get('type') === 'Personalizada' ? 15 : 0)) * qty;
         setProduto({
           nome: overrideNome || localProd.name,
-          preco: discount > 0 ? finalPrice * (1 - discount) : finalPrice,
+          preco: precoComDesconto,
           imagens: [overrideImg || localProd.image].filter(img => img) as string[]
         });
       }
@@ -76,19 +79,18 @@ export default function Checkout() {
         .single()
         .then(({ data }) => {
           if (data) {
-            const basePrice = parsePrice(data.preco);
-            const finalPrice = (basePrice + (searchParams.get('type') === 'Personalizada' ? 15 : 0)) * qty;
             setProduto(prev => ({
               ...prev,
               nome: overrideNome || data.nome,
-              preco: discount > 0 ? finalPrice * (1 - discount) : finalPrice,
+              preco: precoComDesconto,
               imagens: [overrideImg || data.imagem_url || data.image].filter(img => img && !img.includes('placeholder')) as string[]
             }));
           }
         });
     } else if (overrideNome && overridePreco) {
-      // Aplica desconto sobre qualquer preço vindo via parâmetro
-      const finalPrice = Number(overridePreco) * qty;
+      // FORÇAR PREÇO PADRÃO DE 90.93 também para compras via parâmetro
+      const basePrice = 90.93;
+      const finalPrice = basePrice * qty;
       setProduto({
         nome: overrideNome,
         preco: discount > 0 ? finalPrice * (1 - discount) : finalPrice,
