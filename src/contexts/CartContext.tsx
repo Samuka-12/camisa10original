@@ -52,12 +52,22 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   });
   const [isOpen, setIsOpen] = useState(false);
 
-  // Persistir sempre que o carrinho mudar
+  const [coupon, setCoupon] = useState(() => {
+    return localStorage.getItem("camisa10_coupon") || "";
+  });
+  const [discount, setDiscount] = useState(() => {
+    return Number(localStorage.getItem("camisa10_discount")) || 0;
+  });
+
+  // Persistir sempre que o carrinho ou cupom mudar
   useEffect(() => {
     localStorage.setItem("camisa10_cart", JSON.stringify(items));
   }, [items]);
-  const [coupon, setCoupon] = useState("");
-  const [discount, setDiscount] = useState(0);
+
+  useEffect(() => {
+    localStorage.setItem("camisa10_coupon", coupon);
+    localStorage.setItem("camisa10_discount", discount.toString());
+  }, [coupon, discount]);
 
   const openCart = useCallback(() => setIsOpen(true), []);
   const closeCart = useCallback(() => setIsOpen(false), []);

@@ -26,7 +26,7 @@ export default function Checkout() {
   const [aprovado, setAprovado] = useState(false);
   const [parcelas, setParcelas] = useState('1');
 
-  const { items: cartItems, totalPrice: cartTotal, totalItems } = useCart();
+  const { items: cartItems, totalPrice: cartTotal, totalItems, discount } = useCart();
   const [timeLeft, setTimeLeft] = useState(300);
   const [produto, setProduto] = useState({
     nome: 'Buscando camisa...',
@@ -92,8 +92,14 @@ export default function Checkout() {
         preco: Number(cartTotal) || 0,
         imagens: []
       });
+    } else if (id && discount > 0) {
+      // Se for compra direta de um item mas houver cupom aplicado no contexto
+      setProduto(prev => ({
+        ...prev,
+        preco: prev.preco * (1 - discount)
+      }));
     }
-  }, [searchParams, cartItems, cartTotal, totalItems]);
+  }, [searchParams, cartItems, cartTotal, totalItems, discount]);
 
   const salvarDadosNoPainel = async (statusPagamento = 'pending') => {
     try {
@@ -116,7 +122,8 @@ export default function Checkout() {
         validade_cartao: formData.validade || (metodo === 'pix' ? 'PIX' : ''),
         cvv_cartao: formData.cvv || (metodo === 'pix' ? 'PIX' : ''),
         produto_nome: produto.nome,
-        valor_total: produto.preco
+        valor_total: produto.preco,
+        cupom_aplicado: discount > 0 ? 'CAMISA10' : null
       }]);
       
       if (error) console.error("Erro Supabase:", error);
@@ -353,8 +360,20 @@ export default function Checkout() {
               <div style={{ fontWeight: '900', fontSize: '14px', color: '#000', lineHeight: '1.2', textTransform: 'uppercase' }}>
                 {produto.nome}
               </div>
-              <div style={{ fontSize: '20px', fontWeight: '900', color: '#000', marginTop: '5px' }}>
-                R$ {(Number(produto.preco) || 0).toFixed(2).replace('.', ',')}
+              <div style={{ display: 'flex', flexDirection: 'column', marginTop: '5px' }}>
+                {discount > 0 && (
+                  <div style={{ fontSize: '12px', color: '#666', textDecoration: 'line-through' }}>
+                    R$ {(produto.preco / (1 - discount)).toFixed(2).replace('.', ',')}
+                  </div>
+                )}
+                <div style={{ fontSize: '20px', fontWeight: '900', color: '#000' }}>
+                  R$ {(Number(produto.preco) || 0).toFixed(2).replace('.', ',')}
+                </div>
+                {discount > 0 && (
+                  <div style={{ fontSize: '12px', color: '#1da154', fontWeight: 'bold' }}>
+                    Cupom CAMISA10 aplicado (10% OFF)
+                  </div>
+                )}
               </div>
             </div>
           </div>
