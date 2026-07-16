@@ -68,9 +68,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         );
       }
       
-      const basePrice = typeof product.priceNum === 'number' 
-        ? product.priceNum 
-        : parseFloat(String(product.price).replace(/[^\d,.]/g, '').replace(',', '.')) || 0;
+      const getPrice = (p: any) => {
+        if (typeof p.priceNum === 'number') return p.priceNum;
+        if (typeof p.preco === 'number') return p.preco;
+        const rawPrice = p.preco || p.price || '0';
+        return parseFloat(String(rawPrice).replace(/[^\d,.]/g, '').replace(',', '.')) || 0;
+      };
+      
+      const basePrice = getPrice(product);
       
       const itemPrice = options?.type === 'Personalizada' ? basePrice + 15 : basePrice;
 
