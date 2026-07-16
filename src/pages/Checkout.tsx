@@ -79,7 +79,9 @@ export default function Checkout() {
             }
           }
 
-          const finalPrice = (overridePreco ? Number(overridePreco) : basePrice) * qty;
+          // FORÇAR PREÇO PADRÃO DE 90.93
+          const basePriceForced = 90.93;
+          const finalPrice = basePriceForced * qty;
           setProduto({
             nome: productName,
             preco: discount > 0 ? finalPrice * (1 - discount) : finalPrice,
@@ -87,7 +89,8 @@ export default function Checkout() {
           });
         });
     } else if (overrideNome && overridePreco) {
-      const finalPrice = Number(overridePreco) || 0;
+      // FORÇAR PREÇO PADRÃO DE 90.93 para compras via URL também
+      const finalPrice = 90.93 * qty;
       setProduto({
         nome: overrideNome,
         preco: discount > 0 ? finalPrice * (1 - discount) : finalPrice,

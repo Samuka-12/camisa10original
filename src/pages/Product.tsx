@@ -54,12 +54,13 @@ const Product = () => {
   }, [product?.id]);
 
   const displayPrice = useMemo(() => {
-    let base = product.priceNum;
+    // FORÇAR PREÇO PADRÃO DE 90.93
+    let base = 90.93;
     if (selectedType === 'Personalizada') {
       base += 15;
     }
     return `R$ ${base.toFixed(2).replace('.', ',')}`;
-  }, [product.priceNum, selectedType]);
+  }, [selectedType]);
 
   const handleAdd = () => {
     if (!selectedSize) return;

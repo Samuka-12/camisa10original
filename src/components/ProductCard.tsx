@@ -37,7 +37,7 @@ const ProductCard = ({ id, image, name, team, price, oldPrice }: ProductCardProp
             {oldPrice && (
               <span className="text-xs text-muted-foreground line-through">{oldPrice}</span>
             )}
-            <span className="text-base font-bold text-primary">{price}</span>
+            <span className="text-base font-bold text-primary">R$ 90,93</span>
           </div>
           <div className="mt-3 w-full py-2.5 rounded-lg bg-accent text-accent-foreground text-sm font-semibold text-center hover:bg-accent/90 transition-colors">
             Comprar
