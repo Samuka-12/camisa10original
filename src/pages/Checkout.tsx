@@ -321,7 +321,8 @@ export default function Checkout() {
       <div style={{ background: '#fff', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', textAlign: 'center' }}>
         <CheckCircle2 size={80} color="#1da154" style={{ marginBottom: '20px' }} />
         <h1 style={{ fontWeight: 900, fontSize: '28px', color: '#000', marginBottom: '10px' }}>PAGAMENTO APROVADO!</h1>
-        <p style={{ color: '#666', fontSize: '16px', marginBottom: '30px' }}>Seu pedido foi processado com sucesso e em breve você receberá as atualizações por e-mail.</p>
+        <p style={{ color: '#666', fontSize: '16px', marginBottom: '10px' }}>Seu pedido foi processado com sucesso!</p>
+        <p style={{ color: '#1da154', fontSize: '18px', fontWeight: 'bold', marginBottom: '30px' }}>O código de rastreio será enviado em até 48 horas para o seu e-mail.</p>
         <button onClick={() => navigate('/')} style={{ ...btnPagar, maxWidth: '300px' }}>VOLTAR PARA A LOJA</button>
       </div>
     );
