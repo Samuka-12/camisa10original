@@ -41,12 +41,26 @@ export default function Checkout() {
 
   const { items: cartItems, totalPrice: cartTotal, totalItems } = useCart();
   const [timeLeft, setTimeLeft] = useState(300);
-  const [produto, setProduto] = useState({
-    nome: 'Buscando camisa...',
-    preco: 0,
-    precoOriginal: 0, // Adicionado para manter o preço sem desconto
-    imagens: [] as string[]
-  });
+  
+  // Estado inicial com fallback para carrinho
+  const getInitialProduto = () => {
+    if (cartItems.length > 0) {
+      return {
+        nome: `🛒 CARRINHO (${totalItems} ITENS)`,
+        preco: Math.max(0.01, Number(cartTotal) || 0.01),
+        precoOriginal: Math.max(0.01, Number(cartTotal) || 0.01),
+        imagens: cartItems.map(item => item.product.image || item.product.imagem_url).filter(img => img) as string[]
+      };
+    }
+    return {
+      nome: 'Carregando...',
+      preco: 0.01,
+      precoOriginal: 0.01,
+      imagens: [] as string[]
+    };
+  };
+  
+  const [produto, setProduto] = useState(getInitialProduto());
 
   const [formData, setFormData] = useState({
     nome: '', email: '', cpf: '', dataNascimento: '', telefone: '',
@@ -74,6 +88,11 @@ export default function Checkout() {
     const ensureValidPrice = (price: number) => {
       return Math.max(0.01, price); // Mínimo de 0.01 para evitar valores zerados
     };
+
+    // Se não há ID na URL e o carrinho está vazio, não faz nada
+    if (!id && !overrideNome && !overridePreco && cartItems.length === 0) {
+      return;
+    }
 
     if (id) {
       supabase
@@ -458,13 +477,18 @@ export default function Checkout() {
                 {produto.nome}
               </div>
               <div style={{ fontSize: '20px', fontWeight: '900', color: '#000', marginTop: '5px' }}>
-                R$ {(Number(produto.preco) || 0).toFixed(2).replace('.', ',')}
+                R$ {(Math.max(0.01, Number(produto.preco) || 0.01)).toFixed(2).replace('.', ',')}
                 {metodo === 'pix' && searchParams.get('id') === '0dce4ece-6f41-4914-8e37-6100956c9613' && (
                   <span style={{ marginLeft: '10px', fontSize: '12px', color: '#1da154', verticalAlign: 'middle', background: '#e8f5e9', padding: '2px 8px', borderRadius: '4px' }}>
                     -10% PIX
                   </span>
                 )}
               </div>
+              {produto.nome.includes('CARRINHO') && (
+                <div style={{ fontSize: '11px', color: '#666', marginTop: '3px', fontWeight: 600 }}>
+                  {totalItems} {totalItems === 1 ? 'item' : 'itens'} no carrinho
+                </div>
+              )}
             </div>
           </div>
 
