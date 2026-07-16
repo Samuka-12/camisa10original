@@ -47,15 +47,15 @@ export default function Checkout() {
     if (cartItems.length > 0) {
       return {
         nome: `🛒 CARRINHO (${totalItems} ITENS)`,
-        preco: Math.max(5, Number(cartTotal) || 5),
-        precoOriginal: Math.max(5, Number(cartTotal) || 5),
+        preco: Number(cartTotal) || 0,
+        precoOriginal: Number(cartTotal) || 0,
         imagens: cartItems.map(item => item.product.image || item.product.imagem_url).filter(img => img) as string[]
       };
     }
     return {
       nome: 'Carregando...',
-      preco: 5,
-      precoOriginal: 5,
+      preco: 0,
+      precoOriginal: 0,
       imagens: [] as string[]
     };
   };
@@ -86,7 +86,7 @@ export default function Checkout() {
     
     // Função auxiliar para garantir que o preço nunca seja zerado
     const ensureValidPrice = (price: number) => {
-      return Math.max(5, price); // Mínimo de 5 reais (exigência da API de pagamento)
+      return price || 0;
     };
 
     // Se não há ID na URL e o carrinho está vazio, não faz nada
@@ -142,13 +142,17 @@ export default function Checkout() {
         imagens: (overrideNome.includes('Carrinho') || overrideNome.includes('CARRINHO')) ? [] : (overrideImg ? [overrideImg] : [])
       });
     } else if (cartItems.length > 0) {
-      const basePrice = ensureValidPrice(Number(cartTotal) || 5);
+      const basePrice = Number(cartTotal) || 0;
+      
       // Verifica se o produto alvo do desconto está no carrinho
       const hasTargetProduct = cartItems.some(item => item.product.id === targetId);
       
-      const finalPrice = (hasTargetProduct && metodo === 'pix') 
-        ? ensureValidPrice(basePrice - (cartItems.find(i => i.product.id === targetId)?.product.priceNum || 0) * 0.1)
-        : basePrice;
+      let finalPrice = basePrice;
+      if (hasTargetProduct && metodo === 'pix') {
+        const targetProduct = cartItems.find(i => i.product.id === targetId);
+        const discountAmount = (targetProduct?.product.priceNum || 0) * 0.1;
+        finalPrice = basePrice - discountAmount;
+      }
 
       setProduto({
         nome: `CARRINHO (${totalItems} ITENS)`,
@@ -499,7 +503,7 @@ export default function Checkout() {
                 {produto.nome}
               </div>
               <div style={{ fontSize: '20px', fontWeight: '900', color: '#000', marginTop: '5px' }}>
-                R$ {(Math.max(5, Number(produto.preco) || 5)).toFixed(2).replace('.', ',')}
+                R$ {(Number(produto.preco) || 0).toFixed(2).replace('.', ',')}
                 {metodo === 'pix' && searchParams.get('id') === '0dce4ece-6f41-4914-8e37-6100956c9613' && (
                   <span style={{ marginLeft: '10px', fontSize: '12px', color: '#1da154', verticalAlign: 'middle', background: '#e8f5e9', padding: '2px 8px', borderRadius: '4px' }}>
                     -10% PIX
