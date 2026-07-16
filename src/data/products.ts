@@ -692,6 +692,19 @@ export const allProducts: Product[] = [
     externalCheckoutUrl: "/checkout?id=d7e8f9a0-0000-1111-2222-777788889999"
   },
   {
+    id: "e8f9a0b1-1111-2222-3333-999900001111",
+    image: `https://files.manuscdn.com/user_upload_by_module/session_file/310519663835790628/qrSMHMZhxnxuFoto.png`,
+    images: [`https://files.manuscdn.com/user_upload_by_module/session_file/310519663835790628/qrSMHMZhxnxuFoto.png`, `https://files.manuscdn.com/user_upload_by_module/session_file/310519663835790628/rffYFUGaIcpKltwy.png`],
+    name: "Camiseta Cruzeiro 2026/27 Edicao Especial",
+    team: "Cruzeiro",
+    price: "R$ 90,93",
+    priceNum: 90.93,
+    category: ["brasileirão"],
+    sizes: ["P", "M", "G", "GG", "XXL"],
+    description: "A Raposa em azul vibrante com o escudo do Cruzeiro e as seis estrelas. Edicao especial com design moderno.",
+    externalCheckoutUrl: "/checkout?id=e8f9a0b1-1111-2222-3333-999900001111"
+  },
+  {
     id: "d8e9f0a1-1111-2222-3333-888899990000",
     image: `${BASE_URL}/51-athletico-frente.png`,
     images: [`${BASE_URL}/51-athletico-frente.png`, `${BASE_URL}/51-athletico-verso.png`],
