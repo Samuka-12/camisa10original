@@ -172,10 +172,8 @@ const SideCart = () => {
       ? getUrlWithUtm(`${origin}/checkout?id=${items[0].product.id}&qty=${items[0].quantity}`)
       : getUrlWithUtm(`${origin}/checkout?type=cart`);
 
-    // Pequeno delay para garantir que o evento de tracking seja enviado antes do redirecionamento
-    setTimeout(() => {
-      window.location.href = checkoutUrl;
-    }, 100);
+    // Redirecionamento imediato
+    window.location.href = checkoutUrl;
   };
 
   // ── Utilitário: verifica se um item tem unidades gratuitas ─────────────────

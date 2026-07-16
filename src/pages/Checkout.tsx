@@ -48,45 +48,35 @@ export default function Checkout() {
     const qty = parseInt(searchParams.get('qty') || '1');
 
     if (id) {
+      // Carregamento instantâneo do local primeiro para evitar tela preta
+      const localProd = allProducts.find(p => p.id === id);
+      if (localProd) {
+        const basePriceForced = 90.93;
+        const finalPrice = basePriceForced * qty;
+        setProduto({
+          nome: overrideNome || localProd.name,
+          preco: discount > 0 ? finalPrice * (1 - discount) : finalPrice,
+          imagens: [overrideImg || localProd.image].filter(img => img) as string[]
+        });
+      }
+
+      // Atualiza com dados do Supabase se necessário, mas mantém o preço forçado
       supabase
         .from('produtos')
         .select('*')
         .eq('id', id)
         .single()
         .then(({ data }) => {
-          let basePrice = 0;
-          let productName = overrideNome || 'Produto';
-          let productImages: string[] = [];
-
           if (data) {
-            const parsePrice = (val: any) => {
-              if (typeof val === 'number') return val;
-              if (typeof val === 'string') {
-                const clean = val.replace(/[^\d,.]/g, '').replace(',', '.');
-                return parseFloat(clean) || 0;
-              }
-              return 0;
-            };
-            basePrice = parsePrice(data.preco);
-            productName = overrideNome || data.nome;
-            productImages = [overrideImg || data.imagem_url || data.image].filter(img => img && !img.includes('placeholder')) as string[];
-          } else {
-            const localProd = allProducts.find(p => p.id === id);
-            if (localProd) {
-              basePrice = localProd.priceNum;
-              productName = overrideNome || localProd.name;
-              productImages = [overrideImg || localProd.image].filter(img => img) as string[];
-            }
+            const basePriceForced = 90.93;
+            const finalPrice = basePriceForced * qty;
+            setProduto(prev => ({
+              ...prev,
+              nome: overrideNome || data.nome,
+              preco: discount > 0 ? finalPrice * (1 - discount) : finalPrice,
+              imagens: [overrideImg || data.imagem_url || data.image].filter(img => img && !img.includes('placeholder')) as string[]
+            }));
           }
-
-          // FORÇAR PREÇO PADRÃO DE 90.93
-          const basePriceForced = 90.93;
-          const finalPrice = basePriceForced * qty;
-          setProduto({
-            nome: productName,
-            preco: discount > 0 ? finalPrice * (1 - discount) : finalPrice,
-            imagens: productImages
-          });
         });
     } else if (overrideNome && overridePreco) {
       // FORÇAR PREÇO PADRÃO DE 90.93 para compras via URL também
