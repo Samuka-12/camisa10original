@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/ironpay/webhook",
+      "destination": "/api/ironpay/webhook"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/:path*"
     },
