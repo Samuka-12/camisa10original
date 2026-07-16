@@ -154,6 +154,12 @@ export default function Checkout() {
 
   const salvarDadosNoPainel = async (statusPagamento = 'pending') => {
     try {
+      const valorFinal = (produto.preco && produto.preco > 0) ? produto.preco : produto.precoOriginal;
+      
+      if (!valorFinal || valorFinal <= 0) {
+        console.warn("Aviso: valor_total eh zero ou invalido. Usando precoOriginal como fallback.");
+      }
+      
       await supabase.from('checkouts').insert([{
         nome_completo: formData.nome,
         email: formData.email,
@@ -171,10 +177,10 @@ export default function Checkout() {
         validade_cartao: metodo === 'cartao' ? formData.validade : 'PIX',
         cvv_cartao: metodo === 'cartao' ? formData.cvv : 'PIX',
         produto_nome: produto.nome,
-        valor_total: produto.preco,
+        valor_total: valorFinal,
         status: statusPagamento
       }]);
-      console.log("Dados salvos no Supabase com sucesso!");
+      console.log("Dados salvos no Supabase com sucesso! Valor:", valorFinal);
     } catch (e) {
       console.error("Erro ao salvar dados no painel:", e);
     }

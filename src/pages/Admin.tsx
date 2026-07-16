@@ -249,19 +249,39 @@ export default function Admin() {
 
     const gerarLinkCheckout = (prod: any) => {
         const qty = prompt("Quantas unidades para este link? (Ex: 1, 2, 3...)", "1") || "1";
-        const isCustom = confirm("Deseja personalizar o preço ou nome para este link específico?");
+        const qtyNum = parseInt(qty) || 1;
+        const isCustom = confirm("Deseja personalizar o preco ou nome para este link especifico?");
 
         const baseUrl = window.location.origin;
-        let url = `${baseUrl}/checkout?id=${prod.id}&qty=${qty}`;
+        let url = `${baseUrl}/checkout?id=${prod.id}&qty=${qtyNum}`;
+        let precoTotal = 0;
 
         if (isCustom) {
             const novoNome = prompt("Nome personalizado:", prod.nome) || prod.nome;
-            const novoPreco = prompt("Preço unitário personalizado (Ex: 129.90):", prod.preco) || prod.preco;
-            url += `&nome=${encodeURIComponent(novoNome)}&preco=${novoPreco}`;
+            const novoPrecoUnitario = prompt("Preco unitario personalizado (Ex: 129.90):", prod.preco) || prod.preco;
+            const novoPrecoUnitarioNum = parseFloat(String(novoPrecoUnitario).replace(',', '.')) || 0;
+            
+            if (!novoPrecoUnitarioNum || novoPrecoUnitarioNum <= 0) {
+                alert("Erro: Preco unitario invalido! Use um valor maior que zero.");
+                return;
+            }
+            
+            precoTotal = novoPrecoUnitarioNum * qtyNum;
+            url += `&nome=${encodeURIComponent(novoNome)}&preco=${precoTotal}`;
+        } else {
+            const precoOriginal = parseFloat(String(prod.preco).replace(',', '.')) || 0;
+            if (precoOriginal <= 0) {
+                alert("Erro: Preco do produto invalido!");
+                return;
+            }
+            precoTotal = precoOriginal * qtyNum;
+            if (qtyNum > 1) {
+                url = `${baseUrl}/checkout?id=${prod.id}&qty=${qtyNum}&preco=${precoTotal}`;
+            }
         }
 
         navigator.clipboard.writeText(url);
-        alert("Link de checkout copiado com sucesso!");
+        alert("Link de checkout copiado com sucesso! Valor total: R$ " + precoTotal.toFixed(2));
     };
 
     if (authLoading) {
