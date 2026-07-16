@@ -52,12 +52,13 @@ export default function Checkout() {
       const localProd = allProducts.find(p => p.id === id);
       if (localProd) {
         const basePriceForced = 90.93;
-        const finalPrice = basePriceForced * qty;
-        setProduto({
-          nome: overrideNome || localProd.name,
-          preco: discount > 0 ? finalPrice * (1 - discount) : finalPrice,
-          imagens: [overrideImg || localProd.image].filter(img => img) as string[]
-        });
+      const finalPrice = (basePriceForced + (searchParams.get('type') === 'Personalizada' ? 15 : 0)) * qty;
+      const precoComDesconto = discount > 0 ? finalPrice * (1 - discount) : finalPrice;
+      setProduto({
+        nome: overrideNome || localProd.name,
+        preco: precoComDesconto,
+        imagens: [overrideImg || localProd.image].filter(img => img) as string[]
+      });
       }
 
       // Atualiza com dados do Supabase se necessário, mas mantém o preço forçado
@@ -69,11 +70,12 @@ export default function Checkout() {
         .then(({ data }) => {
           if (data) {
             const basePriceForced = 90.93;
-            const finalPrice = basePriceForced * qty;
+            const finalPrice = (basePriceForced + (searchParams.get('type') === 'Personalizada' ? 15 : 0)) * qty;
+            const precoComDesconto = discount > 0 ? finalPrice * (1 - discount) : finalPrice;
             setProduto(prev => ({
               ...prev,
               nome: overrideNome || data.nome,
-              preco: discount > 0 ? finalPrice * (1 - discount) : finalPrice,
+              preco: precoComDesconto,
               imagens: [overrideImg || data.imagem_url || data.image].filter(img => img && !img.includes('placeholder')) as string[]
             }));
           }

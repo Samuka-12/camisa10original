@@ -81,7 +81,8 @@ export interface TripleCrownResult {
 function expandItems(cartItems: CartItem[]): ExpandedUnit[] {
   const units: ExpandedUnit[] = [];
   for (const item of cartItems) {
-    const price = Number(item.product.priceNum) || 0;
+    // FORÇAR PREÇO PADRÃO DE 90.93
+    const price = 90.93 + (item.type === 'Personalizada' ? 15 : 0);
     for (let q = 0; q < item.quantity; q++) {
       units.push({
         productId: item.product.id,
