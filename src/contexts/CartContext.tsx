@@ -98,8 +98,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         return parseFloat(String(rawPrice).replace(/[^\d,.]/g, '').replace(',', '.')) || 0;
       };
       
-      // FORÇAR PREÇO PADRÃO DE 90.93
-      const basePrice = 90.93;
+      const basePrice = getPrice(product);
       
       const itemPrice = options?.type === 'Personalizada' ? basePrice + 15 : basePrice;
 

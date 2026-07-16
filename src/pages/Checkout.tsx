@@ -48,20 +48,27 @@ export default function Checkout() {
     const qty = parseInt(searchParams.get('qty') || '1');
 
     if (id) {
-      // Carregamento instantâneo do local primeiro para evitar tela preta
+      // Carregamento flexível: aceita qualquer preço e aplica o desconto sobre o total
       const localProd = allProducts.find(p => p.id === id);
+      const parsePrice = (val: any) => {
+        if (typeof val === 'number') return val;
+        if (typeof val === 'string') {
+          const clean = val.replace(/[^\d,.]/g, '').replace(',', '.');
+          return parseFloat(clean) || 0;
+        }
+        return 0;
+      };
+
       if (localProd) {
-        const basePriceForced = 90.93;
-      const finalPrice = (basePriceForced + (searchParams.get('type') === 'Personalizada' ? 15 : 0)) * qty;
-      const precoComDesconto = discount > 0 ? finalPrice * (1 - discount) : finalPrice;
-      setProduto({
-        nome: overrideNome || localProd.name,
-        preco: precoComDesconto,
-        imagens: [overrideImg || localProd.image].filter(img => img) as string[]
-      });
+        const basePrice = localProd.priceNum;
+        const finalPrice = (basePrice + (searchParams.get('type') === 'Personalizada' ? 15 : 0)) * qty;
+        setProduto({
+          nome: overrideNome || localProd.name,
+          preco: discount > 0 ? finalPrice * (1 - discount) : finalPrice,
+          imagens: [overrideImg || localProd.image].filter(img => img) as string[]
+        });
       }
 
-      // Atualiza com dados do Supabase se necessário, mas mantém o preço forçado
       supabase
         .from('produtos')
         .select('*')
@@ -69,20 +76,19 @@ export default function Checkout() {
         .single()
         .then(({ data }) => {
           if (data) {
-            const basePriceForced = 90.93;
-            const finalPrice = (basePriceForced + (searchParams.get('type') === 'Personalizada' ? 15 : 0)) * qty;
-            const precoComDesconto = discount > 0 ? finalPrice * (1 - discount) : finalPrice;
+            const basePrice = parsePrice(data.preco);
+            const finalPrice = (basePrice + (searchParams.get('type') === 'Personalizada' ? 15 : 0)) * qty;
             setProduto(prev => ({
               ...prev,
               nome: overrideNome || data.nome,
-              preco: precoComDesconto,
+              preco: discount > 0 ? finalPrice * (1 - discount) : finalPrice,
               imagens: [overrideImg || data.imagem_url || data.image].filter(img => img && !img.includes('placeholder')) as string[]
             }));
           }
         });
     } else if (overrideNome && overridePreco) {
-      // FORÇAR PREÇO PADRÃO DE 90.93 para compras via URL também
-      const finalPrice = 90.93 * qty;
+      // Aplica desconto sobre qualquer preço vindo via parâmetro
+      const finalPrice = Number(overridePreco) * qty;
       setProduto({
         nome: overrideNome,
         preco: discount > 0 ? finalPrice * (1 - discount) : finalPrice,
