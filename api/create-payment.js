@@ -9,8 +9,14 @@ export default async function handler(req, res) {
         const IRONPAY_API_URL = 'https://api.ironpayapp.com.br/api/public/v1/transactions';
         const IRONPAY_TOKEN = 'qoVerJe5Jw33aHINratQw4XFdc4gtQrEPFJ9QE7CRz22JyHupjVT0h8IdmIf';
 
+        // Validação do valor mínimo antes de chamar a API IronPay
+        const amountRaw = Number(body.amount);
+        if (!amountRaw || amountRaw < 5) {
+            return res.status(400).json({ error: 'O valor da compra precisa ser no mínimo R$ 5,00.' });
+        }
+
         // IronPay espera o valor em centavos (inteiro)
-        const amountInCents = Math.round(Number(body.amount) * 100);
+        const amountInCents = Math.round(amountRaw * 100);
 
         // Determinar o método de pagamento
         const paymentMethod = body.payment_method || 'pix';
@@ -128,7 +134,7 @@ export default async function handler(req, res) {
         const xtrackyPayload = {
             token: xtrackyToken,
             orderId: body.identifier || 'camisa10_' + Date.now(),
-            amount: Number(body.amount),
+            amount: amountRaw,
             status: 'initiate_checkout',
             payment_method: paymentMethod,
             customer: {

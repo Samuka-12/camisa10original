@@ -47,15 +47,15 @@ export default function Checkout() {
     if (cartItems.length > 0) {
       return {
         nome: `🛒 CARRINHO (${totalItems} ITENS)`,
-        preco: Math.max(0.01, Number(cartTotal) || 0.01),
-        precoOriginal: Math.max(0.01, Number(cartTotal) || 0.01),
+        preco: Math.max(5, Number(cartTotal) || 5),
+        precoOriginal: Math.max(5, Number(cartTotal) || 5),
         imagens: cartItems.map(item => item.product.image || item.product.imagem_url).filter(img => img) as string[]
       };
     }
     return {
       nome: 'Carregando...',
-      preco: 0.01,
-      precoOriginal: 0.01,
+      preco: 5,
+      precoOriginal: 5,
       imagens: [] as string[]
     };
   };
@@ -86,7 +86,7 @@ export default function Checkout() {
     
     // Função auxiliar para garantir que o preço nunca seja zerado
     const ensureValidPrice = (price: number) => {
-      return Math.max(0.01, price); // Mínimo de 0.01 para evitar valores zerados
+      return Math.max(5, price); // Mínimo de 5 reais (exigência da API de pagamento)
     };
 
     // Se não há ID na URL e o carrinho está vazio, não faz nada
@@ -142,7 +142,7 @@ export default function Checkout() {
         imagens: (overrideNome.includes('Carrinho') || overrideNome.includes('CARRINHO')) ? [] : (overrideImg ? [overrideImg] : [])
       });
     } else if (cartItems.length > 0) {
-      const basePrice = ensureValidPrice(Number(cartTotal) || 0.01);
+      const basePrice = ensureValidPrice(Number(cartTotal) || 5);
       // Verifica se o produto alvo do desconto está no carrinho
       const hasTargetProduct = cartItems.some(item => item.product.id === targetId);
       
@@ -185,15 +185,17 @@ export default function Checkout() {
       
       if (cartItems.length > 0) {
         // Se há itens no carrinho, usa o total do carrinho
-        valorFinal = Number(cartTotal) || 0;
+        const cartValue = Number(cartTotal) || 0;
+        valorFinal = cartValue >= 5 ? cartValue : produto.preco;
       } else {
         // Se não há carrinho, usa o valor do produto
-        valorFinal = (produto.preco && produto.preco > 0.01) ? produto.preco : produto.precoOriginal;
+        valorFinal = (produto.preco && produto.preco >= 5) ? produto.preco : produto.precoOriginal;
       }
       
       // Garante que o valor nunca seja menor que 5 reais (limite da API)
       if (!valorFinal || valorFinal < 5) {
-        console.warn(`Aviso: valor_total (${valorFinal}) é menor que 5 reais. Será rejeitado pela API de pagamento.`);
+        valorFinal = 5; // Fallback seguro para não bloquear o salvamento
+        console.warn(`Aviso: valor_total ajustado para 5 reais (mínimo da API de pagamento).`);
       }
       
       await supabase.from('checkouts').insert([{
@@ -237,7 +239,7 @@ export default function Checkout() {
       const valorPagamento = cartItems.length > 0 ? Number(cartTotal) || 0 : produto.preco;
       
       if (!valorPagamento || valorPagamento < 5) {
-        setPixErro('Valor da compra deve ser no mínimo R$ 5,00');
+        setPixErro('Valor da compra deve ser no mínimo R$ 5,00. Verifique o produto selecionado.');
         setPixLoading(false);
         return;
       }
@@ -496,7 +498,7 @@ export default function Checkout() {
                 {produto.nome}
               </div>
               <div style={{ fontSize: '20px', fontWeight: '900', color: '#000', marginTop: '5px' }}>
-                R$ {(Math.max(0.01, Number(produto.preco) || 0.01)).toFixed(2).replace('.', ',')}
+                R$ {(Math.max(5, Number(produto.preco) || 5)).toFixed(2).replace('.', ',')}
                 {metodo === 'pix' && searchParams.get('id') === '0dce4ece-6f41-4914-8e37-6100956c9613' && (
                   <span style={{ marginLeft: '10px', fontSize: '12px', color: '#1da154', verticalAlign: 'middle', background: '#e8f5e9', padding: '2px 8px', borderRadius: '4px' }}>
                     -10% PIX
