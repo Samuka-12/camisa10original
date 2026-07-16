@@ -36,6 +36,16 @@ const Index = () => {
           id="seleções"
         />
       )}
+      {brasileirao.length > 0 && (
+        <>
+          <div className="border-t border-border" />
+          <ProductSection
+            title="Brasileirão"
+            products={brasileirao.map((p) => ({ ...p, id: p.id }))}
+            id="brasileirão"
+          />
+        </>
+      )}
       {retro.length > 0 && (
         <>
           <div className="border-t border-border" />
@@ -53,16 +63,6 @@ const Index = () => {
             title="Europeus"
             products={europeus.map((p) => ({ ...p, id: p.id }))}
             id="europeus"
-          />
-        </>
-      )}
-      {brasileirao.length > 0 && (
-        <>
-          <div className="border-t border-border" />
-          <ProductSection
-            title="Brasileirão"
-            products={brasileirao.map((p) => ({ ...p, id: p.id }))}
-            id="brasileirão"
           />
         </>
       )}
