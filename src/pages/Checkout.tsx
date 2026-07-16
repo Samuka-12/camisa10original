@@ -12,7 +12,7 @@ import {
   getFbp,
   generateEventId,
 } from '../lib/metaPixel';
-import { User, Mail, CreditCard, MapPin, Phone, Calendar, Hash, Lock, ShieldCheck, QrCode, Copy, CheckCheck, Clock, CheckCircle2 } from 'lucide-react';
+import { User, Mail, CreditCard, MapPin, Phone, Calendar, Hash, Lock, ShieldCheck, QrCode, Copy, CheckCheck, Clock, CheckCircle2, ShoppingCart } from 'lucide-react';
 
 const IRONPAY_API_URL = 'https://api.ironpayapp.com.br/api/public/v1/transactions';
 const IRONPAY_TOKEN = 'qoVerJe5Jw33aHINratQw4XFdc4gtQrEPFJ9QE7CRz22JyHupjVT0h8IdmIf';
@@ -494,7 +494,8 @@ export default function Checkout() {
               </div>
             )}
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: '900', fontSize: '14px', color: '#000', lineHeight: '1.2', textTransform: 'uppercase' }}>
+              <div style={{ fontWeight: '900', fontSize: '14px', color: '#000', lineHeight: '1.2', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {cartItems.length > 0 && <ShoppingCart size={16} color="#000" />}
                 {produto.nome}
               </div>
               <div style={{ fontSize: '20px', fontWeight: '900', color: '#000', marginTop: '5px' }}>
@@ -505,9 +506,9 @@ export default function Checkout() {
                   </span>
                 )}
               </div>
-              {produto.nome.includes('CARRINHO') && (
-                <div style={{ fontSize: '11px', color: '#666', marginTop: '3px', fontWeight: 600 }}>
-                  {totalItems} {totalItems === 1 ? 'item' : 'itens'} no carrinho
+              {cartItems.length > 0 && (
+                <div style={{ fontSize: '12px', color: '#1da154', marginTop: '3px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <ShoppingCart size={12} /> {totalItems} {totalItems === 1 ? 'ITEM SELECIONADO' : 'ITENS NO CARRINHO'}
                 </div>
               )}
             </div>
