@@ -9,7 +9,7 @@
  *
  * Configuração IronPay:
  *   - URL base: https://api.ironpayapp.com.br/api/public/v1
- *   - Token: cz8cziikjy
+ *   - Token: qoVerJe5Jw33aHINratQw4XFdc4gtQrEPFJ9QE7CRz22JyHupjVT0h8IdmIf
  *   - Tipo de webhook: cartao
  *   - Método: POST /api/ironpay/webhook
  *
@@ -18,7 +18,7 @@
  * (via redirect /api/* → /.netlify/functions/:splat no netlify.toml)
  */
 
-const IRONPAY_TOKEN = process.env.IRONPAY_TOKEN        || 'cz8cziikjy';
+const IRONPAY_TOKEN = process.env.IRONPAY_TOKEN        || 'qoVerJe5Jw33aHINratQw4XFdc4gtQrEPFJ9QE7CRz22JyHupjVT0h8IdmIf';
 const PIXEL_ID      = process.env.META_PIXEL_ID        || '1590849999312410';
 const ACCESS_TOKEN  = process.env.META_ACCESS_TOKEN    || '';
 const SUPABASE_URL  = process.env.SUPABASE_URL         || 'https://kffjkhyhhjpkwzfrcvzh.supabase.co';

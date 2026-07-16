@@ -7,7 +7,7 @@ export default async function handler(req, res) {
         const body = req.body;
 
         const IRONPAY_API_URL = 'https://api.ironpayapp.com.br/api/public/v1/transactions';
-        const IRONPAY_TOKEN = process.env.IRONPAY_TOKEN || 'cz8cziikjy';
+        const IRONPAY_TOKEN = process.env.IRONPAY_TOKEN || 'qoVerJe5Jw33aHINratQw4XFdc4gtQrEPFJ9QE7CRz22JyHupjVT0h8IdmIf';
 
         // Validação do valor mínimo antes de chamar a API IronPay
         const amountRaw = Number(body.amount);

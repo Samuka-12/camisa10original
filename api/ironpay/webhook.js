@@ -9,12 +9,12 @@
  *
  * Configuração IronPay:
  *   - URL base: https://api.ironpayapp.com.br/api/public/v1
- *   - Token: cz8cziikjy
+ *   - Token: qoVerJe5Jw33aHINratQw4XFdc4gtQrEPFJ9QE7CRz22JyHupjVT0h8IdmIf
  *   - Tipo de webhook: cartao
  *   - Método: POST /api/ironpay/webhook
  */
 
-const IRONPAY_TOKEN   = process.env.IRONPAY_TOKEN   || 'cz8cziikjy';
+const IRONPAY_TOKEN   = process.env.IRONPAY_TOKEN   || 'qoVerJe5Jw33aHINratQw4XFdc4gtQrEPFJ9QE7CRz22JyHupjVT0h8IdmIf';
 const PIXEL_ID        = process.env.META_PIXEL_ID   || '1590849999312410';
 const ACCESS_TOKEN    = process.env.META_ACCESS_TOKEN || 'EAAShZBr3MwJsBR1DcfngA17838taRRTl67baJJdapxJARjZBrdFMYxZCVBGo4v8KxZAfSG6GwZAPWb98fJyG7O9a4ZB7MZCw1lotpZBsn6U6e9zGypWy6bOa1TReh6fNaa5NBHz10ZBXGZCzmZBLZCb7AITZB7wZCiOfSbQNPZC1RHm17ZAHxGsFDckbVOhM1QvIFUAj6gZDZD';
 const SUPABASE_URL    = process.env.SUPABASE_URL    || 'https://kffjkhyhhjpkwzfrcvzh.supabase.co';
