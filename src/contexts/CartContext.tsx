@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import type { Product } from "@/data/products";
 import { applyTripleCrownDiscount, type TripleCrownResult } from "@/lib/tripleCrown";
 
@@ -28,6 +28,7 @@ interface CartContextType {
   coupon: string;
   setCoupon: (c: string) => void;
   applyCoupon: () => void;
+  clearCart: () => void;
   discount: number;
   tripleCrown: TripleCrownResult;
 }
@@ -41,8 +42,20 @@ export const useCart = () => {
 };
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [items, setItems] = useState<CartItem[]>(() => {
+    try {
+      const saved = localStorage.getItem("camisa10_cart");
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [isOpen, setIsOpen] = useState(false);
+
+  // Persistir sempre que o carrinho mudar
+  useEffect(() => {
+    localStorage.setItem("camisa10_cart", JSON.stringify(items));
+  }, [items]);
   const [coupon, setCoupon] = useState("");
   const [discount, setDiscount] = useState(0);
 
@@ -118,6 +131,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [coupon]);
 
+  const clearCart = useCallback(() => {
+    setItems([]);
+    localStorage.removeItem("camisa10_cart");
+  }, []);
+
   const totalItems = items.reduce((s, i) => s + i.quantity, 0);
 
   const subtotal = items.reduce((s, i) => s + (i.itemPrice || 0) * i.quantity, 0);
@@ -143,6 +161,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         coupon,
         setCoupon,
         applyCoupon,
+        clearCart,
         discount,
         tripleCrown,
       }}

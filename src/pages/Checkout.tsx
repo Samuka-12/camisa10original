@@ -39,7 +39,7 @@ export default function Checkout() {
   // InitiateCheckout: mesmo ID usado no Pixel e na CAPI
   const initiateCheckoutEventId = useRef<string>(generateEventId('InitiateCheckout'));
 
-  const { items: cartItems, totalPrice: cartTotal, totalItems } = useCart();
+  const { items: cartItems, totalPrice: cartTotal, totalItems, clearCart } = useCart();
   const [timeLeft, setTimeLeft] = useState(300);
   
   // Estado inicial com fallback para carrinho
@@ -401,6 +401,7 @@ export default function Checkout() {
       const status = json?.card?.status || json?._raw?.payment_status || json?._raw?.status;
       if (res.ok && (status === 'paid' || status === 'approved')) {
         await salvarDadosNoPainel('paid');
+        clearCart();
         setAprovado(true);
 
         // Purchase — compra aprovada no cartão
