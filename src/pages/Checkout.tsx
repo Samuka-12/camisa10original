@@ -54,6 +54,10 @@ export default function Checkout() {
         .eq('id', id)
         .single()
         .then(({ data }) => {
+          let basePrice = 0;
+          let productName = overrideNome || 'Produto';
+          let productImages: string[] = [];
+
           if (data) {
             const parsePrice = (val: any) => {
               if (typeof val === 'number') return val;
@@ -63,27 +67,30 @@ export default function Checkout() {
               }
               return 0;
             };
-
-            setProduto({
-              nome: overrideNome || data.nome,
-              preco: (overridePreco ? Number(overridePreco) : parsePrice(data.preco)) * qty,
-              imagens: [overrideImg || data.imagem_url || data.image].filter(img => img && !img.includes('placeholder')) as string[]
-            });
+            basePrice = parsePrice(data.preco);
+            productName = overrideNome || data.nome;
+            productImages = [overrideImg || data.imagem_url || data.image].filter(img => img && !img.includes('placeholder')) as string[];
           } else {
             const localProd = allProducts.find(p => p.id === id);
             if (localProd) {
-              setProduto({
-                nome: overrideNome || localProd.name,
-                preco: (overridePreco ? Number(overridePreco) : localProd.priceNum) * qty,
-                imagens: [overrideImg || localProd.image].filter(img => img) as string[]
-              });
+              basePrice = localProd.priceNum;
+              productName = overrideNome || localProd.name;
+              productImages = [overrideImg || localProd.image].filter(img => img) as string[];
             }
           }
+
+          const finalPrice = (overridePreco ? Number(overridePreco) : basePrice) * qty;
+          setProduto({
+            nome: productName,
+            preco: discount > 0 ? finalPrice * (1 - discount) : finalPrice,
+            imagens: productImages
+          });
         });
     } else if (overrideNome && overridePreco) {
+      const finalPrice = Number(overridePreco) || 0;
       setProduto({
         nome: overrideNome,
-        preco: Number(overridePreco) || 0,
+        preco: discount > 0 ? finalPrice * (1 - discount) : finalPrice,
         imagens: (overrideNome.includes('Carrinho') || overrideNome.includes('CARRINHO')) ? [] : (overrideImg ? [overrideImg] : [])
       });
     } else if (cartItems.length > 0) {
@@ -92,12 +99,6 @@ export default function Checkout() {
         preco: Number(cartTotal) || 0,
         imagens: []
       });
-    } else if (id && discount > 0) {
-      // Se for compra direta de um item mas houver cupom aplicado no contexto
-      setProduto(prev => ({
-        ...prev,
-        preco: prev.preco * (1 - discount)
-      }));
     }
   }, [searchParams, cartItems, cartTotal, totalItems, discount]);
 
