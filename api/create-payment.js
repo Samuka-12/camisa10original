@@ -122,8 +122,16 @@ export default async function handler(req, res) {
 
         // Se for cartão de crédito, incluir status da transação
         if (paymentMethod === 'credit_card') {
+            let cardStatus = data?.status || 'pending';
+            // Normalizar status
+            if (['paid', 'authorized', 'approved', 'captured'].includes(cardStatus.toLowerCase())) {
+                cardStatus = 'aprovado';
+            } else if (['refused', 'denied', 'declined', 'failed', 'error', 'canceled'].includes(cardStatus.toLowerCase())) {
+                cardStatus = 'recusado';
+            }
+            
             responseData.card = {
-                status: data?.status || 'pending',
+                status: cardStatus,
                 authorization_code: data?.authorization_code || null,
                 last_four: body.card?.number?.slice(-4) || null
             };
