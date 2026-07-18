@@ -255,6 +255,7 @@ export default function Admin() {
         const baseUrl = window.location.origin;
         let url = `${baseUrl}/checkout?id=${prod.id}&qty=${qtyNum}`;
         let precoTotal = 0;
+        const imgParam = prod.imagem_url || prod.image ? `&img=${encodeURIComponent(prod.imagem_url || prod.image)}` : '';
 
         if (isCustom) {
             const novoNome = prompt("Nome personalizado:", prod.nome) || prod.nome;
@@ -267,17 +268,15 @@ export default function Admin() {
             }
             
             precoTotal = novoPrecoUnitarioNum * qtyNum;
-            url += `&nome=${encodeURIComponent(novoNome)}&preco=${precoTotal.toFixed(2)}`;
+            url = `${baseUrl}/checkout?id=${prod.id}&qty=${qtyNum}&nome=${encodeURIComponent(novoNome)}&preco=${novoPrecoUnitarioNum.toFixed(2)}${imgParam}`;
         } else {
-            const precoOriginal = parseFloat(String(prod.preco).replace(',', '.')) || 0;
-            if (precoOriginal <= 0) {
+            const unitPrice = parseFloat(String(prod.preco).replace(',', '.')) || 0;
+            if (unitPrice <= 0) {
                 alert("Erro: Preço do produto inválido!");
                 return;
             }
-            precoTotal = precoOriginal * qtyNum;
-            if (qtyNum > 1) {
-                url = `${baseUrl}/checkout?id=${prod.id}&qty=${qtyNum}&preco=${precoTotal.toFixed(2)}`;
-            }
+            precoTotal = unitPrice * qtyNum;
+            url = `${baseUrl}/checkout?id=${prod.id}&qty=${qtyNum}&nome=${encodeURIComponent(prod.nome)}&preco=${unitPrice.toFixed(2)}${imgParam}`;
         }
 
         navigator.clipboard.writeText(url);

@@ -100,7 +100,7 @@ export default function Checkout() {
       setProduto({
         nome: `CARRINHO (${totalItems} ITENS)`,
         preco: Number(cartTotal) || 0,
-        imagens: []
+        imagens: cartItems.map(item => item.product.image || item.product.imagem_url).filter(img => img) as string[]
       });
     }
   }, [searchParams, cartItems, cartTotal, totalItems, discount]);
@@ -474,13 +474,6 @@ export default function Checkout() {
             <button type="submit" disabled={loading || (metodo === 'pix' && pixLoading)} style={loading ? btnDisabled : btnPagar}>
               {loading ? 'PROCESSANDO...' : (metodo === 'pix' && !pixData ? 'GERAR PIX' : 'FINALIZAR PAGAMENTO')}
             </button>
-
-            <div style={{ textAlign: 'center', marginTop: '20px', opacity: 0.6 }}>
-              <img src="https://logodownload.org/wp-content/uploads/2014/07/cartao-visa-logo.png" height="15" style={{ marginRight: '10px' }} alt="Visa" />
-              <img src="https://logodownload.org/wp-content/uploads/2014/07/mastercard-logo.png" height="15" style={{ marginRight: '10px' }} alt="Mastercard" />
-              <img src="https://logodownload.org/wp-content/uploads/2015/03/elo-logo.png" height="15" style={{ marginRight: '10px' }} alt="Elo" />
-              <img src="https://logodownload.org/wp-content/uploads/2020/02/pix-logo.png" height="15" alt="Pix" />
-            </div>
           </form>
         </div>
       </div>
