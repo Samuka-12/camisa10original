@@ -240,8 +240,8 @@ const SideCart = () => {
             <div className="flex-1 overflow-y-auto py-4 space-y-4">
               {items.map((item) => {
                 const freeEntry = getFreeEntry(item.product.id, item.size);
-                // FORÇAR PREÇO PADRÃO DE 90.93
-                const unitPrice = 90.93 + (item.type === 'Personalizada' ? 15 : 0);
+                // Usar o preço do item (calculado com base no preço do produto)
+                const unitPrice = item.itemPrice ?? (90.93 + (item.type === 'Personalizada' ? 15 : 0));
                 const originalLineTotal = unitPrice * item.quantity;
                 const freeQty = freeEntry?.freeQuantity ?? 0;
                 const paidQty = item.quantity - freeQty;

@@ -61,9 +61,11 @@ export default function Checkout() {
         return 0;
       };
 
-      // FORÇAR PREÇO PADRÃO DE 90.93 NO CHECKOUT PARA TODOS OS PRODUTOS
-      const basePrice = 90.93;
-      const finalPrice = (basePrice + (searchParams.get('type') === 'Personalizada' ? 15 : 0)) * qty;
+      // Se houver overridePreco nos parâmetros da URL (como do link dinâmico), usa ele.
+      // Caso contrário, se for produto local, usa localProd.priceNum.
+      // Se não, usa 90.93 por padrão (ou o preço do banco de dados quando carregar).
+      const initialBasePrice = overridePreco ? parsePrice(overridePreco) : (localProd ? localProd.priceNum : 90.93);
+      const finalPrice = (initialBasePrice + (searchParams.get('type') === 'Personalizada' ? 15 : 0)) * qty;
       const precoComDesconto = discount > 0 ? finalPrice * (1 - discount) : finalPrice;
 
       if (localProd) {
@@ -81,17 +83,29 @@ export default function Checkout() {
         .single()
         .then(({ data }) => {
           if (data) {
+            const dbBasePrice = overridePreco ? parsePrice(overridePreco) : (data.preco ? parsePrice(data.preco) : 90.93);
+            const dbFinalPrice = (dbBasePrice + (searchParams.get('type') === 'Personalizada' ? 15 : 0)) * qty;
+            const dbPrecoComDesconto = discount > 0 ? dbFinalPrice * (1 - discount) : dbFinalPrice;
+
             setProduto(prev => ({
               ...prev,
               nome: overrideNome || data.nome,
-              preco: precoComDesconto,
+              preco: dbPrecoComDesconto,
               imagens: [overrideImg || data.imagem_url || data.image].filter(img => img && !img.includes('placeholder')) as string[]
             }));
           }
         });
     } else if (overrideNome && overridePreco) {
-      // FORÇAR PREÇO PADRÃO DE 90.93 também para compras via parâmetro
-      const basePrice = 90.93;
+      const parsePrice = (val: any) => {
+        if (typeof val === 'number') return val;
+        if (typeof val === 'string') {
+          const clean = val.replace(/[^\d,.]/g, '').replace(',', '.');
+          return parseFloat(clean) || 0;
+        }
+        return 0;
+      };
+      // Usa o preço vindo via parâmetro (&preco=...) ao invés de forçar 90.93
+      const basePrice = parsePrice(overridePreco);
       const finalPrice = basePrice * qty;
       setProduto({
         nome: overrideNome,
