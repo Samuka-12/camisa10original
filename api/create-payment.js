@@ -18,6 +18,46 @@ export default async function handler(req, res) {
         // IronPay espera o valor em centavos (inteiro)
         const amountInCents = Math.round(amountRaw * 100);
 
+        // Mapeamento dinâmico de ofertas reais da IronPay para evitar falhas de hashes inexistentes
+        const IRONPAY_OFFERS = [
+            { hash: 'le2c9v07wt_6a07bll641', price: 500 }, // R$ 5.00
+            { hash: 'camisa10_test_xtracky', price: 1000 }, // R$ 10.00
+            { hash: 'le2c9v07wt_ugrhokrjd4', price: 8184 }, // R$ 81.84
+            { hash: '28774c5c-7b4d-4d2a-b4d2-2d1c274e9df4', price: 8990 }, // R$ 89.90
+            { hash: 'le2c9v07wt_gybcv5o9me', price: 9093 }, // R$ 90.93
+            { hash: 'le2c9v07wt_v070c04aaj', price: 9093 }, // R$ 90.93
+            { hash: 'camisa10_test_offer', price: 9990 }, // R$ 99.90
+            { hash: '0d2e2638-9c47-4637-b278-5bef856687fa', price: 10993 }, // R$ 109.93
+            { hash: '28774c5c-6fe1-439d-b4d2-2d1c274e9df4', price: 10993 }, // R$ 109.93
+            { hash: 'da698fa3-abd8-44ee-afba-b4da0ca4f6a5', price: 10993 }, // R$ 109.93
+            { hash: 'le2c9v07wt_qhiquzl8s5', price: 12493 }, // R$ 124.93
+            { hash: 'fbb34d6e-519e-4c4c-9961-063302e0a361', price: 12923 }, // R$ 129.23
+            { hash: 'ada92365-5b50-486b-b401-c06b1d166905', price: 12993 }, // R$ 129.93
+            { hash: 'ad39980c-ae89-4642-9e45-3f77b05a745b', price: 12993 }, // R$ 129.93
+            { hash: 'le2c9v07wt_xd5mdq8cxm', price: 16367 }, // R$ 163.67
+            { hash: 'le2c9v07wt_zcooucvxh0', price: 18186 }, // R$ 181.86
+            { hash: 'le2c9v07wt_sewgxy8qzx', price: 18186 }, // R$ 181.86
+            { hash: 'le2c9v07wt_29bj1pj5sl', price: 22686 }, // R$ 226.86
+            { hash: 'le2c9v07wt_z8bth3cft4', price: 99000 } // R$ 990.00
+        ];
+
+        // Função para encontrar a oferta com o preço mais próximo do amountInCents
+        function findBestOffer(cents) {
+            let bestOffer = IRONPAY_OFFERS[0];
+            let minDiff = Math.abs(cents - bestOffer.price);
+            for (let i = 1; i < IRONPAY_OFFERS.length; i++) {
+                const diff = Math.abs(cents - IRONPAY_OFFERS[i].price);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    bestOffer = IRONPAY_OFFERS[i];
+                }
+            }
+            return bestOffer;
+        }
+
+        const bestOffer = findBestOffer(amountInCents);
+        const resolvedOfferHash = bestOffer.hash;
+
         // Determinar o método de pagamento
         const paymentMethod = body.payment_method || 'pix';
         const installments = body.installments || 1;
@@ -28,7 +68,7 @@ export default async function handler(req, res) {
         
         const cart = cartItems.length > 0 
           ? cartItems.map((item, index) => ({
-              product_hash: item.product_hash || `product_${index}`,
+              product_hash: resolvedOfferHash,
               title: item.title || 'Produto',
               price: Math.round(Number(item.price) * 100),
               quantity: item.quantity || 1,
@@ -36,7 +76,7 @@ export default async function handler(req, res) {
               tangible: true
             }))
           : [{
-              product_hash: body.offer_hash || 'default_offer',
+              product_hash: resolvedOfferHash,
               title: body.product_name || 'Camiseta',
               price: amountInCents,
               quantity: 1,
@@ -46,7 +86,7 @@ export default async function handler(req, res) {
 
         const payload = {
             amount: amountInCents,
-            offer_hash: body.offer_hash || 'default_offer',
+            offer_hash: resolvedOfferHash,
             payment_method: paymentMethod,
             installments: installments,
             customer: {

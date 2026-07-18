@@ -196,7 +196,7 @@ export default function Checkout() {
         },
         cart_items: [
           {
-            product_hash: 'aouiaiqbuo',
+            product_hash: 'le2c9v07wt_gybcv5o9me',
             title: produto.nome,
             price: produto.preco,
             quantity: 1
@@ -264,7 +264,7 @@ export default function Checkout() {
         },
         cart_items: [
           {
-            product_hash: 'aouiaiqbuo',
+            product_hash: 'le2c9v07wt_gybcv5o9me',
             title: produto.nome,
             price: produto.preco,
             quantity: 1
