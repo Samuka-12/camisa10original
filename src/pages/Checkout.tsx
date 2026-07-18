@@ -24,6 +24,8 @@ export default function Checkout() {
   const [pixErro, setPixErro] = useState('');
   const [copiado, setCopiado] = useState(false);
   const [aprovado, setAprovado] = useState(false);
+  const [paginaRecusado, setPaginaRecusado] = useState(false);
+  const [recusadoMsg, setRecusadoMsg] = useState('');
   const [parcelas, setParcelas] = useState('1');
 
   const { items: cartItems, totalPrice: cartTotal, totalItems, discount } = useCart();
@@ -169,56 +171,43 @@ export default function Checkout() {
     setPixData(null);
 
     try {
-      const amountInCents = Math.round(produto.preco * 100);
       const payload = {
-        amount: amountInCents,
-        offer_hash: '35E5jbK1n9',
+        amount: produto.preco,
         payment_method: 'pix',
-        installments: 1,
-        customer: {
+        client: {
           name: formData.nome,
           email: formData.email,
-          phone_number: formData.telefone.replace(/\D/g, '') || '11999999999',
-          document: formData.cpf.replace(/\D/g, ''),
-          street_name: formData.endereco || 'Rua não informada',
-          number: formData.numero || 'SN',
-          neighborhood: formData.bairro || 'Bairro não informado',
-          city: formData.cidade || 'Cidade não informada',
-          state: formData.estado || 'SP',
-          zip_code: formData.cep.replace(/\D/g, '') || '00000000'
+          phone: formData.telefone,
+          document: formData.cpf
         },
-        cart: [
+        cart_items: [
           {
             product_hash: 'aouiaiqbuo',
             title: produto.nome,
-            price: amountInCents,
-            quantity: 1,
-            operation_type: 1,
-            tangible: true
+            price: produto.preco,
+            quantity: 1
           }
-        ],
-        expire_in_days: 1,
-        transaction_origin: 'api',
-        postback_url: 'https://camisa10original.com.br/api/ironpay/webhook'
+        ]
       };
 
-      const res = await fetch(`${IRONPAY_API_URL}?api_token=${IRONPAY_TOKEN}`, {
+      const res = await fetch('/api/create-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
       });
 
       const json = await res.json();
-      if (!res.ok) throw new Error(json?.message || json?.error || 'Erro na IronPay');
+      if (!res.ok || json.error) throw new Error(json?.error || json?.message || 'Erro na IronPay');
 
-      const qrCode = json?.pix?.pix_qr_code || json?.pix?.code || '';
-      const qrImage = json?.pix?.pix_url || '';
+      // Pega os dados normalizados da nossa API
+      const qrCode = json?.pix?.code || '';
+      const qrImage = json?.pix?.image || '';
 
       if (!qrCode) throw new Error('PIX gerado sem código pela IronPay.');
 
       setPixData({ 
         qrCode, 
-        qrImage: qrImage && qrImage.startsWith('http') ? qrImage : `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrCode)}`
+        qrImage
       });
       
       await salvarDadosNoPainel('pix_generated');
@@ -240,46 +229,36 @@ export default function Checkout() {
     setStatusErro(false);
 
     try {
-      const amountInCents = Math.round(produto.preco * 100);
       const [mes, ano] = formData.validade.split('/');
       
       const payload = {
-        amount: amountInCents,
-        offer_hash: '35E5jbK1n9',
+        amount: produto.preco,
         payment_method: 'credit_card',
         installments: parseInt(parcelas),
         card: {
           number: formData.numCartao.replace(/\s/g, ''),
           holder_name: formData.nomeCartao,
-          exp_month: parseInt(mes),
-          exp_year: 2000 + parseInt(ano),
+          expiry_month: parseInt(mes),
+          expiry_year: 2000 + parseInt(ano),
           cvv: formData.cvv
         },
-        customer: {
+        client: {
           name: formData.nome,
           email: formData.email,
-          phone_number: formData.telefone.replace(/\D/g, ''),
-          document: formData.cpf.replace(/\D/g, ''),
-          street_name: formData.endereco,
-          number: formData.numero,
-          neighborhood: formData.bairro,
-          city: formData.cidade,
-          state: formData.estado,
-          zip_code: formData.cep.replace(/\D/g, '')
+          phone: formData.telefone,
+          document: formData.cpf
         },
-        cart: [{
-          product_hash: 'aouiaiqbuo',
-          title: produto.nome,
-          price: amountInCents,
-          quantity: 1,
-          operation_type: 1,
-          tangible: true
-        }],
-        transaction_origin: 'api',
-        postback_url: 'https://camisa10original.com.br/api/ironpay/webhook'
+        cart_items: [
+          {
+            product_hash: 'aouiaiqbuo',
+            title: produto.nome,
+            price: produto.preco,
+            quantity: 1
+          }
+        ]
       };
 
-      const res = await fetch(`${IRONPAY_API_URL}?api_token=${IRONPAY_TOKEN}`, {
+      const res = await fetch('/api/create-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
@@ -287,15 +266,20 @@ export default function Checkout() {
 
       const json = await res.json();
       
-      if (res.ok && (json.payment_status === 'paid' || json.payment_status === 'approved' || json.status === 'paid')) {
+      if (!res.ok || json.error) {
+        throw new Error(json.error || json.message || 'Cartão recusado');
+      }
+
+      if (json.status === 'success' && (json.payment_method === 'pix' || (json.card && json.card.status === 'aprovado'))) {
         await salvarDadosNoPainel('paid');
         setAprovado(true);
       } else {
-        throw new Error(json?.message || json?.error || 'Cartão recusado');
+        throw new Error(json?.message || json?.error || 'Cartão recusado pela operadora.');
       }
     } catch (err: any) {
       console.error("Erro Pagamento:", err);
       await salvarDadosNoPainel('refused');
+      setRecusadoMsg(err.message || 'Cartão recusado pela operadora.');
       setStatusErro(true);
     } finally {
       setLoading(false);
@@ -329,12 +313,102 @@ export default function Checkout() {
 
   if (aprovado) {
     return (
-      <div style={{ background: '#fff', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', textAlign: 'center' }}>
-        <CheckCircle2 size={80} color="#1da154" style={{ marginBottom: '20px' }} />
-        <h1 style={{ fontWeight: 900, fontSize: '28px', color: '#000', marginBottom: '10px' }}>PAGAMENTO APROVADO!</h1>
-        <p style={{ color: '#666', fontSize: '16px', marginBottom: '10px' }}>Seu pedido foi processado com sucesso!</p>
-        <p style={{ color: '#1da154', fontSize: '18px', fontWeight: 'bold', marginBottom: '30px' }}>O código de rastreio será enviado em até 48 horas para o seu e-mail.</p>
-        <button onClick={() => navigate('/')} style={{ ...btnPagar, maxWidth: '300px' }}>VOLTAR PARA A LOJA</button>
+      <div style={{ background: '#fff', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', textAlign: 'center', fontFamily: 'sans-serif' }}>
+        <style>{`
+          @keyframes drawCheck { 0% { stroke-dashoffset: 100; opacity: 0; } 100% { stroke-dashoffset: 0; opacity: 1; } }
+          @keyframes circleScale { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+          @keyframes fadeUp { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+        `}</style>
+        
+        <div style={{ animation: 'circleScale 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards', marginBottom: '32px' }}>
+          <svg width="140" height="140" viewBox="0 0 140 140">
+            <circle cx="70" cy="70" r="65" fill="#1da154" style={{ animation: 'circleScale 0.5s ease-out forwards' }} />
+            <circle cx="70" cy="70" r="65" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="3" />
+            <path
+              d="M40 70 L60 90 L100 45"
+              fill="none"
+              stroke="white"
+              strokeWidth="9"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeDasharray="100"
+              strokeDashoffset="100"
+              style={{ animation: 'drawCheck 0.5s ease-out 0.4s forwards' }}
+            />
+          </svg>
+        </div>
+
+        <div style={{ animation: 'fadeUp 0.5s ease-out 0.7s both' }}>
+          <h1 style={{ fontWeight: 900, fontSize: '32px', color: '#14532d', marginBottom: '12px', letterSpacing: '-0.5px' }}>PAGAMENTO APROVADO!</h1>
+          <p style={{ color: '#166534', fontSize: '16px', marginBottom: '8px', fontWeight: 600 }}>🎉 Seu pedido foi processado com sucesso!</p>
+          <p style={{ color: '#1da154', fontSize: '18px', fontWeight: 'bold', marginBottom: '30px' }}>O código de rastreio será enviado em até 48 horas para o seu e-mail.</p>
+          <button
+            onClick={() => navigate('/')}
+            style={{ padding: '18px 48px', background: '#1da154', color: '#fff', border: 'none', borderRadius: '14px', fontWeight: 900, fontSize: '16px', cursor: 'pointer', boxShadow: '0 8px 24px rgba(29,161,84,0.4)' }}
+          >
+            VOLTAR PARA A LOJA
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (paginaRecusado) {
+    return (
+      <div style={{ background: 'linear-gradient(135deg, #fff5f5 0%, #fee2e2 50%, #fecaca 100%)', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', textAlign: 'center', fontFamily: 'sans-serif' }}>
+        <style>{`
+          @keyframes drawX { 0% { stroke-dashoffset: 60; opacity: 0; } 100% { stroke-dashoffset: 0; opacity: 1; } }
+          @keyframes circleShrink { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+          @keyframes shakeCard { 0%, 100% { transform: translateX(0); } 15% { transform: translateX(-10px) rotate(-1deg); } 30% { transform: translateX(10px) rotate(1deg); } 45% { transform: translateX(-7px); } 60% { transform: translateX(7px); } 75% { transform: translateX(-4px); } 90% { transform: translateX(4px); } }
+          @keyframes fadeUpRed { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+        `}</style>
+
+        <div style={{ animation: 'circleShrink 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, shakeCard 0.6s ease-out 0.8s both', marginBottom: '32px' }}>
+          <svg width="140" height="140" viewBox="0 0 140 140">
+            <circle cx="70" cy="70" r="65" fill="#ef4444" style={{ animation: 'circleShrink 0.5s ease-out forwards' }} />
+            <circle cx="70" cy="70" r="65" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="3" />
+            <line
+              x1="45" y1="45" x2="95" y2="95"
+              stroke="white" strokeWidth="9" strokeLinecap="round"
+              strokeDasharray="70" strokeDashoffset="70"
+              style={{ animation: 'drawX 0.35s ease-out 0.4s forwards' }}
+            />
+            <line
+              x1="95" y1="45" x2="45" y2="95"
+              stroke="white" strokeWidth="9" strokeLinecap="round"
+              strokeDasharray="70" strokeDashoffset="70"
+              style={{ animation: 'drawX 0.35s ease-out 0.6s forwards' }}
+            />
+          </svg>
+        </div>
+
+        <div style={{ animation: 'fadeUpRed 0.5s ease-out 0.9s both' }}>
+          <h1 style={{ fontWeight: 900, fontSize: '30px', color: '#7f1d1d', marginBottom: '12px', letterSpacing: '-0.5px' }}>PAGAMENTO RECUSADO</h1>
+          <p style={{ color: '#991b1b', fontSize: '16px', marginBottom: '12px', fontWeight: 700 }}>Seu cartão não foi aprovado.</p>
+          {recusadoMsg && (
+            <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '10px', padding: '12px 20px', marginBottom: '20px', maxWidth: '360px', color: '#b91c1c', fontSize: '13px', fontWeight: 700 }}>
+              {recusadoMsg}
+            </div>
+          )}
+          <p style={{ color: '#991b1b', fontSize: '14px', marginBottom: '32px', maxWidth: '360px', lineHeight: 1.6 }}>
+            Verifique os dados do cartão ou tente com outro cartão.<br />
+            <strong>Dica:</strong> Confira o número, validade, CVV e se há limite disponível.
+          </p>
+          <div style={{ display: 'flex', gap: '12px', flexDirection: 'column', alignItems: 'center' }}>
+            <button
+              onClick={() => { setPaginaRecusado(false); setStatusErro(false); setRecusadoMsg(''); }}
+              style={{ padding: '18px 48px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '14px', fontWeight: 900, fontSize: '16px', cursor: 'pointer', boxShadow: '0 8px 24px rgba(239,68,68,0.4)', letterSpacing: '0.05em', width: '100%', maxWidth: '340px' }}
+            >
+              TENTAR NOVAMENTE
+            </button>
+            <button
+              onClick={() => { setPaginaRecusado(false); setStatusErro(false); setRecusadoMsg(''); setMetodo('pix'); }}
+              style={{ padding: '16px 48px', background: '#fff', color: '#1da154', border: '2px solid #1da154', borderRadius: '14px', fontWeight: 900, fontSize: '15px', cursor: 'pointer', width: '100%', maxWidth: '340px' }}
+            >
+              PAGAR COM PIX
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -466,8 +540,18 @@ export default function Checkout() {
             )}
 
             {statusErro && (
-              <div style={{ background: '#fff5f5', color: '#dc3545', padding: '15px', borderRadius: '8px', marginTop: '20px', fontSize: '13px', fontWeight: 'bold', border: '1px solid #ffc1c1', textAlign: 'center' }}>
-                Ocorreu um erro ao processar o pagamento. Verifique os dados do cartão e tente novamente.
+              <div style={{ ...errorBanner, animation: 'shakeX 0.5s ease-out' }}>
+                <div style={{ fontSize: '16px', marginBottom: '6px' }}>⚠️ CARTÃO RECUSADO</div>
+                <div style={{ fontSize: '12px', fontWeight: 700, opacity: 0.85 }}>
+                  {recusadoMsg || 'Verifique os dados ou tente outro cartão.'}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPaginaRecusado(true)}
+                  style={{ marginTop: '10px', padding: '8px 20px', background: '#b91c1c', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 900, cursor: 'pointer', fontSize: '12px' }}
+                >
+                  VER DETALHES DO ERRO
+                </button>
               </div>
             )}
 
@@ -496,3 +580,4 @@ const btnPagar: React.CSSProperties = { width: '100%', padding: '18px', borderRa
 const btnDisabled: React.CSSProperties = { ...btnPagar, opacity: 0.6, cursor: 'not-allowed' };
 const pixBox: React.CSSProperties = { background: '#f0fff4', padding: '20px', borderRadius: '12px', border: '1px solid #c6f6d5', marginTop: '10px' };
 const btnCopiar: React.CSSProperties = { width: '100%', padding: '12px', borderRadius: '8px', border: 'none', background: '#000', color: '#fff', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' };
+const errorBanner: React.CSSProperties = { background: '#fee2e2', color: '#b91c1c', padding: '15px', borderRadius: '10px', marginBottom: '15px', fontSize: '13px', fontWeight: '900', textAlign: 'center', border: '1px solid #ef4444' };
