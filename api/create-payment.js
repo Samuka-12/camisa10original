@@ -104,8 +104,8 @@ export default async function handler(req, res) {
             payload.card = {
                 number: body.card.number?.replace(/\s/g, ''),
                 holder_name: body.card.holder_name,
-                expiry_month: body.card.expiry_month,
-                expiry_year: body.card.expiry_year,
+                exp_month: body.card.expiry_month,
+                exp_year: body.card.expiry_year,
                 cvv: body.card.cvv
             };
         }

@@ -294,7 +294,7 @@ export default function Checkout() {
       console.error("Erro Pagamento:", err);
       await salvarDadosNoPainel('refused');
       setRecusadoMsg(err.message || 'Cartão recusado pela operadora.');
-      setStatusErro(true);
+      setPaginaRecusado(true);
     } finally {
       setLoading(false);
     }
