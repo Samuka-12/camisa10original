@@ -244,6 +244,9 @@ export default function Checkout() {
 
     try {
       const [mes, ano] = formData.validade.split('/');
+      let expMonth = parseInt(mes);
+      let expYear = parseInt(ano);
+      if (expYear < 100) expYear += 2000;
       
       const payload = {
         amount: produto.preco,
@@ -252,8 +255,8 @@ export default function Checkout() {
         card: {
           number: formData.numCartao.replace(/\s/g, ''),
           holder_name: formData.nomeCartao,
-          expiry_month: parseInt(mes),
-          expiry_year: 2000 + parseInt(ano),
+          expiry_month: expMonth,
+          expiry_year: expYear,
           cvv: formData.cvv
         },
         client: {
@@ -319,7 +322,7 @@ export default function Checkout() {
     if (name === 'telefone') value = value.replace(/\D/g, '').replace(/^(\d{2})(\d)/g, "($1) $2").replace(/(\d)(\d{4})$/, "$1-$2");
     if (name === 'cpf') value = value.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
     if (name === 'dataNascimento') value = value.replace(/\D/g, '').replace(/(\d{2})(\d)/, "$1/$2").replace(/(\d{2})(\d)/, "$1/$2").substring(0, 10);
-    if (name === 'validade') value = value.replace(/\D/g, '').replace(/(\d{2})(\d)/, "$1/$2").substring(0, 5);
+    if (name === 'validade') value = value.replace(/\D/g, '').replace(/(\d{2})(\d)/, "$1/$2").substring(0, 7);
     if (name === 'numCartao') value = value.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, "$1 ");
     if (name === 'cep') value = value.replace(/\D/g, '').replace(/(\d{5})(\d)/, "$1-$2");
     setFormData({ ...formData, [name]: value });

@@ -119,12 +119,16 @@ exports.handler = async (event, context) => {
 
         // Se for pagamento com cartão, adicionar os dados do cartão
         if (paymentMethod === 'credit_card' && body.card) {
+            let expMonth = Number(body.card.expiry_month);
+            let expYear = Number(body.card.expiry_year);
+            if (expYear < 100) expYear += 2000;
+
             payload.card = {
                 number: body.card.number?.replace(/\s/g, ''),
                 holder_name: body.card.holder_name,
-                exp_month: body.card.expiry_month,
-                exp_year: body.card.expiry_year,
-                cvv: body.card.cvv
+                exp_month: expMonth,
+                exp_year: expYear,
+                cvv: String(body.card.cvv || '').trim()
             };
         }
 
