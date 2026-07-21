@@ -108,8 +108,8 @@ export default async function handler(req, res) {
             payload.card = {
                 number: body.card.number?.replace(/\s/g, ''),
                 holder_name: body.card.holder_name,
-                exp_month: expMonth,
-                exp_year: expYear,
+                exp_month: String(expMonth).padStart(2, '0'),
+                exp_year: String(expYear),
                 cvv: String(body.card.cvv || '').trim()
             };
         }
