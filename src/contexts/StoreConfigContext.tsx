@@ -265,6 +265,37 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     loadConfig();
+
+    // Supabase Realtime Subscription for store_config changes (syncs mobile & desktop instantly)
+    const channel = supabase
+      .channel('realtime_store_config')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'produtos',
+          filter: 'id=eq.store_config'
+        },
+        (payload: any) => {
+          if (payload.new && payload.new.description) {
+            try {
+              const parsed = JSON.parse(payload.new.description);
+              const merged = mergeDeep(DEFAULT_CONFIG, parsed);
+              setConfig(merged);
+              localStorage.setItem('store_config_cache', JSON.stringify(merged));
+              window.dispatchEvent(new CustomEvent('storeConfigUpdated', { detail: merged }));
+            } catch (e) {
+              console.error('Realtime config parse error:', e);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const loadConfig = async () => {
@@ -332,8 +363,13 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
           }
         ], { onConflict: 'id' });
 
-      return !error;
+      if (error) {
+        console.error('Supabase saveConfig error:', error);
+        return false;
+      }
+      return true;
     } catch (e) {
+      console.error('saveConfig exception:', e);
       return false;
     }
   };
