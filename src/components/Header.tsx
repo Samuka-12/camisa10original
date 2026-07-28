@@ -11,8 +11,13 @@ const Header = () => {
   const { config } = useStoreConfig();
   const verificado = config.verificadoLoja?.ativo;
 
+  const fe = config.frontend;
+
   return (
-    <header className="border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50">
+    <header
+      className="border-b border-border sticky top-0 z-50 backdrop-blur-md transition-colors"
+      style={{ backgroundColor: fe?.headerBg || undefined, color: fe?.headerTextColor || undefined }}
+    >
       <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-4">
         {/* Logo */}
         <Link to="/" className="flex-shrink-0 flex items-center gap-1.5">

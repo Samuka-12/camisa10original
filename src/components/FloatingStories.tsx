@@ -37,6 +37,11 @@ export const FloatingStories: React.FC = () => {
   // Filter stories based on visibility settings
   const visibleStories = stories.filter(story => {
     if (story.visibilidade === 'global') return true;
+    if (story.visibilidade === 'inicial' && (location.pathname === '/' || location.pathname === '')) return true;
+    if (story.visibilidade === 'categoria' && story.categoriaVisib) {
+      const slug = story.categoriaVisib.toLowerCase();
+      return location.pathname.toLowerCase().includes(slug);
+    }
     if (story.visibilidade === 'produto' && story.produtoPaginaId) {
       return currentProductId === story.produtoPaginaId;
     }
