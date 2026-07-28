@@ -54,7 +54,7 @@ const Footer = () => {
               </li>
             </ul>
             <h4 className="font-semibold text-sm uppercase tracking-wider mt-6 mb-3">Pagamento</h4>
-            <p className="text-sm text-background/60">Pix • Cartão de Crédito • Boleto</p>
+            <p className="text-sm text-background/60">Pix • Cartão de Crédito</p>
           </div>
         </div>
 
