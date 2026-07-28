@@ -455,9 +455,19 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
       console.warn('API save-config exception:', apiErr);
     }
 
-    // 3. Fallback: try direct Supabase (works when admin is authenticated)
+    // 3. Fallback: try direct Supabase (works when admin is authenticated or RLS allows update)
     try {
-      const { error } = await supabase
+      const { error: updateErr } = await supabase
+        .from('produtos')
+        .update({ description: JSON.stringify(newConfig) })
+        .eq('id', STORE_CONFIG_ID);
+
+      if (!updateErr) {
+        console.log('Config saved via Supabase update ✅');
+        return true;
+      }
+
+      const { error: upsertErr } = await supabase
         .from('produtos')
         .upsert([
           {
@@ -468,13 +478,13 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
           }
         ], { onConflict: 'id' });
 
-      if (!error) {
-        console.log('Config saved via Supabase client ✅');
+      if (!upsertErr) {
+        console.log('Config saved via Supabase upsert ✅');
         return true;
       }
-      console.warn('Supabase upsert error:', error);
+      console.warn('Supabase update/upsert errors:', updateErr, upsertErr);
     } catch (supaErr) {
-      console.warn('Supabase upsert exception:', supaErr);
+      console.warn('Supabase save exception:', supaErr);
     }
 
     // 4. If all server methods fail, state and localStorage are still updated
