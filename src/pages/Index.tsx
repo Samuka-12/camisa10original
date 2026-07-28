@@ -4,18 +4,20 @@ import CategoryBar from "@/components/CategoryBar";
 import ProductSection from "@/components/ProductSection";
 import Footer from "@/components/Footer";
 import { selecoes, retro, europeus, brasileirao } from "@/data/products";
-import heroBanner from "@/assets/hero-banner.jpg";
+import heroBannerAsset from "@/assets/hero-banner.jpg";
 import { supabase } from "@/lib/supabase";
+import { useStoreConfig } from "@/contexts/StoreConfigContext";
 
 const Index = () => {
   const [dbProducts, setDbProducts] = useState<any[]>([]);
+  const { config } = useStoreConfig();
+  const fe = config.frontend;
 
   useEffect(() => {
     const fetchDbProducts = async () => {
       try {
         const { data } = await supabase.from('produtos').select('*');
         if (data) {
-          // Filter out store configurations row
           setDbProducts(data.filter(p => p.id !== 'store_config'));
         }
       } catch (err) {
@@ -25,7 +27,6 @@ const Index = () => {
     fetchDbProducts();
   }, []);
 
-  // Merge static products with dynamic products by category
   const getMergedProducts = (staticList: any[], categorySlug: string) => {
     const parsedStatic = staticList.map(p => ({
       id: p.id,
@@ -66,6 +67,10 @@ const Index = () => {
   const mergedRetro = getMergedProducts(retro, 'retrô');
   const mergedEuropeus = getMergedProducts(europeus, 'europeus');
 
+  const heroImageSrc = fe?.heroImage || heroBannerAsset;
+  const heroTitleText = fe?.heroTitle || "Vista a camisa do seu time";
+  const heroSubtitleText = fe?.heroSubtitle || "Coleção exclusiva de camisetas originais, retrô e lançamentos. Frete grátis acima de R$ 300.";
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -74,17 +79,19 @@ const Index = () => {
       {/* Hero banner */}
       <section className="relative overflow-hidden">
         <img
-          src={heroBanner}
-          alt="Jogadores de seleções na Copa do Mundo"
+          src={heroImageSrc}
+          alt={heroTitleText}
           className="w-full h-[450px] md:h-[600px] object-cover object-top"
           width={1920}
           height={1080}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
         <div className="absolute inset-0 flex flex-col items-center justify-end pb-10 md:pb-14 text-center px-4">
-          <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-3 text-white drop-shadow-lg">Vista a camisa do seu time</h2>
+          <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-3 text-white drop-shadow-lg">
+            {heroTitleText}
+          </h2>
           <p className="text-white/85 text-lg max-w-2xl mx-auto drop-shadow">
-            Coleção exclusiva de camisetas originais, retrô e lançamentos. Frete grátis acima de R$ 300.
+            {heroSubtitleText}
           </p>
         </div>
       </section>
