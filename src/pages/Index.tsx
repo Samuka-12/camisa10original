@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 import { selecoes, retro, europeus, brasileirao } from "@/data/products";
 import heroBannerAsset from "@/assets/hero-banner.jpg";
 import { supabase } from "@/lib/supabase";
-import { useStoreConfig } from "@/contexts/StoreConfigContext";
+import { useStoreConfig, STORE_CONFIG_ID } from "@/contexts/StoreConfigContext";
 
 const Index = () => {
   const [dbProducts, setDbProducts] = useState<any[]>([]);
@@ -18,7 +18,7 @@ const Index = () => {
       try {
         const { data } = await supabase.from('produtos').select('*');
         if (data) {
-          setDbProducts(data.filter(p => p.id !== 'store_config'));
+          setDbProducts(data.filter(p => p.id !== 'store_config' && p.id !== STORE_CONFIG_ID));
         }
       } catch (err) {
         console.error("Erro ao carregar produtos do banco:", err);

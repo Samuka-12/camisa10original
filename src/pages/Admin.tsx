@@ -203,7 +203,7 @@ export default function Admin() {
 
     const buscarProdutos = async () => {
         const { data } = await supabase.from('produtos').select('*').order('created_at', { ascending: false });
-        if (data) setProdutos(data.filter(p => p.id !== 'store_config'));
+        if (data) setProdutos(data.filter(p => p.id !== 'store_config' && p.id !== '00000000-0000-0000-0000-000000000000'));
     };
 
     const buscarMetaEvents = async () => {

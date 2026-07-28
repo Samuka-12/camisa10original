@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
+export const STORE_CONFIG_ID = '00000000-0000-0000-0000-000000000000';
+
 export interface PriceRule {
   id: string;
   nome: string;
@@ -328,7 +330,7 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
           event: '*',
           schema: 'public',
           table: 'produtos',
-          filter: 'id=eq.store_config'
+          filter: `id=eq.${STORE_CONFIG_ID}`
         },
         (payload: any) => {
           if (payload.new && payload.new.description) {
@@ -363,7 +365,7 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
       const { data } = await supabase
         .from('produtos')
         .select('description')
-        .eq('id', 'store_config')
+        .eq('id', STORE_CONFIG_ID)
         .single();
 
       if (data?.description) {
@@ -408,7 +410,7 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
         .from('produtos')
         .upsert([
           {
-            id: 'store_config',
+            id: STORE_CONFIG_ID,
             nome: 'store_config',
             preco: 0,
             description: JSON.stringify(newConfig)
@@ -431,7 +433,6 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
     const rules = config.precoGestao?.regras || [];
     const cats = Array.isArray(productCategory) ? productCategory : [productCategory];
 
-    // Apply specific product discount if exists
     if (productId && config.precoGestao?.descontosEspecificos) {
       const spec = config.precoGestao.descontosEspecificos.find(d => d.produtoId === productId);
       if (spec && spec.descontoPercent > 0) {
