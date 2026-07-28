@@ -21,7 +21,7 @@ export interface Coupon {
   codigo: string;
   nome: string;
   descricao?: string;
-  desconto: number; // percentage
+  desconto: number;
   escopo: 'tudo' | 'categoria' | 'produto';
   categoria?: string;
   produtoId?: string;
@@ -305,6 +305,25 @@ const DEFAULT_CONFIG: StoreConfig = {
   }
 };
 
+function mergeDeep(target: any, source: any): any {
+  const output = { ...target };
+  if (isObject(target) && isObject(source)) {
+    Object.keys(source).forEach(key => {
+      if (isObject(source[key])) {
+        if (!(key in target)) Object.assign(output, { [key]: source[key] });
+        else output[key] = mergeDeep(target[key], source[key]);
+      } else {
+        Object.assign(output, { [key]: source[key] });
+      }
+    });
+  }
+  return output;
+}
+
+function isObject(item: any): boolean {
+  return item && typeof item === 'object' && !Array.isArray(item);
+}
+
 interface StoreConfigContextType {
   config: StoreConfig;
   loading: boolean;
@@ -322,6 +341,7 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     loadConfig();
 
+    // Realtime sync via Supabase channel (best-effort, may not trigger if RLS blocks)
     const channel = supabase
       .channel('realtime_store_config_channel')
       .on(
@@ -341,20 +361,30 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
               localStorage.setItem('store_config_cache', JSON.stringify(merged));
               window.dispatchEvent(new CustomEvent('storeConfigUpdated', { detail: merged }));
             } catch (e) {
-              console.error('Realtime error:', e);
+              console.error('Realtime parse error:', e);
             }
           }
         }
       )
       .subscribe();
 
+    // Listen for cross-tab config updates
+    const handleConfigUpdate = (e: CustomEvent) => {
+      if (e.detail) {
+        setConfig(e.detail);
+      }
+    };
+    window.addEventListener('storeConfigUpdated', handleConfigUpdate as EventListener);
+
     return () => {
       supabase.removeChannel(channel);
+      window.removeEventListener('storeConfigUpdated', handleConfigUpdate as EventListener);
     };
   }, []);
 
   const loadConfig = async () => {
     try {
+      // 1. Load from localStorage cache first (instant)
       const cached = localStorage.getItem('store_config_cache');
       if (cached) {
         try {
@@ -362,18 +392,37 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
           setConfig(mergeDeep(DEFAULT_CONFIG, parsed));
         } catch (_) {}
       }
-      const { data } = await supabase
-        .from('produtos')
-        .select('description')
-        .eq('id', STORE_CONFIG_ID)
-        .single();
 
-      if (data?.description) {
-        const parsed = JSON.parse(data.description);
-        const merged = mergeDeep(DEFAULT_CONFIG, parsed);
-        setConfig(merged);
-        localStorage.setItem('store_config_cache', JSON.stringify(merged));
-      }
+      // 2. Load from API (server-side, bypasses RLS)
+      try {
+        const res = await fetch('/api/get-config');
+        if (res.ok) {
+          const { config: serverConfig } = await res.json();
+          if (serverConfig) {
+            const merged = mergeDeep(DEFAULT_CONFIG, serverConfig);
+            setConfig(merged);
+            localStorage.setItem('store_config_cache', JSON.stringify(merged));
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (_) {}
+
+      // 3. Fallback: try direct Supabase (works when admin is authenticated)
+      try {
+        const { data } = await supabase
+          .from('produtos')
+          .select('description')
+          .eq('id', STORE_CONFIG_ID)
+          .single();
+
+        if (data?.description) {
+          const parsed = JSON.parse(data.description);
+          const merged = mergeDeep(DEFAULT_CONFIG, parsed);
+          setConfig(merged);
+          localStorage.setItem('store_config_cache', JSON.stringify(merged));
+        }
+      } catch (_) {}
     } catch (e) {
       console.error('loadConfig error:', e);
     } finally {
@@ -381,31 +430,33 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
     }
   };
 
-  function mergeDeep(target: any, source: any): any {
-    const output = { ...target };
-    if (isObject(target) && isObject(source)) {
-      Object.keys(source).forEach(key => {
-        if (isObject(source[key])) {
-          if (!(key in target)) Object.assign(output, { [key]: source[key] });
-          else output[key] = mergeDeep(target[key], source[key]);
-        } else {
-          Object.assign(output, { [key]: source[key] });
-        }
-      });
-    }
-    return output;
-  }
-
-  function isObject(item: any): boolean {
-    return item && typeof item === 'object' && !Array.isArray(item);
-  }
-
   const saveConfig = async (newConfig: StoreConfig): Promise<boolean> => {
-    try {
-      setConfig(newConfig);
-      localStorage.setItem('store_config_cache', JSON.stringify(newConfig));
-      window.dispatchEvent(new CustomEvent('storeConfigUpdated', { detail: newConfig }));
+    // 1. Update state and localStorage immediately (optimistic update)
+    setConfig(newConfig);
+    localStorage.setItem('store_config_cache', JSON.stringify(newConfig));
+    window.dispatchEvent(new CustomEvent('storeConfigUpdated', { detail: newConfig }));
 
+    // 2. Try saving via API endpoint (server-side, bypasses RLS — primary method)
+    try {
+      const res = await fetch('/api/save-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config: newConfig }),
+      });
+
+      if (res.ok) {
+        console.log('Config saved via API (service role) ✅');
+        return true;
+      } else {
+        const err = await res.json().catch(() => ({ error: 'unknown' }));
+        console.warn('API save-config failed:', err);
+      }
+    } catch (apiErr) {
+      console.warn('API save-config exception:', apiErr);
+    }
+
+    // 3. Fallback: try direct Supabase (works when admin is authenticated)
+    try {
       const { error } = await supabase
         .from('produtos')
         .upsert([
@@ -417,15 +468,18 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
           }
         ], { onConflict: 'id' });
 
-      if (error) {
-        console.error('Supabase error saving store_config:', error);
-        return false;
+      if (!error) {
+        console.log('Config saved via Supabase client ✅');
+        return true;
       }
-      return true;
-    } catch (e) {
-      console.error('saveConfig exception:', e);
-      return false;
+      console.warn('Supabase upsert error:', error);
+    } catch (supaErr) {
+      console.warn('Supabase upsert exception:', supaErr);
     }
+
+    // 4. If all server methods fail, state and localStorage are still updated
+    // Return false so admin knows server persistence failed
+    return false;
   };
 
   const getAdjustedPrice = (productPrice: number, productCategory: string | string[], productId?: string): number => {
