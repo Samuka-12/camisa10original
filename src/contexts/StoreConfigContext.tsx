@@ -56,13 +56,49 @@ export interface FrontendConfig {
   heroSubtitle: string;
   heroCta: string;
   heroBg: string;
+  heroImage?: string;
   primaryColor: string;
   secondaryColor: string;
   accentColor: string;
+  buttonBorderRadius?: string;
   footerBg: string;
   footerTextColor: string;
   footerCopyright: string;
   fontFamily: string;
+}
+
+export interface VendaRealizada {
+  id: string;
+  cliente: string;
+  produto: string;
+  valor: number;
+  origem: 'checkout' | 'link_externo';
+  data: string;
+}
+
+export interface GastoAnuncio {
+  id: string;
+  campanha: string;
+  conjunto: string;
+  plataforma: 'meta' | 'google' | 'tiktok';
+  valor: number;
+  data: string;
+}
+
+export interface EstrategiaEscala {
+  id: string;
+  titulo: string;
+  descricao: string;
+  metaRoas?: string;
+  criadaEm: string;
+}
+
+export interface DescontoProdutoSpec {
+  produtoId: string;
+  descontoPercent: number;
+  tempoLimitado?: boolean;
+  freteGratis?: boolean;
+  estadoFreteGratis?: string;
 }
 
 export interface StoreConfig {
@@ -72,6 +108,7 @@ export interface StoreConfig {
     textoBotao: string;
     statusLoja: string;
     mensagensPersonalizadas: Record<string, string>;
+    mensagensPorProduto: Record<string, string>;
   };
   bannerGeolocalizado: {
     ativo: boolean;
@@ -81,6 +118,8 @@ export interface StoreConfig {
     tamanhoFonte: string;
     textoTemplate: string;
     posicao: string;
+    formatoBanner: 'barra_fina' | 'banner_largo' | 'card_popup' | 'pilula_fixa' | 'full_width';
+    alturaPx?: string;
     visibilidade: 'global' | 'inicial' | 'categoria' | 'produto';
     categoriaVisib?: string;
     produtoVisibId?: string;
@@ -136,6 +175,7 @@ export interface StoreConfig {
   precoGestao: {
     regras: PriceRule[];
     cupons: Coupon[];
+    descontosEspecificos?: DescontoProdutoSpec[];
   };
   stories: {
     lista: FloatingStory[];
@@ -147,6 +187,9 @@ export interface StoreConfig {
   calculadoraAds: {
     gastos: number;
     vendas: number;
+    vendasPlanilha: VendaRealizada[];
+    gastosDetalhados: GastoAnuncio[];
+    estrategiasEscala: EstrategiaEscala[];
   };
   frontend: FrontendConfig;
 }
@@ -157,7 +200,10 @@ const DEFAULT_CONFIG: StoreConfig = {
     numero: '5547983174463',
     textoBotao: 'Comprar pelo WhatsApp',
     statusLoja: 'Online',
-    mensagensPersonalizadas: {}
+    mensagensPersonalizadas: {
+      padrao: 'Olá! Vim pelo site e quero saber mais sobre as camisetas de time!'
+    },
+    mensagensPorProduto: {}
   },
   bannerGeolocalizado: {
     ativo: true,
@@ -167,6 +213,8 @@ const DEFAULT_CONFIG: StoreConfig = {
     tamanhoFonte: '14px',
     textoTemplate: '⚡ Frete Grátis para {cidade} - {estado} em compras acima de R$ 300! ⚡',
     posicao: 'topo_vitrine',
+    formatoBanner: 'barra_fina',
+    alturaPx: '48px',
     visibilidade: 'global'
   },
   bannerTopo: {
@@ -219,7 +267,8 @@ const DEFAULT_CONFIG: StoreConfig = {
   },
   precoGestao: {
     regras: [],
-    cupons: []
+    cupons: [],
+    descontosEspecificos: []
   },
   stories: {
     lista: []
@@ -230,7 +279,10 @@ const DEFAULT_CONFIG: StoreConfig = {
   },
   calculadoraAds: {
     gastos: 0,
-    vendas: 0
+    vendas: 0,
+    vendasPlanilha: [],
+    gastosDetalhados: [],
+    estrategiasEscala: []
   },
   frontend: {
     headerBg: '#0a0a0a',
@@ -239,9 +291,11 @@ const DEFAULT_CONFIG: StoreConfig = {
     heroSubtitle: 'Camisetas Oficiais dos Maiores Times do Mundo',
     heroCta: 'Ver Camisetas',
     heroBg: '#0a0a0a',
+    heroImage: '',
     primaryColor: '#dc2626',
     secondaryColor: '#0a0a0a',
     accentColor: '#fbbf24',
+    buttonBorderRadius: '12px',
     footerBg: '#0a0a0a',
     footerTextColor: '#ffffff',
     footerCopyright: '© 2025 Camisa 10. Todos os direitos reservados.',
@@ -266,9 +320,8 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     loadConfig();
 
-    // Supabase Realtime Subscription for store_config changes (syncs mobile & desktop instantly)
     const channel = supabase
-      .channel('realtime_store_config')
+      .channel('realtime_store_config_channel')
       .on(
         'postgres_changes',
         {
@@ -286,7 +339,7 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
               localStorage.setItem('store_config_cache', JSON.stringify(merged));
               window.dispatchEvent(new CustomEvent('storeConfigUpdated', { detail: merged }));
             } catch (e) {
-              console.error('Realtime config parse error:', e);
+              console.error('Realtime error:', e);
             }
           }
         }
@@ -302,8 +355,10 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
     try {
       const cached = localStorage.getItem('store_config_cache');
       if (cached) {
-        const parsed = JSON.parse(cached);
-        setConfig(prev => mergeDeep(DEFAULT_CONFIG, parsed));
+        try {
+          const parsed = JSON.parse(cached);
+          setConfig(mergeDeep(DEFAULT_CONFIG, parsed));
+        } catch (_) {}
       }
       const { data } = await supabase
         .from('produtos')
@@ -318,10 +373,7 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
         localStorage.setItem('store_config_cache', JSON.stringify(merged));
       }
     } catch (e) {
-      const cached = localStorage.getItem('store_config_cache');
-      if (cached) {
-        try { setConfig(prev => mergeDeep(DEFAULT_CONFIG, JSON.parse(cached))); } catch (_) {}
-      }
+      console.error('loadConfig error:', e);
     } finally {
       setLoading(false);
     }
@@ -364,7 +416,7 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
         ], { onConflict: 'id' });
 
       if (error) {
-        console.error('Supabase saveConfig error:', error);
+        console.error('Supabase error saving store_config:', error);
         return false;
       }
       return true;
@@ -378,6 +430,14 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
     let finalPrice = productPrice;
     const rules = config.precoGestao?.regras || [];
     const cats = Array.isArray(productCategory) ? productCategory : [productCategory];
+
+    // Apply specific product discount if exists
+    if (productId && config.precoGestao?.descontosEspecificos) {
+      const spec = config.precoGestao.descontosEspecificos.find(d => d.produtoId === productId);
+      if (spec && spec.descontoPercent > 0) {
+        finalPrice = finalPrice * (1 - spec.descontoPercent / 100);
+      }
+    }
 
     rules.forEach(rule => {
       if (!rule.ativa) return;

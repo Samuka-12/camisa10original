@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import { useStoreConfig, PriceRule, FloatingStory, CatalogImage, Coupon } from '../contexts/StoreConfigContext';
+import {
+    useStoreConfig, PriceRule, FloatingStory, CatalogImage, Coupon,
+    VendaRealizada, GastoAnuncio, EstrategiaEscala, DescontoProdutoSpec
+} from '../contexts/StoreConfigContext';
 import { allProducts } from '../data/products';
 import { getTeamPlayers, getTeamsWithPlayers } from '../data/teamPlayers';
 import {
     LayoutDashboard, ShoppingCart, PlusCircle, Eye, RefreshCw, Trash2,
     LogOut, Sliders, Activity, Calculator, Shield, Camera, Sparkles,
     Play, Plus, Download, Search, Check, Edit2, ExternalLink, Copy, Tag,
-    Package, Film, Palette, X, Link2, Menu, Save
+    Package, Film, Palette, X, Link2, Menu, Save, DollarSign, TrendingUp,
+    MessageSquare, Truck, Clock, Percent, ListFilter, CheckCircle
 } from 'lucide-react';
 import { ImageUploader } from '@/components/admin/ImageUploader';
 
@@ -63,7 +67,8 @@ export default function Admin() {
     // Local config copy
     const [localConfig, setLocalConfig] = useState(config);
 
-    // NEW PRODUCT FORM
+    // NEW / EDIT PRODUCT FORM STATE
+    const [editingProdId, setEditingProdId] = useState<string | null>(null);
     const [nomeProd, setNomeProd] = useState('');
     const [precoProd, setPrecoProd] = useState('');
     const [productImages, setProductImages] = useState<string[]>(['', '', '', '', '', '']);
@@ -75,18 +80,19 @@ export default function Admin() {
     const [selectedSizes, setSelectedSizes] = useState<string[]>(['P', 'M', 'G', 'GG', 'XGG']);
     const [selectedPlayer, setSelectedPlayer] = useState('');
 
-    // DYNAMIC PRODUCT FORM
+    // PRODUCT SPECIFIC DISCOUNT / PROMO SETTINGS
+    const [prodDescontoPercent, setProdDescontoPercent] = useState('0');
+    const [prodTempoLimitado, setProdTempoLimitado] = useState(false);
+    const [prodFreteGratis, setProdFreteGratis] = useState(false);
+    const [prodEstadoFreteGratis, setProdEstadoFreteGratis] = useState('');
+
+    // DYNAMIC PRODUCT LINK FORM
     const [dynNome, setDynNome] = useState('');
     const [dynPreco, setDynPreco] = useState('');
     const [dynImg, setDynImg] = useState('');
     const [dynDesc, setDynDesc] = useState('');
     const [dynLinks, setDynLinks] = useState<Array<{ id: string; nome: string; preco: string; img: string; url: string }>>([]);
     const [copiedId, setCopiedId] = useState<string | null>(null);
-
-    // EDIT VITRINE PRODUCT
-    const [editingProd, setEditingProd] = useState<string | null>(null);
-    const [editNome, setEditNome] = useState('');
-    const [editPreco, setEditPreco] = useState('');
 
     // PRICE RULES
     const [ruleNome, setRuleNome] = useState('');
@@ -129,11 +135,32 @@ export default function Admin() {
     const [imageCols, setImageCols] = useState<'2' | '3' | '4'>('4');
     const [newAlbumName, setNewAlbumName] = useState('');
 
-    // CALCULATOR
+    // CALCULATOR & PLANILHA DE VENDAS & AD SPEND & ESCALA
     const [calcVal1, setCalcVal1] = useState('');
     const [calcVal2, setCalcVal2] = useState('');
     const [calcResult, setCalcResult] = useState<number | null>(null);
     const [calcOp, setCalcOp] = useState<'+' | '-' | '*' | '/'>('-');
+
+    // Planilha de Vendas Form
+    const [vendaCliente, setVendaCliente] = useState('');
+    const [vendaProduto, setVendaProduto] = useState('');
+    const [vendaValor, setVendaValor] = useState('');
+    const [vendaOrigem, setVendaOrigem] = useState<'checkout' | 'link_externo'>('checkout');
+
+    // Gasto de Anúncios Form
+    const [gastoCampanha, setGastoCampanha] = useState('');
+    const [gastoConjunto, setGastoConjunto] = useState('');
+    const [gastoPlataforma, setGastoPlataforma] = useState<'meta' | 'google' | 'tiktok'>('meta');
+    const [gastoValor, setGastoValor] = useState('');
+
+    // Estratégias de Escala Form
+    const [escalaTitulo, setEscalaTitulo] = useState('');
+    const [escalaDesc, setEscalaDesc] = useState('');
+    const [escalaRoas, setEscalaRoas] = useState('');
+
+    // WhatsApp Message Per Product Form
+    const [wspSelectedProd, setWspSelectedProd] = useState('');
+    const [wspProdMessage, setWspProdMessage] = useState('');
 
     // SAVE FEEDBACK
     const [saving, setSaving] = useState(false);
@@ -196,14 +223,14 @@ export default function Admin() {
         if (authorized) refreshAll();
     }, [authorized]);
 
-    // -------- SINGLE SAVE ALL BUTTON LOGIC (Persists to Supabase & syncs mobile + desktop) --------
+    // -------- GLOBAL SAVE TO SUPABASE & LOCALSTORAGE --------
     const handleSaveAll = async (targetConfig = localConfig) => {
         setSaving(true);
         setSaveMsg('');
         const success = await saveConfig(targetConfig);
         setSaving(false);
         if (success) {
-            setSaveMsg('✅ TODAS AS ALTERAÇÕES FORAM SALVAS NO BANCO E APLICADAS NO SITE!');
+            setSaveMsg('✅ ALTERAÇÕES SALVAS COM SUCESSO NO BANCO DE DADOS E APLICADAS EM TODA A LOJA!');
         } else {
             setSaveMsg('⚠️ Erro ao salvar no banco Supabase. Tente novamente.');
         }
@@ -225,15 +252,58 @@ export default function Admin() {
         }, 1500);
     };
 
-    // PRODUCT CRUD
-    const cadastrarProduto = async (e: React.FormEvent) => {
+    // PRODUCT CREATE / EDIT LOGIC
+    const handleStartEditProduct = (prod: any) => {
+        setEditingProdId(prod.id);
+        setNomeProd(prod.nome || prod.name || '');
+        setPrecoProd(String(prod.preco || prod.priceNum || ''));
+        setCategoryProd(Array.isArray(prod.category) ? prod.category[0] : (prod.category || 'europeus'));
+        setTeamProd(prod.team || 'Personalizado');
+        setDescProd(prod.description || '');
+
+        let imgs: string[] = ['', '', '', '', '', ''];
+        if (prod.images) {
+            try {
+                const parsed = typeof prod.images === 'string' ? JSON.parse(prod.images) : prod.images;
+                if (Array.isArray(parsed)) {
+                    parsed.forEach((img: string, i: number) => { if (i < 6) imgs[i] = img; });
+                }
+            } catch (_) {
+                imgs[0] = prod.imagem_url || prod.image || '';
+            }
+        } else if (prod.imagem_url || prod.image) {
+            imgs[0] = prod.imagem_url || prod.image;
+        }
+        setProductImages(imgs);
+        setSelectedSizes(prod.sizes || ['P', 'M', 'G', 'GG', 'XGG']);
+
+        // Check specific product discount settings
+        const spec = (localConfig.precoGestao?.descontosEspecificos || []).find(d => d.produtoId === prod.id);
+        if (spec) {
+            setProdDescontoPercent(String(spec.descontoPercent || 0));
+            setProdTempoLimitado(!!spec.tempoLimitado);
+            setProdFreteGratis(!!spec.freteGratis);
+            setProdEstadoFreteGratis(spec.estadoFreteGratis || '');
+        } else {
+            setProdDescontoPercent('0');
+            setProdTempoLimitado(false);
+            setProdFreteGratis(false);
+            setProdEstadoFreteGratis('');
+        }
+
+        setAba('novo');
+    };
+
+    const salvarProduto = async (e: React.FormEvent) => {
         e.preventDefault();
         const precoNumerico = parseFloat(precoProd.replace(',', '.'));
         const mainImg = productImages.find(i => i) || '';
         const allImgs = productImages.filter(i => i);
+        const prodId = editingProdId || crypto.randomUUID();
 
-        const { error } = await supabase.from('produtos').insert([{
-            id: crypto.randomUUID(),
+        // 1. Save product to Supabase 'produtos' table
+        const { error } = await supabase.from('produtos').upsert([{
+            id: prodId,
             nome: nomeProd,
             preco: precoNumerico,
             imagem_url: mainImg,
@@ -243,16 +313,43 @@ export default function Admin() {
             team: teamProd,
             description: descProd + (descVideoProd ? `\n\n[VÍDEO](${descVideoProd})` : ''),
             sizes: selectedSizes
-        }]);
+        }], { onConflict: 'id' });
 
-        if (!error) {
-            alert('✅ Produto cadastrado com sucesso!');
-            setNomeProd(''); setPrecoProd(''); setProductImages(['', '', '', '', '', '']); setDescProd(''); setDescVideoProd(''); setSelectedPlayer('');
-            await buscarProdutos();
-            setAba('vitrine');
-        } else {
-            alert('Erro ao cadastrar no banco: ' + error.message);
+        if (error) {
+            alert('Erro ao salvar produto no banco: ' + error.message);
+            return;
         }
+
+        // 2. Save specific product discount & offer settings in store_config
+        const currentSpecs = localConfig.precoGestao?.descontosEspecificos || [];
+        const existingIdx = currentSpecs.findIndex(s => s.produtoId === prodId);
+        const newSpec: DescontoProdutoSpec = {
+            produtoId: prodId,
+            descontoPercent: parseFloat(prodDescontoPercent) || 0,
+            tempoLimitado: prodTempoLimitado,
+            freteGratis: prodFreteGratis,
+            estadoFreteGratis: prodEstadoFreteGratis || undefined
+        };
+
+        let updatedSpecs = [...currentSpecs];
+        if (existingIdx >= 0) updatedSpecs[existingIdx] = newSpec;
+        else updatedSpecs.push(newSpec);
+
+        const updatedConfig = {
+            ...localConfig,
+            precoGestao: { ...localConfig.precoGestao, descontosEspecificos: updatedSpecs }
+        };
+
+        setLocalConfig(updatedConfig);
+        await handleSaveAll(updatedConfig);
+
+        alert(editingProdId ? '✅ Produto atualizado com sucesso!' : '✅ Produto cadastrado na vitrine!');
+
+        // Reset form
+        setEditingProdId(null); setNomeProd(''); setPrecoProd(''); setProductImages(['', '', '', '', '', '']); setDescProd(''); setDescVideoProd(''); setSelectedPlayer('');
+        setProdDescontoPercent('0'); setProdTempoLimitado(false); setProdFreteGratis(false); setProdEstadoFreteGratis('');
+        await buscarProdutos();
+        setAba('vitrine');
     };
 
     const deletarProduto = async (id: string) => {
@@ -260,13 +357,6 @@ export default function Admin() {
         const { error } = await supabase.from('produtos').delete().eq('id', id);
         if (error) alert('Erro ao excluir: ' + error.message);
         else { await buscarProdutos(); }
-    };
-
-    const salvarEdicaoProduto = async (id: string) => {
-        const preco = parseFloat(editPreco.replace(',', '.'));
-        const { error } = await supabase.from('produtos').update({ nome: editNome, preco }).eq('id', id);
-        if (!error) { setEditingProd(null); await buscarProdutos(); }
-        else alert('Erro: ' + error.message);
     };
 
     // DYNAMIC LINKS
@@ -385,13 +475,6 @@ export default function Admin() {
         await handleSaveAll(updatedConfig);
     };
 
-    const handleToggleCoupon = async (id: string) => {
-        const updated = (localConfig.precoGestao?.cupons || []).map(c => c.id === id ? { ...c, ativo: !c.ativo } : c);
-        const updatedConfig = { ...localConfig, precoGestao: { ...localConfig.precoGestao, cupons: updated } };
-        setLocalConfig(updatedConfig);
-        await handleSaveAll(updatedConfig);
-    };
-
     // STORIES
     const handleAddStory = async () => {
         if (!storyNome || !storyVideoUrl) { alert('Nome e URL/arquivo do vídeo são obrigatórios!'); return; }
@@ -470,7 +553,7 @@ export default function Admin() {
         setNewAlbumName('');
     };
 
-    // CALCULATOR
+    // CALCULATOR & PLANILHA DE VENDAS & AD SPEND & ESCALA
     const handleCalculator = () => {
         const v1 = parseFloat(calcVal1); const v2 = parseFloat(calcVal2);
         if (isNaN(v1) || isNaN(v2)) { alert('Digite números válidos!'); return; }
@@ -481,6 +564,101 @@ export default function Admin() {
         else if (v2 === 0) { alert('Divisão por zero!'); return; }
         else res = v1 / v2;
         setCalcResult(res);
+    };
+
+    const handleAddVendaPlanilha = async () => {
+        if (!vendaCliente || !vendaValor) { alert('Preencha o nome do cliente e valor!'); return; }
+        const novaVenda: VendaRealizada = {
+            id: crypto.randomUUID(),
+            cliente: vendaCliente,
+            produto: vendaProduto || 'Camiseta Manto Sagrado',
+            valor: parseFloat(vendaValor) || 0,
+            origem: vendaOrigem,
+            data: new Date().toISOString()
+        };
+        const currentPlanilha = localConfig.calculadoraAds?.vendasPlanilha || [];
+        const updatedConfig = {
+            ...localConfig,
+            calculadoraAds: { ...localConfig.calculadoraAds, vendasPlanilha: [novaVenda, ...currentPlanilha] }
+        };
+        setLocalConfig(updatedConfig);
+        await handleSaveAll(updatedConfig);
+        setVendaCliente(''); setVendaProduto(''); setVendaValor('');
+    };
+
+    const handleRemoveVendaPlanilha = async (id: string) => {
+        const updated = (localConfig.calculadoraAds?.vendasPlanilha || []).filter(v => v.id !== id);
+        const updatedConfig = { ...localConfig, calculadoraAds: { ...localConfig.calculadoraAds, vendasPlanilha: updated } };
+        setLocalConfig(updatedConfig);
+        await handleSaveAll(updatedConfig);
+    };
+
+    const handleAddGastoAnuncio = async () => {
+        if (!gastoCampanha || !gastoValor) { alert('Preencha nome da campanha e valor!'); return; }
+        const novoGasto: GastoAnuncio = {
+            id: crypto.randomUUID(),
+            campanha: gastoCampanha,
+            conjunto: gastoConjunto || 'Geral',
+            plataforma: gastoPlataforma,
+            valor: parseFloat(gastoValor) || 0,
+            data: new Date().toISOString()
+        };
+        const currentGastos = localConfig.calculadoraAds?.gastosDetalhados || [];
+        const updatedConfig = {
+            ...localConfig,
+            calculadoraAds: { ...localConfig.calculadoraAds, gastosDetalhados: [novoGasto, ...currentGastos] }
+        };
+        setLocalConfig(updatedConfig);
+        await handleSaveAll(updatedConfig);
+        setGastoCampanha(''); setGastoConjunto(''); setGastoValor('');
+    };
+
+    const handleRemoveGastoAnuncio = async (id: string) => {
+        const updated = (localConfig.calculadoraAds?.gastosDetalhados || []).filter(g => g.id !== id);
+        const updatedConfig = { ...localConfig, calculadoraAds: { ...localConfig.calculadoraAds, gastosDetalhados: updated } };
+        setLocalConfig(updatedConfig);
+        await handleSaveAll(updatedConfig);
+    };
+
+    const handleAddEstrategiaEscala = async () => {
+        if (!escalaTitulo || !escalaDesc) { alert('Preencha o título e a descrição da estratégia!'); return; }
+        const novaEstrategia: EstrategiaEscala = {
+            id: crypto.randomUUID(),
+            titulo: escalaTitulo,
+            descricao: escalaDesc,
+            metaRoas: escalaRoas || undefined,
+            criadaEm: new Date().toISOString()
+        };
+        const currentEstrategias = localConfig.calculadoraAds?.estrategiasEscala || [];
+        const updatedConfig = {
+            ...localConfig,
+            calculadoraAds: { ...localConfig.calculadoraAds, estrategiasEscala: [novaEstrategia, ...currentEstrategias] }
+        };
+        setLocalConfig(updatedConfig);
+        await handleSaveAll(updatedConfig);
+        setEscalaTitulo(''); setEscalaDesc(''); setEscalaRoas('');
+    };
+
+    const handleRemoveEstrategiaEscala = async (id: string) => {
+        const updated = (localConfig.calculadoraAds?.estrategiasEscala || []).filter(e => e.id !== id);
+        const updatedConfig = { ...localConfig, calculadoraAds: { ...localConfig.calculadoraAds, estrategiasEscala: updated } };
+        setLocalConfig(updatedConfig);
+        await handleSaveAll(updatedConfig);
+    };
+
+    const handleSaveWspProdMessage = async () => {
+        if (!wspSelectedProd || !wspProdMessage) { alert('Selecione o produto/categoria e digite a mensagem!'); return; }
+        const currentMsgs = localConfig.whatsapp?.mensagensPorProduto || {};
+        const updatedConfig = {
+            ...localConfig,
+            whatsapp: {
+                ...localConfig.whatsapp,
+                mensagensPorProduto: { ...currentMsgs, [wspSelectedProd]: wspProdMessage }
+            }
+        };
+        setLocalConfig(updatedConfig);
+        await handleSaveAll(updatedConfig);
+        setWspProdMessage('');
     };
 
     // METRICS
@@ -494,8 +672,8 @@ export default function Admin() {
     const initiateCheckouts = metaEvents.filter(e => e.event_name === 'InitiateCheckout').length;
 
     const allVitrineProducts = [
-        ...allProducts.map(p => ({ id: p.id, nome: p.name, preco: p.priceNum, imagem_url: p.image, category: Array.isArray(p.category) ? p.category[0] : p.category, isStatic: true })),
-        ...produtos.map(p => ({ ...p, isStatic: false }))
+        ...allProducts.map(p => ({ id: p.id, nome: p.name, preco: p.priceNum, imagem_url: p.image, category: Array.isArray(p.category) ? p.category[0] : p.category, isStatic: true, raw: p })),
+        ...produtos.map(p => ({ ...p, isStatic: false, raw: p }))
     ];
 
     const teamPlayersList = getTeamPlayers(teamProd);
@@ -503,13 +681,13 @@ export default function Admin() {
     const tabsList: Array<[ActiveTab, React.ReactNode, string]> = [
         ['dashboard', <LayoutDashboard size={16} key="db" />, 'Dashboard'],
         ['vitrine', <Package size={16} key="vit" />, 'Vitrine da Loja'],
-        ['novo', <PlusCircle size={16} key="nov" />, 'Novo Produto'],
+        ['novo', <PlusCircle size={16} key="nov" />, 'Novo / Editar Produto'],
         ['dinamicos', <Link2 size={16} key="din" />, 'Produtos Dinâmicos'],
         ['configuracoes', <Sliders size={16} key="cfg" />, 'Banners & Widgets'],
         ['stories', <Play size={16} key="st" />, 'Stories Flutuantes'],
         ['precos', <Activity size={16} key="prc" />, 'Preços & Cupons'],
         ['imagens', <Camera size={16} key="img" />, 'Banco de Imagens'],
-        ['calculadora', <Calculator size={16} key="calc" />, 'Calculadora ROI'],
+        ['calculadora', <Calculator size={16} key="calc" />, 'Calculadora ROI & Escala'],
         ['integracoes', <Shield size={16} key="int" />, 'Integrações'],
         ['frontend', <Palette size={16} key="fe" />, 'Editar Frontend'],
     ];
@@ -529,7 +707,7 @@ export default function Admin() {
                 <div style={{ textAlign: 'center', marginBottom: '4px' }}>
                     <div style={{ background: 'linear-gradient(135deg, #7c3aed, #3b82f6)', color: '#fff', padding: '12px', borderRadius: '14px', width: 'fit-content', margin: '0 auto 12px', boxShadow: '0 4px 20px rgba(124,58,237,0.4)', fontSize: '28px', lineHeight: 1 }}>🐱</div>
                     <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#fff', margin: 0 }}>MantoSagrado Admin</h2>
-                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>Painel Mobile & Desktop 💸</p>
+                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>Painel de Controle 💸</p>
                 </div>
                 {loginError && <div style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: '8px', padding: '10px 14px', color: '#fc8181', fontSize: '12px', fontWeight: 700 }}>{loginError}</div>}
                 <div>
@@ -547,19 +725,19 @@ export default function Admin() {
         </div>
     );
 
-    // MAIN ADMIN INTERFACE (Responsive Mobile & Desktop)
+    // MAIN ADMIN INTERFACE
     return (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'transparent', color: '#fff', fontFamily: 'sans-serif', position: 'relative' }}>
             <AnimatedBackground />
 
-            {/* Notification Toast */}
+            {/* Save Notification Toast */}
             {saveMsg && (
-                <div style={{ position: 'fixed', top: '12px', right: '12px', left: '12px', smLeft: 'auto', zIndex: 200, background: saveMsg.startsWith('✅') ? 'rgba(16,185,129,0.95)' : 'rgba(245,158,11,0.95)', color: '#fff', padding: '12px 18px', borderRadius: '12px', fontWeight: 900, fontSize: '12px', textAlign: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)' }}>
+                <div style={{ position: 'fixed', top: '14px', right: '14px', left: '14px', zIndex: 300, background: saveMsg.startsWith('✅') ? 'rgba(16,185,129,0.95)' : 'rgba(245,158,11,0.95)', color: '#fff', padding: '14px 20px', borderRadius: '14px', fontWeight: 900, fontSize: '13px', textAlign: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.6)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.2)' }}>
                     {saveMsg}
                 </div>
             )}
 
-            {/* MOBILE TOP HEADER */}
+            {/* MOBILE HEADER */}
             <header className="md:hidden flex items-center justify-between p-4 bg-slate-950/90 border-b border-white/10 sticky top-0 z-40 backdrop-blur-md">
                 <div className="flex items-center gap-2 font-black text-sm text-white">
                     <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-1.5 rounded-lg text-lg">🐱</div>
@@ -567,7 +745,7 @@ export default function Admin() {
                 </div>
                 <div className="flex items-center gap-2">
                     <button onClick={() => handleSaveAll()} disabled={saving} className="bg-gradient-to-r from-green-500 to-emerald-600 text-white font-black px-3 py-1.5 rounded-lg text-xs flex items-center gap-1 shadow">
-                        <Save size={13} /> {saving ? 'Salvando...' : 'SALVAR BANCO'}
+                        <Save size={13} /> {saving ? 'Salvando...' : 'SALVAR NO BANCO'}
                     </button>
                     <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 bg-slate-800 border border-white/10 rounded-lg text-white">
                         {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -575,7 +753,7 @@ export default function Admin() {
                 </div>
             </header>
 
-            {/* MOBILE MENU MODAL / OVERLAY */}
+            {/* MOBILE MENU */}
             {mobileMenuOpen && (
                 <div className="md:hidden fixed inset-0 z-30 bg-slate-950/95 backdrop-blur-xl p-5 pt-20 flex flex-col justify-between overflow-y-auto">
                     <nav className="space-y-1">
@@ -592,7 +770,7 @@ export default function Admin() {
 
                     <div className="pt-6 border-t border-white/10 space-y-3">
                         <button onClick={() => { handleSaveAll(); setMobileMenuOpen(false); }} disabled={saving} className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-black p-3.5 rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg">
-                            <Save size={16} /> {saving ? 'Salvando...' : '💾 SALVAR TODAS ALTERAÇÕES NO BANCO'}
+                            <Save size={16} /> {saving ? 'Salvando...' : '💾 SALVAR TUDO NO BANCO DE DADOS'}
                         </button>
                         <button onClick={handleLogout} className="w-full text-red-400 font-bold p-3 text-sm flex items-center justify-center gap-2">
                             <LogOut size={16} /> Sair do Painel
@@ -617,13 +795,13 @@ export default function Admin() {
                         ))}
                     </nav>
 
-                    {/* DESKTOP SAVE ALL BUTTON */}
+                    {/* GLOBAL SAVE BUTTON */}
                     <button
                         onClick={() => handleSaveAll()}
                         disabled={saving}
                         className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-black p-3 rounded-xl cursor-pointer mb-3 shadow-lg transition text-xs flex items-center justify-center gap-2 border border-green-400/30"
                     >
-                        <Save size={15} /> {saving ? 'SALVANDO...' : '💾 SALVAR TODAS AS ALTERAÇÕES'}
+                        <Save size={15} /> {saving ? 'SALVANDO...' : '💾 SALVAR NO BANCO DE DADOS'}
                     </button>
 
                     <button onClick={handleLogout} className="border-none bg-none color-red-400 font-bold flex gap-2 p-2.5 cursor-pointer text-xs items-center text-red-400 hover:text-red-300">
@@ -633,19 +811,18 @@ export default function Admin() {
 
                 {/* MAIN CONTENT AREA */}
                 <main className="flex-1 p-4 sm:p-6 md:p-8 z-10 overflow-y-auto max-w-full">
-                    {/* Header bar */}
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
                         <div>
                             <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
                                 {aba === 'dashboard' && '📊 Dashboard de Vendas'}
                                 {aba === 'vitrine' && '🏪 Vitrine da Loja'}
-                                {aba === 'novo' && '➕ Novo Produto'}
+                                {aba === 'novo' && (editingProdId ? '✏️ Editar Produto Existente' : '➕ Novo Produto')}
                                 {aba === 'dinamicos' && '🔗 Produtos Dinâmicos'}
                                 {aba === 'configuracoes' && '⚙️ Banners & Widgets'}
                                 {aba === 'stories' && '📱 Stories Flutuantes'}
                                 {aba === 'precos' && '💰 Preços & Cupons'}
                                 {aba === 'imagens' && '🖼️ Banco de Imagens'}
-                                {aba === 'calculadora' && '🧮 Calculadora ROI'}
+                                {aba === 'calculadora' && '🧮 Calculadora ROI, Planilha & Escala'}
                                 {aba === 'integracoes' && '🔗 Integrações'}
                                 {aba === 'frontend' && '🎨 Editar Frontend'}
                             </h1>
@@ -679,7 +856,7 @@ export default function Admin() {
                         <div className="space-y-5">
                             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                                 {[
-                                    ['💰 Faturamento', `R$ ${totalFaturamento.toFixed(2).replace('.', ',')}`, 'text-green-400'],
+                                    ['💰 Faturamento Total', `R$ ${totalFaturamento.toFixed(2).replace('.', ',')}`, 'text-green-400'],
                                     ['📥 Leads (Checkout)', String(totalLeads), 'text-blue-400'],
                                     ['✅ Vendas Pagas', String(pedidosPagos), 'text-purple-400'],
                                     ['📈 Conversão', `${taxaConversao}%`, 'text-amber-400'],
@@ -745,57 +922,54 @@ export default function Admin() {
                         <div className="space-y-4">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                                 <p className="text-xs sm:text-sm text-gray-400">{allVitrineProducts.length} produtos na vitrine ({allProducts.length} estáticos + {produtos.length} cadastrados)</p>
-                                <button onClick={() => setAba('novo')} style={{ ...btnRef, background: 'linear-gradient(135deg,#7c3aed,#3b82f6)', border: 'none', color: '#fff', fontWeight: 900 }}>
-                                    <Plus size={14} /> Adicionar Produto
+                                <button onClick={() => { setEditingProdId(null); setAba('novo'); }} style={{ ...btnRef, background: 'linear-gradient(135deg,#7c3aed,#3b82f6)', border: 'none', color: '#fff', fontWeight: 900 }}>
+                                    <Plus size={14} /> Novo Produto
                                 </button>
                             </div>
                             <div style={tabCard}>
                                 <div style={{ overflowX: 'auto' }}>
                                     <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
                                         <thead><tr>
-                                            <th style={th}>FOTO</th><th style={th}>PRODUTO</th><th style={th}>PREÇO</th><th style={th}>TIPO</th><th style={th}>AÇÕES</th>
+                                            <th style={th}>FOTO</th><th style={th}>PRODUTO</th><th style={th}>PREÇO</th><th style={th}>OFERTA / DESC</th><th style={th}>AÇÕES</th>
                                         </tr></thead>
                                         <tbody>
-                                            {allVitrineProducts.map(prod => (
-                                                <tr key={prod.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                                                    <td style={td}>
-                                                        <div style={{ width: '44px', height: '44px', background: '#fff', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
-                                                            <img src={prod.imagem_url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="" />
-                                                        </div>
-                                                    </td>
-                                                    <td style={td}>
-                                                        {editingProd === prod.id ? (
-                                                            <div className="flex gap-2 flex-wrap">
-                                                                <input value={editNome} onChange={e => setEditNome(e.target.value)} style={{ ...input, marginBottom: 0, width: '140px' }} />
-                                                                <input value={editPreco} onChange={e => setEditPreco(e.target.value)} style={{ ...input, marginBottom: 0, width: '70px' }} placeholder="Preço" />
+                                            {allVitrineProducts.map(prod => {
+                                                const spec = (localConfig.precoGestao?.descontosEspecificos || []).find(s => s.produtoId === prod.id);
+                                                return (
+                                                    <tr key={prod.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                                                        <td style={td}>
+                                                            <div style={{ width: '44px', height: '44px', background: '#fff', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
+                                                                <img src={prod.imagem_url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="" />
                                                             </div>
-                                                        ) : (
-                                                            <><strong style={{ fontSize: '12px' }}>{prod.nome}</strong><br /><span style={{ fontSize: '11px', color: '#a78bfa' }}>{prod.category}</span></>
-                                                        )}
-                                                    </td>
-                                                    <td style={{ ...td, fontWeight: 900, color: '#10b981' }}>R$ {(prod.preco || 0).toFixed(2).replace('.', ',')}</td>
-                                                    <td style={td}>
-                                                        <span style={{ padding: '3px 7px', borderRadius: '5px', fontSize: '10px', fontWeight: 900, background: prod.isStatic ? 'rgba(59,130,246,0.2)' : 'rgba(124,58,237,0.2)', color: prod.isStatic ? '#93c5fd' : '#c4b5fd' }}>
-                                                            {prod.isStatic ? 'ESTÁTICO' : 'DINÂMICO'}
-                                                        </span>
-                                                    </td>
-                                                    <td style={td}>
-                                                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                                                            <a href={`/checkout?id=${prod.id}`} target="_blank" style={{ ...btnV, textDecoration: 'none' }}><ExternalLink size={11} /> Checkout</a>
-                                                            {!prod.isStatic && (
-                                                                <>
-                                                                    {editingProd === prod.id ? (
-                                                                        <button onClick={() => salvarEdicaoProduto(prod.id)} style={{ ...btnV, background: '#10b981', boxShadow: 'none' }}><Check size={11} /> Salvar</button>
-                                                                    ) : (
-                                                                        <button onClick={() => { setEditingProd(prod.id); setEditNome(prod.nome); setEditPreco(String(prod.preco)); }} style={{ ...btnV, background: 'rgba(255,255,255,0.1)', boxShadow: 'none' }}><Edit2 size={11} /> Editar</button>
-                                                                    )}
-                                                                    <button onClick={() => deletarProduto(prod.id)} style={{ ...btnV, background: '#ef4444', boxShadow: 'none' }}><Trash2 size={11} /> Excluir</button>
-                                                                </>
+                                                        </td>
+                                                        <td style={td}>
+                                                            <strong style={{ fontSize: '12px' }}>{prod.nome}</strong><br />
+                                                            <span style={{ fontSize: '11px', color: '#a78bfa' }}>{prod.category}</span>
+                                                        </td>
+                                                        <td style={{ ...td, fontWeight: 900, color: '#10b981' }}>R$ {(prod.preco || 0).toFixed(2).replace('.', ',')}</td>
+                                                        <td style={td}>
+                                                            {spec && spec.descontoPercent > 0 ? (
+                                                                <span className="bg-green-900/50 text-green-300 font-bold px-2 py-0.5 rounded text-[10px]">
+                                                                    -{spec.descontoPercent}% OFF {spec.freteGratis ? '• Frete Grátis' : ''}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-[10px] text-gray-500">Padrão</span>
                                                             )}
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))}
+                                                        </td>
+                                                        <td style={td}>
+                                                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                                                <a href={`/checkout?id=${prod.id}`} target="_blank" style={{ ...btnV, textDecoration: 'none' }}><ExternalLink size={11} /> Checkout</a>
+                                                                <button onClick={() => handleStartEditProduct(prod.raw)} style={{ ...btnV, background: 'rgba(255,255,255,0.1)', boxShadow: 'none' }}>
+                                                                    <Edit2 size={11} /> Editar Completo
+                                                                </button>
+                                                                {!prod.isStatic && (
+                                                                    <button onClick={() => deletarProduto(prod.id)} style={{ ...btnV, background: '#ef4444', boxShadow: 'none' }}><Trash2 size={11} /> Excluir</button>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>
@@ -803,10 +977,14 @@ export default function Admin() {
                         </div>
                     )}
 
-                    {/* NOVO PRODUTO */}
+                    {/* NOVO / EDITAR PRODUTO */}
                     {aba === 'novo' && (
                         <div className="bg-slate-900/40 border border-white/5 p-4 sm:p-6 rounded-xl sm:rounded-2xl max-w-2xl">
-                            <form onSubmit={cadastrarProduto} className="space-y-4">
+                            <h3 className="text-sm font-bold text-white mb-4">
+                                {editingProdId ? `✏️ Editando Produto: ${nomeProd}` : '➕ Cadastrar Novo Produto na Vitrine'}
+                            </h3>
+
+                            <form onSubmit={salvarProduto} className="space-y-4">
                                 <div>
                                     <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Nome da Camisa</label>
                                     <input value={nomeProd} onChange={e => setNomeProd(e.target.value)} placeholder="Ex: Brasil Retrô 2002" style={input} required />
@@ -821,20 +999,21 @@ export default function Admin() {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Preço (R$)</label>
+                                        <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Preço Original (R$)</label>
                                         <input value={precoProd} onChange={e => setPrecoProd(e.target.value)} placeholder="139.90" style={input} required />
                                     </div>
                                 </div>
 
+                                {/* Team Players List */}
                                 {teamPlayersList.length > 0 && (
                                     <div className="border border-white/5 p-3.5 rounded-xl bg-slate-950/40">
-                                        <label className="block text-xs font-bold text-white uppercase mb-2">Jogadores Disponíveis — {teamProd}</label>
+                                        <label className="block text-xs font-bold text-white uppercase mb-2">Jogadores Oficiais — {teamProd} (10+ jogadores reais)</label>
                                         <div className="flex gap-2 flex-wrap max-h-36 overflow-y-auto">
                                             {teamPlayersList.map(p => (
                                                 <button key={p.nome} type="button"
                                                     onClick={() => setSelectedPlayer(prev => prev === p.nome + ' #' + p.numero ? '' : p.nome + ' #' + p.numero)}
                                                     className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition ${selectedPlayer === p.nome + ' #' + p.numero ? 'bg-purple-600 border-purple-500 text-white' : 'bg-slate-800 border-white/10 text-gray-300'}`}>
-                                                    #{p.numero} {p.nome}
+                                                    #{p.numero} {p.nome} ({p.posicao})
                                                 </button>
                                             ))}
                                         </div>
@@ -866,6 +1045,33 @@ export default function Admin() {
                                                 />
                                             </div>
                                         ))}
+                                    </div>
+                                </div>
+
+                                {/* Product Specific Discount / Offer Settings */}
+                                <div className="border border-purple-500/20 p-4 rounded-xl bg-purple-950/20 space-y-3">
+                                    <h4 className="text-xs font-black text-purple-300 uppercase flex items-center gap-1.5">
+                                        <Tag size={14} /> Oferta & Desconto Específico deste Produto
+                                    </h4>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-xs text-gray-400 font-bold mb-1">Desconto Específico (%)</label>
+                                            <input type="number" value={prodDescontoPercent} onChange={e => setProdDescontoPercent(e.target.value)} placeholder="0" style={input} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-400 font-bold mb-1">Frete Grátis p/ Estado Específico</label>
+                                            <input value={prodEstadoFreteGratis} onChange={e => setProdEstadoFreteGratis(e.target.value.toUpperCase())} placeholder="Ex: SP, RJ, SC" style={input} />
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4 flex-wrap pt-1">
+                                        <label className="flex items-center gap-2 cursor-pointer text-xs text-gray-300 font-bold">
+                                            <input type="checkbox" checked={prodTempoLimitado} onChange={e => setProdTempoLimitado(e.target.checked)} className="w-4 h-4 accent-purple-600" />
+                                            ⏱️ Oferta por Tempo Limitado
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer text-xs text-gray-300 font-bold">
+                                            <input type="checkbox" checked={prodFreteGratis} onChange={e => setProdFreteGratis(e.target.checked)} className="w-4 h-4 accent-purple-600" />
+                                            🚚 Frete Grátis Ativado
+                                        </label>
                                     </div>
                                 </div>
 
@@ -906,10 +1112,19 @@ export default function Admin() {
                                             {aiGenerating ? 'Gerando...' : 'IA ✨'}
                                         </button>
                                     </div>
-                                    <textarea value={descProd} onChange={e => setDescProd(e.target.value)} placeholder="Descrição do produto ou use o assistente de IA..." rows={4} className="w-full bg-slate-800 text-white rounded-xl border border-white/10 p-3 focus:outline-none text-sm" required />
+                                    <textarea value={descProd} onChange={e => setDescProd(e.target.value)} placeholder="Descrição do produto..." rows={4} className="w-full bg-slate-800 text-white rounded-xl border border-white/10 p-3 focus:outline-none text-sm" required />
                                 </div>
 
-                                <button type="submit" style={btnSave}>CADASTRAR PRODUTO NA VITRINE</button>
+                                <div className="flex gap-2">
+                                    <button type="submit" style={{ ...btnSave, flex: 1 }}>
+                                        {editingProdId ? '💾 SALVAR EDITION DO PRODUTO' : '✅ CADASTRAR PRODUTO NA VITRINE'}
+                                    </button>
+                                    {editingProdId && (
+                                        <button type="button" onClick={() => { setEditingProdId(null); setNomeProd(''); setPrecoProd(''); setProductImages(['','','','','','']); setDescProd(''); }} className="bg-slate-800 hover:bg-slate-700 text-gray-300 font-bold px-4 rounded-xl text-xs">
+                                            Cancelar
+                                        </button>
+                                    )}
+                                </div>
                             </form>
                         </div>
                     )}
@@ -953,11 +1168,11 @@ export default function Admin() {
                         </div>
                     )}
 
-                    {/* CONFIGURAÇÕES BANNERS */}
+                    {/* CONFIGURAÇÕES BANNERS & WIDGETS */}
                     {aba === 'configuracoes' && localConfig && (
                         <div className="space-y-5 max-w-4xl">
-                            {/* Banner Geolocalizado */}
-                            <div className="bg-slate-900/40 border border-white/5 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-3">
+                            {/* Banner Geolocalizado com Formatos Decentes por Posição */}
+                            <div className="bg-slate-900/40 border border-white/5 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-4">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-sm sm:text-md font-bold text-white">📍 Banner Geolocalizado</h3>
                                     <label className="flex items-center gap-2 cursor-pointer">
@@ -967,6 +1182,28 @@ export default function Admin() {
                                 </div>
                                 {localConfig.bannerGeolocalizado?.ativo && (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-xs text-gray-400 font-bold mb-1">Formato Visual p/ Posição</label>
+                                            <select value={localConfig.bannerGeolocalizado.formatoBanner || 'barra_fina'} onChange={e => setLocalConfig({ ...localConfig, bannerGeolocalizado: { ...localConfig.bannerGeolocalizado, formatoBanner: e.target.value as any } })} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs">
+                                                <option value="barra_fina">Barra Fina de Topo (48px)</option>
+                                                <option value="banner_largo">Banner Largo Destacado (80px)</option>
+                                                <option value="card_popup">Card Pop-up Flutuante</option>
+                                                <option value="pilula_fixa">Pílula Arredondada Fixa</option>
+                                                <option value="full_width">Banner Largura Total (Full Width)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-400 font-bold mb-1">Posição no Site</label>
+                                            <select value={localConfig.bannerGeolocalizado.posicao || 'topo_vitrine'} onChange={e => setLocalConfig({ ...localConfig, bannerGeolocalizado: { ...localConfig.bannerGeolocalizado, posicao: e.target.value } })} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs">
+                                                <option value="topo_vitrine">Topo da Vitrine</option>
+                                                <option value="header_abaixo">Abaixo do Header</option>
+                                                <option value="acima_botao_comprar">Acima do Botão Comprar</option>
+                                                <option value="abaixo_botao_comprar">Abaixo do Botão Comprar</option>
+                                                <option value="vitrine_categoria">Topo da Categoria</option>
+                                                <option value="popup_modal">Popup Modal</option>
+                                                <option value="rodape">Rodapé</option>
+                                            </select>
+                                        </div>
                                         <div>
                                             <label className="block text-xs text-gray-400 font-bold mb-1">Cor de Fundo</label>
                                             <div className="flex gap-2 items-center">
@@ -981,384 +1218,191 @@ export default function Admin() {
                                                 <input value={localConfig.bannerGeolocalizado.corTexto} onChange={e => setLocalConfig({ ...localConfig, bannerGeolocalizado: { ...localConfig.bannerGeolocalizado, corTexto: e.target.value } })} className="flex-1 bg-slate-800 text-white rounded-lg border border-white/10 p-2 focus:outline-none text-xs font-mono" />
                                             </div>
                                         </div>
-                                        <div>
-                                            <label className="block text-xs text-gray-400 font-bold mb-1">Posição no Site</label>
-                                            <select value={localConfig.bannerGeolocalizado.posicao || 'topo_vitrine'} onChange={e => setLocalConfig({ ...localConfig, bannerGeolocalizado: { ...localConfig.bannerGeolocalizado, posicao: e.target.value } })} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs">
-                                                <option value="topo_vitrine">Topo da Vitrine</option>
-                                                <option value="header_abaixo">Abaixo do Header</option>
-                                                <option value="acima_botao_comprar">Acima do Botão Comprar</option>
-                                                <option value="abaixo_botao_comprar">Abaixo do Botão Comprar</option>
-                                                <option value="vitrine_categoria">Topo da Vitrine Categoria</option>
-                                                <option value="popup_modal">Popup Modal</option>
-                                                <option value="rodape">Rodapé</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs text-gray-400 font-bold mb-1">Visibilidade</label>
-                                            <select value={localConfig.bannerGeolocalizado.visibilidade || 'global'} onChange={e => setLocalConfig({ ...localConfig, bannerGeolocalizado: { ...localConfig.bannerGeolocalizado, visibilidade: e.target.value as any } })} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs">
-                                                <option value="global">Toda a Loja</option>
-                                                <option value="inicial">Apenas Página Inicial</option>
-                                                <option value="categoria">Categoria Específica</option>
-                                                <option value="produto">Produto Específico</option>
-                                            </select>
-                                        </div>
                                         <div className="sm:col-span-2">
-                                            <label className="block text-xs text-gray-400 font-bold mb-1">Template do Texto</label>
+                                            <label className="block text-xs text-gray-400 font-bold mb-1">Template de Texto (use {'{cidade}'} e {'{estado}'})</label>
                                             <input value={localConfig.bannerGeolocalizado.textoTemplate} onChange={e => setLocalConfig({ ...localConfig, bannerGeolocalizado: { ...localConfig.bannerGeolocalizado, textoTemplate: e.target.value } })} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs" />
                                         </div>
                                     </div>
                                 )}
                             </div>
 
-                            {/* Banner Topo Marquee */}
-                            <div className="bg-slate-900/40 border border-white/5 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-sm sm:text-md font-bold text-white">🔥 Banner Topo Rotativo (Marquee)</h3>
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <span className="text-xs text-gray-400">{localConfig.bannerTopo?.ativo ? 'Ativo' : 'Inativo'}</span>
-                                        <input type="checkbox" checked={localConfig.bannerTopo?.ativo} onChange={e => setLocalConfig({ ...localConfig, bannerTopo: { ...localConfig.bannerTopo, ativo: e.target.checked } })} className="w-5 h-5 accent-purple-600" />
-                                    </label>
-                                </div>
-                                {localConfig.bannerTopo?.ativo && (
-                                    <div className="space-y-3">
-                                        <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                                            <div>
-                                                <label className="block text-xs text-gray-400 font-bold mb-1">Fundo</label>
-                                                <input type="color" value={localConfig.bannerTopo.corFundo} onChange={e => setLocalConfig({ ...localConfig, bannerTopo: { ...localConfig.bannerTopo, corFundo: e.target.value } })} className="w-full h-9 border border-white/10 rounded cursor-pointer" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs text-gray-400 font-bold mb-1">Texto</label>
-                                                <input type="color" value={localConfig.bannerTopo.corTexto} onChange={e => setLocalConfig({ ...localConfig, bannerTopo: { ...localConfig.bannerTopo, corTexto: e.target.value } })} className="w-full h-9 border border-white/10 rounded cursor-pointer" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs text-gray-400 font-bold mb-1">Velocidade</label>
-                                                <input type="number" value={localConfig.bannerTopo.velocidade} onChange={e => setLocalConfig({ ...localConfig, bannerTopo: { ...localConfig.bannerTopo, velocidade: parseInt(e.target.value) || 30 } })} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2 focus:outline-none text-xs" />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs text-gray-400 font-bold mb-1">Texto</label>
-                                            <input value={localConfig.bannerTopo.textoMarquee} onChange={e => setLocalConfig({ ...localConfig, bannerTopo: { ...localConfig.bannerTopo, textoMarquee: e.target.value } })} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs" />
-                                        </div>
+                            {/* WhatsApp Mensagens Personalizadas por Produto */}
+                            <div className="bg-slate-900/40 border border-white/5 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-4">
+                                <h3 className="text-sm sm:text-md font-bold text-white flex items-center gap-2">
+                                    <MessageSquare size={16} /> Mensagens Personalizadas de WhatsApp por Produto / Global
+                                </h3>
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="block text-xs text-gray-400 font-bold mb-1">Mensagem Padrão Global</label>
+                                        <textarea
+                                            value={localConfig.whatsapp?.mensagensPersonalizadas?.['padrao'] || ''}
+                                            onChange={e => setLocalConfig({ ...localConfig, whatsapp: { ...localConfig.whatsapp, mensagensPersonalizadas: { ...localConfig.whatsapp.mensagensPersonalizadas, padrao: e.target.value } } })}
+                                            rows={2}
+                                            placeholder="Olá! Vim pelo site Manto Sagrado..."
+                                            className="w-full bg-slate-800 text-white rounded-xl border border-white/10 p-3 focus:outline-none text-xs"
+                                        />
                                     </div>
-                                )}
-                            </div>
 
-                            {/* WhatsApp + Selo Verificado */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="bg-slate-900/40 border border-white/5 p-4 sm:p-5 rounded-xl space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="text-xs sm:text-sm font-bold text-white">✅ Selo Verificado</h3>
-                                        <input type="checkbox" checked={localConfig.verificadoLoja?.ativo} onChange={e => setLocalConfig({ ...localConfig, verificadoLoja: { ativo: e.target.checked } })} className="w-4 h-4 accent-purple-600" />
+                                    <div className="border border-white/5 p-3.5 rounded-xl bg-slate-950/40 space-y-2">
+                                        <h4 className="text-xs font-bold text-purple-300">Definir Mensagem Específica para um Produto</h4>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                            <div>
+                                                <label className="block text-[11px] text-gray-400 font-bold mb-1">Produto</label>
+                                                <select value={wspSelectedProd} onChange={e => setWspSelectedProd(e.target.value)} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2 focus:outline-none text-xs">
+                                                    <option value="">Selecione o produto...</option>
+                                                    {allVitrineProducts.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-[11px] text-gray-400 font-bold mb-1">Mensagem WhatsApp Específica</label>
+                                                <input value={wspProdMessage} onChange={e => setWspProdMessage(e.target.value)} placeholder="Ex: Olá, quero comprar a camisa X..." style={input} />
+                                            </div>
+                                        </div>
+                                        <button onClick={handleSaveWspProdMessage} className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg text-xs">
+                                            Salvar Mensagem do Produto
+                                        </button>
                                     </div>
-                                </div>
-                                <div className="bg-slate-900/40 border border-white/5 p-4 sm:p-5 rounded-xl space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="text-xs sm:text-sm font-bold text-white">💬 WhatsApp 1x1</h3>
-                                        <input type="checkbox" checked={localConfig.whatsapp?.ativo} onChange={e => setLocalConfig({ ...localConfig, whatsapp: { ...localConfig.whatsapp, ativo: e.target.checked } })} className="w-4 h-4 accent-purple-600" />
-                                    </div>
-                                    {localConfig.whatsapp?.ativo && (
-                                        <input value={localConfig.whatsapp.numero} onChange={e => setLocalConfig({ ...localConfig, whatsapp: { ...localConfig.whatsapp, numero: e.target.value } })} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2 focus:outline-none text-xs" placeholder="5547983174463" />
-                                    )}
                                 </div>
                             </div>
 
                             <button onClick={() => handleSaveAll()} disabled={saving} style={btnSave}>
-                                {saving ? '⏳ Salvando no Banco...' : '💾 SALVAR TODAS AS ALTERAÇÕES NO BANCO'}
+                                {saving ? '⏳ Salvando no Banco...' : '💾 SALVAR TODAS AS CONFIGURAÇÕES NO BANCO'}
                             </button>
                         </div>
                     )}
 
-                    {/* STORIES */}
-                    {aba === 'stories' && (
-                        <div className="space-y-5 max-w-2xl">
-                            <div className="bg-slate-900/40 border border-white/5 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-3">
-                                <h3 className="text-sm sm:text-md font-bold text-white">📱 Adicionar Story Flutuante</h3>
-
-                                <div><label className="block text-xs text-gray-400 font-bold mb-1">Nome do Story</label><input value={storyNome} onChange={e => setStoryNome(e.target.value)} placeholder="Ex: Promo Flamengo" style={input} /></div>
-
-                                <div>
-                                    <label className="block text-xs text-gray-400 font-bold mb-1">Vídeo do Story</label>
-                                    <input value={storyVideoUrl} onChange={e => setStoryVideoUrl(e.target.value)} placeholder="URL do vídeo ou upload abaixo" style={{ ...input, marginBottom: '6px' }} />
-                                    <div className="border border-white/5 p-3 rounded-xl bg-slate-950/40">
-                                        <label className="block text-xs text-gray-400 font-bold mb-1.5">Upload de Vídeo (Mobile/PC)</label>
-                                        <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={async e => { if (e.target.files?.[0]) await handleUploadStoryVideo(e.target.files[0]); }} />
-                                        <button type="button" onClick={() => videoInputRef.current?.click()} disabled={storyUploadingVideo} className="w-full bg-purple-600/20 hover:bg-purple-600 text-purple-300 hover:text-white px-3 py-2 rounded-lg border border-purple-500/20 text-xs font-bold flex items-center justify-center gap-2 transition">
-                                            <Film size={13} /> {storyUploadingVideo ? 'Enviando vídeo...' : 'Selecionar Vídeo'}
-                                        </button>
-                                        {storyVideoUrl && <p className="text-[11px] text-green-400 mt-1.5 truncate">✅ Vídeo carregado</p>}
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div><label className="block text-xs text-gray-400 font-bold mb-1">Vínculo</label>
-                                        <select value={storyTipo} onChange={e => setStoryTipo(e.target.value as any)} className="w-full bg-slate-800 text-white rounded-xl border border-white/10 p-2.5 focus:outline-none text-xs">
-                                            <option value="produto">Produto da Loja</option>
-                                            <option value="texto">Texto Promocional</option>
-                                        </select>
-                                    </div>
-                                    <div><label className="block text-xs text-gray-400 font-bold mb-1">Visibilidade</label>
-                                        <select value={storyVisib} onChange={e => setStoryVisib(e.target.value as any)} className="w-full bg-slate-800 text-white rounded-xl border border-white/10 p-2.5 focus:outline-none text-xs">
-                                            <option value="global">Toda a Loja</option>
-                                            <option value="inicial">Apenas Página Inicial</option>
-                                            <option value="categoria">Categoria Específica</option>
-                                            <option value="produto">Produto Específico</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                {storyTipo === 'produto' && <div><label className="block text-xs text-gray-400 font-bold mb-1">ID do Produto</label><input value={storyProdId} onChange={e => setStoryProdId(e.target.value)} style={input} /></div>}
-                                {storyTipo === 'texto' && <div><label className="block text-xs text-gray-400 font-bold mb-1">Texto Promo</label><input value={storyText} onChange={e => setStoryText(e.target.value)} style={input} /></div>}
-
-                                <button onClick={handleAddStory} disabled={saving} style={btnSave}>📱 PUBLICAR STORY</button>
-                            </div>
-
-                            <div className="space-y-2">
-                                <h3 className="text-xs font-bold text-white">Stories Ativos ({(localConfig.stories?.lista || []).length})</h3>
-                                {(localConfig.stories?.lista || []).map(s => (
-                                    <div key={s.id} className="flex justify-between items-center bg-slate-900/40 border border-white/5 p-3 rounded-xl">
-                                        <div className="flex-1 min-w-0 pr-2">
-                                            <h4 className="text-xs font-bold text-white truncate">{s.nome}</h4>
-                                            <span className="text-[10px] text-purple-300 font-bold">{s.visibilidade} • {s.tipoViculo}</span>
-                                        </div>
-                                        <button onClick={() => handleRemoveStory(s.id)} className="bg-red-900/20 border border-red-500/20 hover:bg-red-600 text-red-300 hover:text-white p-2 rounded-lg transition"><Trash2 size={14} /></button>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* PREÇOS & CUPONS */}
-                    {aba === 'precos' && (
-                        <div className="space-y-5 max-w-3xl">
-                            <div className="bg-slate-900/40 border border-white/5 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-3">
-                                <h3 className="text-sm sm:text-md font-bold text-white">💰 Criar Regra de Preço</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div><label className="block text-xs text-gray-400 font-bold mb-1">Nome da Regra *</label><input value={ruleNome} onChange={e => setRuleNome(e.target.value)} placeholder="Ex: Oferta Especial" style={input} /></div>
-                                    <div><label className="block text-xs text-gray-400 font-bold mb-1">Escopo</label>
-                                        <select value={ruleEscopo} onChange={e => setRuleEscopo(e.target.value as any)} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs">
-                                            <option value="tudo">Todos os Produtos</option>
-                                            <option value="categoria">Categoria Específica</option>
-                                            <option value="produto">Produto Único (ID)</option>
-                                        </select>
-                                    </div>
-                                    {ruleEscopo === 'categoria' && <div><label className="block text-xs text-gray-400 font-bold mb-1">Categoria</label><select value={ruleCat} onChange={e => setRuleCat(e.target.value)} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs"><option value="seleções">Seleções</option><option value="brasileirão">Brasileirão</option><option value="retrô">Retrô</option><option value="europeus">Europeus</option></select></div>}
-                                    {ruleEscopo === 'produto' && <div><label className="block text-xs text-gray-400 font-bold mb-1">ID do Produto</label><input value={ruleProdId} onChange={e => setRuleProdId(e.target.value)} style={input} /></div>}
-                                    <div><label className="block text-xs text-gray-400 font-bold mb-1">Operação</label>
-                                        <select value={ruleOp} onChange={e => setRuleOp(e.target.value as any)} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs">
-                                            <option value="aumentar">▲ Aumentar %</option>
-                                            <option value="diminuir">▼ Diminuir %</option>
-                                        </select>
-                                    </div>
-                                    <div><label className="block text-xs text-gray-400 font-bold mb-1">Percentual (%)</label><input type="number" value={rulePercent} onChange={e => setRulePercent(e.target.value)} placeholder="10" style={input} /></div>
-                                    <div className="sm:col-span-2"><label className="block text-xs text-gray-400 font-bold mb-1">Descrição</label><input value={ruleDesc} onChange={e => setRuleDesc(e.target.value)} placeholder="Detalhes da oferta..." style={input} /></div>
-                                </div>
-                                <div className="flex gap-2 flex-wrap">
-                                    <button onClick={handleAddPriceRule} disabled={saving} style={{ ...btnSave, flex: 1 }}>
-                                        {saving ? 'Salvando...' : 'CRIAR REGRA NO BANCO'}
-                                    </button>
-                                    <button onClick={handleSimulate} className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center justify-center gap-1">
-                                        <Eye size={13} /> SIMULAR
-                                    </button>
-                                    {simulationOpen && (
-                                        <button onClick={() => setSimulationOpen(false)} className="bg-slate-700 hover:bg-slate-600 text-white font-bold px-3 py-2 rounded-xl text-xs">
-                                            Ocultar
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Simulation Table */}
-                            {simulationOpen && simulatedProducts.length > 0 && (
-                                <div className="bg-slate-900/40 border border-white/5 p-4 rounded-xl space-y-2">
-                                    <h3 className="text-xs font-bold text-white">Simulação ({simulatedProducts.length} itens)</h3>
-                                    <div style={{ overflowX: 'auto' }}>
-                                        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '450px' }}>
-                                            <thead><tr><th style={th}>PRODUTO</th><th style={th}>ORIGINAL</th><th style={th}>SIMULADO</th><th style={th}>DIF.</th></tr></thead>
-                                            <tbody>
-                                                {simulatedProducts.map(p => {
-                                                    const sim = getSimulatedPrice(p);
-                                                    const diff = sim - p.preco;
-                                                    return (
-                                                        <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                                                            <td style={td}><div className="font-bold text-xs">{p.nome}</div></td>
-                                                            <td style={td}>R$ {(p.preco || 0).toFixed(2).replace('.', ',')}</td>
-                                                            <td style={{ ...td, color: diff !== 0 ? (diff > 0 ? '#34d399' : '#f87171') : '#fff', fontWeight: 900 }}>R$ {sim.toFixed(2).replace('.', ',')}</td>
-                                                            <td style={{ ...td, color: diff > 0 ? '#34d399' : diff < 0 ? '#f87171' : '#64748b', fontWeight: 900 }}>{diff > 0 ? `+${diff.toFixed(2)}` : diff < 0 ? `-${Math.abs(diff).toFixed(2)}` : '—'}</td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Regras e Cupons list */}
-                            <div className="bg-slate-900/40 border border-white/5 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-3">
-                                <h3 className="text-xs sm:text-sm font-bold text-white">Regras Ativas ({(localConfig.precoGestao?.regras || []).length})</h3>
-                                {(localConfig.precoGestao?.regras || []).map(r => (
-                                    <div key={r.id} className="flex justify-between items-center bg-slate-950/40 border border-white/5 p-3 rounded-xl">
-                                        <div>
-                                            <h4 className="text-xs font-bold text-white">{r.nome}</h4>
-                                            <p className="text-[11px] text-gray-400">{r.escopo} • <span className={r.operacao === 'aumentar' ? 'text-green-400' : 'text-red-400'}>{r.operacao} {r.percentual}%</span></p>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <button onClick={() => handleToggleRule(r.id)} className="text-[10px] px-2 py-1 bg-slate-800 rounded font-bold">{r.ativa ? 'Ativa' : 'Pausada'}</button>
-                                            <button onClick={() => handleRemoveRule(r.id)} className="p-1.5 bg-red-900/20 text-red-400 rounded"><Trash2 size={13} /></button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Cupons */}
-                            <div className="bg-slate-900/40 border border-white/5 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-3">
-                                <h3 className="text-xs sm:text-sm font-bold text-white">🏷️ Criar Cupom</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div><label className="block text-xs text-gray-400 font-bold mb-1">Código</label><input value={cupomCodigo} onChange={e => setCupomCodigo(e.target.value.toUpperCase())} placeholder="PROMO10" style={input} /></div>
-                                    <div><label className="block text-xs text-gray-400 font-bold mb-1">Nome</label><input value={cupomNome} onChange={e => setCupomNome(e.target.value)} placeholder="Cupom" style={input} /></div>
-                                    <div><label className="block text-xs text-gray-400 font-bold mb-1">Desconto (%)</label><input type="number" value={cupomDesconto} onChange={e => setCupomDesconto(e.target.value)} style={input} /></div>
-                                    <div><label className="block text-xs text-gray-400 font-bold mb-1">Escopo</label><select value={cupomEscopo} onChange={e => setCupomEscopo(e.target.value as any)} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs"><option value="tudo">Todos</option><option value="categoria">Categoria</option><option value="produto">Produto Único</option></select></div>
-                                </div>
-                                <button onClick={handleAddCoupon} disabled={saving} style={btnSave}>🏷️ CRIAR CUPOM NO BANCO</button>
-
-                                <div className="space-y-2 pt-1">
-                                    {(localConfig.precoGestao?.cupons || []).map(c => (
-                                        <div key={c.id} className="flex justify-between items-center bg-slate-950/40 border border-white/5 p-3 rounded-xl">
-                                            <div>
-                                                <span className="font-mono text-xs font-bold text-yellow-300 bg-yellow-500/20 px-1.5 py-0.5 rounded mr-2">{c.codigo}</span>
-                                                <span className="text-xs text-white">{c.desconto}% OFF</span>
-                                            </div>
-                                            <button onClick={() => handleRemoveCoupon(c.id)} className="p-1.5 bg-red-900/20 text-red-400 rounded"><Trash2 size={13} /></button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* BANCO DE IMAGENS */}
-                    {aba === 'imagens' && (
-                        <div className="space-y-5">
-                            <div className="bg-slate-900/40 border border-white/5 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-3 max-w-2xl">
-                                <h3 className="text-sm font-bold text-white">🖼️ Banco de Mídias</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-xs text-gray-400 font-bold mb-1">Álbum</label>
-                                        <select value={bankAlbum} onChange={e => setBankAlbum(e.target.value)} className="w-full bg-slate-800 text-white rounded-xl border border-white/10 p-3 focus:outline-none text-xs">
-                                            {(localConfig.imagensBanco?.albuns || ['Geral', 'Brasileirão', 'Europeus', 'Seleções', 'Retrô']).map(a => <option key={a} value={a}>{a}</option>)}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs text-gray-400 font-bold mb-1">Novo Álbum</label>
-                                        <div className="flex gap-2">
-                                            <input value={newAlbumName} onChange={e => setNewAlbumName(e.target.value)} placeholder="Nome" style={{ ...input, marginBottom: 0, flex: 1 }} />
-                                            <button onClick={handleCreateAlbum} className="bg-purple-600 text-white px-3 rounded-xl text-xs font-bold"><Plus size={14} /></button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="border border-white/5 p-3 rounded-xl bg-slate-950/40">
-                                    <ImageUploader onUploadSuccess={u => setBankImageUrl(u)} currentImageUrl={bankImageUrl} onRemoveImage={() => setBankImageUrl('')} />
-                                    {bankImageUrl && <input value={bankImageUrl} onChange={e => setBankImageUrl(e.target.value)} style={{ ...input, marginTop: '6px' }} placeholder="URL" />}
-                                </div>
-                                <button onClick={handleAddBankImage} className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 w-full text-xs transition"><Plus size={14} /> ADICIONAR AO BANCO</button>
-                            </div>
-
-                            <div className="bg-slate-900/40 border border-white/5 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-3">
-                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                                    <select value={selectedAlbumFilter} onChange={e => setSelectedAlbumFilter(e.target.value)} className="bg-slate-800 text-white rounded-lg border border-white/10 p-2 text-xs focus:outline-none">
-                                        <option value="Todos">Todos os Álbuns</option>
-                                        {(localConfig.imagensBanco?.albuns || []).map(a => <option key={a} value={a}>{a}</option>)}
-                                    </select>
-                                    <input value={imageSearch} onChange={e => setImageSearch(e.target.value)} placeholder="Buscar..." className="bg-slate-800 text-white rounded-lg border border-white/10 p-2 w-full sm:w-48 text-xs focus:outline-none" />
-                                </div>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                                    {(localConfig.imagensBanco?.lista || []).filter(i => selectedAlbumFilter === 'Todos' || i.album === selectedAlbumFilter).filter(i => i.nome.toLowerCase().includes(imageSearch.toLowerCase())).map(img => (
-                                        <div key={img.id} className="bg-slate-950 border border-white/5 rounded-xl overflow-hidden group relative">
-                                            <div className="aspect-square bg-white flex items-center justify-center p-1.5 relative overflow-hidden">
-                                                <img src={img.url} className="max-w-full max-h-full object-contain" alt="" />
-                                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
-                                                    <a href={img.url} download target="_blank" rel="noopener noreferrer" className="p-2 bg-white text-slate-900 rounded-full"><Download size={14} /></a>
-                                                    <button onClick={() => handleRemoveBankImage(img.id)} className="p-2 bg-red-600 text-white rounded-full"><Trash2 size={14} /></button>
-                                                </div>
-                                            </div>
-                                            <div className="p-2">
-                                                <h4 className="text-[11px] font-bold text-white truncate">{img.nome}</h4>
-                                                <span className="text-[9px] uppercase bg-purple-900/50 text-purple-300 font-bold px-1 py-0.5 rounded">{img.album}</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* CALCULADORA */}
+                    {/* CALCULADORA & PLANILHA & ESCALA */}
                     {aba === 'calculadora' && (
-                        <div className="space-y-5 max-w-2xl">
+                        <div className="space-y-6 max-w-4xl">
+                            {/* 1. Calculadora ROI */}
                             <div className="bg-slate-900/40 border border-white/5 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-3">
-                                <h3 className="text-sm font-bold text-white">🧮 Calculadora ROI</h3>
+                                <h3 className="text-sm font-bold text-white">🧮 Calculadora Rápida de ROI / ROAS</h3>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div><label className="block text-xs text-gray-400 font-bold mb-1">Valor 1 (R$)</label><input type="number" value={calcVal1} onChange={e => setCalcVal1(e.target.value)} placeholder="5000" style={input} /></div>
                                     <div><label className="block text-xs text-gray-400 font-bold mb-1">Valor 2 (R$)</label><input type="number" value={calcVal2} onChange={e => setCalcVal2(e.target.value)} placeholder="1000" style={input} /></div>
                                 </div>
                                 <div className="flex gap-1.5">
                                     {(['+', '-', '*', '/'] as const).map(op => (
-                                        <button key={op} type="button" onClick={() => setCalcOp(op)} className={`flex-1 py-2.5 rounded-lg font-bold border text-xs transition ${calcOp === op ? 'bg-purple-600 border-purple-500 text-white' : 'bg-slate-800 border-white/10 text-gray-400'}`}>
+                                        <button key={op} type="button" onClick={() => setCalcOp(op)} className={`flex-1 py-2 rounded-lg font-bold border text-xs transition ${calcOp === op ? 'bg-purple-600 border-purple-500 text-white' : 'bg-slate-800 border-white/10 text-gray-400'}`}>
                                             {op === '+' ? '+' : op === '-' ? '-' : op === '*' ? '×' : '÷'}
                                         </button>
                                     ))}
                                 </div>
-                                <div className="flex gap-2">
-                                    <button onClick={handleCalculator} style={{ ...btnSave, flex: 2 }}>CALCULAR</button>
-                                    <button onClick={() => { setCalcVal1(''); setCalcVal2(''); setCalcResult(null); }} className="flex-1 bg-slate-800 text-gray-300 font-bold py-3 rounded-xl border border-white/5 text-xs">LIMPAR</button>
-                                </div>
+                                <button onClick={handleCalculator} style={{ ...btnSave, padding: '10px' }}>CALCULAR</button>
                                 {calcResult !== null && (
-                                    <div className="bg-slate-950/80 border border-white/5 p-4 rounded-xl">
+                                    <div className="bg-slate-950/80 border border-white/5 p-3 rounded-xl">
                                         <p className="text-[10px] text-gray-400 font-bold uppercase">Resultado:</p>
-                                        <h3 className="text-2xl font-black text-green-400 mt-0.5">R$ {calcResult.toFixed(2).replace('.', ',')}</h3>
+                                        <h3 className="text-xl font-black text-green-400 mt-0.5">R$ {calcResult.toFixed(2).replace('.', ',')}</h3>
                                     </div>
                                 )}
                             </div>
-                        </div>
-                    )}
 
-                    {/* INTEGRAÇÕES */}
-                    {aba === 'integracoes' && (
-                        <div className="space-y-4 max-w-2xl">
-                            <div className="bg-slate-900/40 border border-white/5 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-3">
-                                <h3 className="text-sm sm:text-md font-bold text-white">💳 APIs de Pagamento Ativas</h3>
-                                <div className="space-y-2">
-                                    <div className="p-3.5 bg-slate-950/40 rounded-xl border border-green-500/20 flex justify-between items-start">
-                                        <div>
-                                            <h4 className="text-xs sm:text-sm font-bold text-white">💳 IronPay — Cartão de Crédito</h4>
-                                            <p className="text-[11px] text-gray-400 mt-0.5">Parcelamento até 12x. Token ativo no backend.</p>
-                                        </div>
-                                        <span className="text-[9px] bg-green-900/50 text-green-300 font-bold px-2 py-0.5 rounded">ATIVO</span>
+                            {/* 2. Planilha de Vendas Realizadas */}
+                            <div className="bg-slate-900/40 border border-white/5 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-4">
+                                <h3 className="text-sm sm:text-md font-bold text-white flex items-center gap-2">
+                                    <DollarSign size={16} /> Planilha de Vendas Realizadas (Checkout / Links Externos)
+                                </h3>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                                    <div><label className="block text-[11px] text-gray-400 font-bold mb-1">Cliente</label><input value={vendaCliente} onChange={e => setVendaCliente(e.target.value)} placeholder="Nome do cliente" style={input} /></div>
+                                    <div><label className="block text-[11px] text-gray-400 font-bold mb-1">Produto</label><input value={vendaProduto} onChange={e => setVendaProduto(e.target.value)} placeholder="Nome do produto" style={input} /></div>
+                                    <div><label className="block text-[11px] text-gray-400 font-bold mb-1">Valor (R$)</label><input type="number" value={vendaValor} onChange={e => setVendaValor(e.target.value)} placeholder="139.90" style={input} /></div>
+                                    <div><label className="block text-[11px] text-gray-400 font-bold mb-1">Origem</label>
+                                        <select value={vendaOrigem} onChange={e => setVendaOrigem(e.target.value as any)} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs">
+                                            <option value="checkout">Checkout do Site</option>
+                                            <option value="link_externo">Link Externo / WhatsApp</option>
+                                        </select>
                                     </div>
-                                    <div className="p-3.5 bg-slate-950/40 rounded-xl border border-green-500/20 flex justify-between items-start">
-                                        <div>
-                                            <h4 className="text-xs sm:text-sm font-bold text-white">⚡ IronPay — Pix Instantâneo</h4>
-                                            <p className="text-[11px] text-gray-400 mt-0.5">QR Code tempo real + Webhook Netlify.</p>
-                                        </div>
-                                        <span className="text-[9px] bg-green-900/50 text-green-300 font-bold px-2 py-0.5 rounded">ATIVO</span>
-                                    </div>
+                                </div>
+                                <button onClick={handleAddVendaPlanilha} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs w-full">
+                                    + REGISTRAR VENDA NA PLANILHA
+                                </button>
+
+                                <div style={{ overflowX: 'auto' }}>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '500px' }}>
+                                        <thead><tr><th style={th}>DATA</th><th style={th}>CLIENTE</th><th style={th}>PRODUTO</th><th style={th}>VALOR</th><th style={th}>ORIGEM</th><th style={th}>AÇÃO</th></tr></thead>
+                                        <tbody>
+                                            {(localConfig.calculadoraAds?.vendasPlanilha || []).map(v => (
+                                                <tr key={v.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                                                    <td style={td}>{new Date(v.data).toLocaleDateString('pt-BR')}</td>
+                                                    <td style={td}><strong>{v.cliente}</strong></td>
+                                                    <td style={td}>{v.produto}</td>
+                                                    <td style={{ ...td, color: '#34d399', fontWeight: 900 }}>R$ {v.valor.toFixed(2).replace('.', ',')}</td>
+                                                    <td style={td}><span className="text-[9px] bg-slate-800 px-2 py-0.5 rounded uppercase font-bold">{v.origem}</span></td>
+                                                    <td style={td}><button onClick={() => handleRemoveVendaPlanilha(v.id)} className="p-1 bg-red-900/30 text-red-400 rounded"><Trash2 size={13} /></button></td>
+                                                </tr>
+                                            ))}
+                                            {(localConfig.calculadoraAds?.vendasPlanilha || []).length === 0 && (
+                                                <tr><td colSpan={6} style={{ ...td, textAlign: 'center', color: '#64748b', padding: '16px' }}>Nenhuma venda registrada manualmente.</td></tr>
+                                            )}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
 
-                            <div className="bg-slate-900/40 border border-white/5 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-3">
-                                <h3 className="text-sm sm:text-md font-bold text-white">📊 Rastreamento & Analytics</h3>
-                                <div className="space-y-2">
-                                    {[
-                                        ['Meta Pixel', '4980340808962720', 'PageView, ViewContent, Checkout, Purchase'],
-                                        ['Meta CAPI', 'EAAShZBr3...', 'Server-side via Netlify Function'],
-                                        ['Supabase DB', 'kffjkhyhhjpkwzfrcvzh', 'Checkouts e StoreConfig sincronizados'],
-                                    ].map(([name, value, desc]) => (
-                                        <div key={name} className="flex justify-between items-start p-3 bg-slate-950/40 rounded-xl border border-white/5">
-                                            <div>
-                                                <h4 className="text-xs font-bold text-white">{name}</h4>
-                                                <p className="text-[10px] text-gray-400">{desc}</p>
-                                            </div>
-                                            <span className="text-[9px] bg-green-900/50 text-green-300 font-bold px-1.5 py-0.5 rounded">ATIVO</span>
+                            {/* 3. Gastos com Anúncios */}
+                            <div className="bg-slate-900/40 border border-white/5 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-4">
+                                <h3 className="text-sm sm:text-md font-bold text-white flex items-center gap-2">
+                                    <TrendingUp size={16} /> Registro de Gastos com Anúncios por Campanha e Conjunto
+                                </h3>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                                    <div><label className="block text-[11px] text-gray-400 font-bold mb-1">Nome Campanha</label><input value={gastoCampanha} onChange={e => setGastoCampanha(e.target.value)} placeholder="Ex: CBO Retargeting" style={input} /></div>
+                                    <div><label className="block text-[11px] text-gray-400 font-bold mb-1">Conjunto</label><input value={gastoConjunto} onChange={e => setGastoConjunto(e.target.value)} placeholder="Ex: Aberto Brasil 18-45" style={input} /></div>
+                                    <div><label className="block text-[11px] text-gray-400 font-bold mb-1">Plataforma</label>
+                                        <select value={gastoPlataforma} onChange={e => setGastoPlataforma(e.target.value as any)} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs">
+                                            <option value="meta">Meta Ads (FB/IG)</option>
+                                            <option value="google">Google Ads</option>
+                                            <option value="tiktok">TikTok Ads</option>
+                                        </select>
+                                    </div>
+                                    <div><label className="block text-[11px] text-gray-400 font-bold mb-1">Gasto (R$)</label><input type="number" value={gastoValor} onChange={e => setGastoValor(e.target.value)} placeholder="150.00" style={input} /></div>
+                                </div>
+                                <button onClick={handleAddGastoAnuncio} className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs w-full">
+                                    + REGISTRAR GASTO DE ANÚNCIO
+                                </button>
+
+                                <div style={{ overflowX: 'auto' }}>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '500px' }}>
+                                        <thead><tr><th style={th}>DATA</th><th style={th}>CAMPANHA</th><th style={th}>CONJUNTO</th><th style={th}>PLATAFORMA</th><th style={th}>GASTO</th><th style={th}>AÇÃO</th></tr></thead>
+                                        <tbody>
+                                            {(localConfig.calculadoraAds?.gastosDetalhados || []).map(g => (
+                                                <tr key={g.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                                                    <td style={td}>{new Date(g.data).toLocaleDateString('pt-BR')}</td>
+                                                    <td style={td}><strong>{g.campanha}</strong></td>
+                                                    <td style={td}>{g.conjunto}</td>
+                                                    <td style={td}><span className="text-[9px] bg-purple-900/50 text-purple-300 px-2 py-0.5 rounded font-bold uppercase">{g.plataforma}</span></td>
+                                                    <td style={{ ...td, color: '#f87171', fontWeight: 900 }}>R$ {g.valor.toFixed(2).replace('.', ',')}</td>
+                                                    <td style={td}><button onClick={() => handleRemoveGastoAnuncio(g.id)} className="p-1 bg-red-900/30 text-red-400 rounded"><Trash2 size={13} /></button></td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {/* 4. Estratégias de Escala */}
+                            <div className="bg-slate-900/40 border border-white/5 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-4">
+                                <h3 className="text-sm sm:text-md font-bold text-white flex items-center gap-2">
+                                    🚀 Estratégias de Escala (Criação & Execução)
+                                </h3>
+
+                                <div className="space-y-3">
+                                    <div><label className="block text-xs text-gray-400 font-bold mb-1">Título da Estratégia *</label><input value={escalaTitulo} onChange={e => setEscalaTitulo(e.target.value)} placeholder="Ex: Escala Horizontal 20% ao dia" style={input} /></div>
+                                    <div><label className="block text-xs text-gray-400 font-bold mb-1">Meta de ROAS / Meta de Vendas</label><input value={escalaRoas} onChange={e => setEscalaRoas(e.target.value)} placeholder="Ex: ROAS 4.5x" style={input} /></div>
+                                    <div><label className="block text-xs text-gray-400 font-bold mb-1">Descrição e Plano de Ação *</label><textarea value={escalaDesc} onChange={e => setEscalaDesc(e.target.value)} rows={3} placeholder="Descreva os passos para executar essa escala..." className="w-full bg-slate-800 text-white rounded-xl border border-white/10 p-3 focus:outline-none text-xs" /></div>
+                                    <button onClick={handleAddEstrategiaEscala} className="bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold py-2.5 px-4 rounded-xl text-xs w-full">
+                                        + CRIAR ESTRATÉGIA DE ESCALA
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                                    {(localConfig.calculadoraAds?.estrategiasEscala || []).map(e => (
+                                        <div key={e.id} className="bg-slate-950 border border-white/5 p-4 rounded-xl space-y-2 relative">
+                                            <button onClick={() => handleRemoveEstrategiaEscala(e.id)} className="absolute top-3 right-3 text-red-400 hover:text-red-300"><Trash2 size={14} /></button>
+                                            <h4 className="text-xs font-bold text-white pr-6">{e.titulo}</h4>
+                                            {e.metaRoas && <span className="text-[10px] bg-green-900/50 text-green-300 font-bold px-2 py-0.5 rounded">{e.metaRoas}</span>}
+                                            <p className="text-xs text-gray-400">{e.descricao}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -1370,7 +1414,8 @@ export default function Admin() {
                     {aba === 'frontend' && localConfig && (
                         <div className="space-y-5 max-w-3xl">
                             <div className="bg-slate-900/40 border border-white/5 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-4">
-                                <h3 className="text-sm sm:text-md font-bold text-white">🎨 Personalizar Visual do Site</h3>
+                                <h3 className="text-sm sm:text-md font-bold text-white">🎨 Personalizar Visual Completo do Site</h3>
+
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     {[
                                         ['Cor Principal (Botões/CTA)', 'primaryColor', '#dc2626'],
@@ -1404,6 +1449,11 @@ export default function Admin() {
                                     ))}
                                 </div>
 
+                                <div>
+                                    <label className="block text-xs text-gray-400 font-bold mb-1">Arredondamento dos Botões (px)</label>
+                                    <input value={localConfig.frontend?.buttonBorderRadius || '12px'} onChange={e => setLocalConfig({ ...localConfig, frontend: { ...localConfig.frontend, buttonBorderRadius: e.target.value } as any })} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs" placeholder="12px" />
+                                </div>
+
                                 <button onClick={() => handleSaveAll()} disabled={saving} style={btnSave}>
                                     {saving ? '⏳ Salvando no Banco...' : '💾 SALVAR E APLICAR NO SITE IMEDIATAMENTE'}
                                 </button>
@@ -1417,7 +1467,7 @@ export default function Admin() {
     );
 }
 
-// Styles
+// STYLES
 const bIn: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: '9px', width: '100%', padding: '10px 12px', border: 'none', background: 'none', color: 'rgba(255,255,255,0.55)', cursor: 'pointer', borderRadius: '9px', fontWeight: 800, textAlign: 'left', transition: 'all 0.2s', fontSize: '12px' };
 const bAt: React.CSSProperties = { ...bIn, background: 'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(59,130,246,0.15))', color: '#fff', border: '1px solid rgba(124,58,237,0.3)' };
 const th: React.CSSProperties = { padding: '10px 12px', textAlign: 'left', fontSize: '10px', fontWeight: 900, color: 'rgba(255,255,255,0.4)', borderBottom: '1px solid rgba(255,255,255,0.06)', letterSpacing: '0.08em' };
