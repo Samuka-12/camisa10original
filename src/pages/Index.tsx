@@ -1,11 +1,71 @@
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import CategoryBar from "@/components/CategoryBar";
 import ProductSection from "@/components/ProductSection";
 import Footer from "@/components/Footer";
 import { selecoes, retro, europeus, brasileirao } from "@/data/products";
 import heroBanner from "@/assets/hero-banner.jpg";
+import { supabase } from "@/lib/supabase";
 
 const Index = () => {
+  const [dbProducts, setDbProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchDbProducts = async () => {
+      try {
+        const { data } = await supabase.from('produtos').select('*');
+        if (data) {
+          // Filter out store configurations row
+          setDbProducts(data.filter(p => p.id !== 'store_config'));
+        }
+      } catch (err) {
+        console.error("Erro ao carregar produtos do banco:", err);
+      }
+    };
+    fetchDbProducts();
+  }, []);
+
+  // Merge static products with dynamic products by category
+  const getMergedProducts = (staticList: any[], categorySlug: string) => {
+    const parsedStatic = staticList.map(p => ({
+      id: p.id,
+      image: p.image,
+      name: p.name,
+      team: p.team,
+      price: p.price,
+      priceNum: p.priceNum,
+      category: p.category,
+      oldPrice: p.oldPrice,
+      externalCheckoutUrl: p.externalCheckoutUrl
+    }));
+
+    const dynamicFiltered = dbProducts
+      .filter(p => {
+        const cat = p.category;
+        if (Array.isArray(cat)) {
+          return cat.map(c => c.toLowerCase()).includes(categorySlug);
+        }
+        return typeof cat === 'string' && cat.toLowerCase() === categorySlug;
+      })
+      .map(p => ({
+        id: p.id,
+        image: p.imagem_url || p.image,
+        name: p.nome,
+        team: p.team || 'Time',
+        price: `R$ ${p.preco.toFixed(2).replace('.', ',')}`,
+        priceNum: p.preco,
+        category: [categorySlug],
+        description: p.description
+      }));
+
+    return [...dynamicFiltered, ...parsedStatic];
+  };
+
+  const mergedSelecoes = getMergedProducts(selecoes, 'seleções');
+  const mergedBrasileirao = getMergedProducts(brasileirao, 'brasileirão');
+  const mergedRetro = getMergedProducts(retro, 'retrô');
+  const mergedEuropeus = getMergedProducts(europeus, 'europeus');
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -29,39 +89,39 @@ const Index = () => {
         </div>
       </section>
 
-      {selecoes.length > 0 && (
+      {mergedSelecoes.length > 0 && (
         <ProductSection
           title="Seleções"
-          products={selecoes.map((p) => ({ ...p, id: p.id }))}
+          products={mergedSelecoes}
           id="seleções"
         />
       )}
-      {brasileirao.length > 0 && (
+      {mergedBrasileirao.length > 0 && (
         <>
           <div className="border-t border-border" />
           <ProductSection
             title="Brasileirão"
-            products={brasileirao.map((p) => ({ ...p, id: p.id }))}
+            products={mergedBrasileirao}
             id="brasileirão"
           />
         </>
       )}
-      {retro.length > 0 && (
+      {mergedRetro.length > 0 && (
         <>
           <div className="border-t border-border" />
           <ProductSection
             title="Históricas, edição: Série A Italiana"
-            products={retro.map((p) => ({ ...p, id: p.id }))}
+            products={mergedRetro}
             id="retrô"
           />
         </>
       )}
-      {europeus.length > 0 && (
+      {mergedEuropeus.length > 0 && (
         <>
           <div className="border-t border-border" />
           <ProductSection
             title="Europeus"
-            products={europeus.map((p) => ({ ...p, id: p.id }))}
+            products={mergedEuropeus}
             id="europeus"
           />
         </>

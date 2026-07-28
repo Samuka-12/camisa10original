@@ -2,20 +2,26 @@ import SearchBar from "@/components/SearchBar";
 import RegisterModal from "@/components/RegisterModal";
 
 import { useCart } from "@/contexts/CartContext";
+import { useStoreConfig } from "@/contexts/StoreConfigContext";
 import { Link } from "react-router-dom";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, ShieldCheck } from "lucide-react";
 
 const Header = () => {
   const { openCart, totalItems } = useCart();
+  const { config } = useStoreConfig();
+  const verificado = config.verificadoLoja?.ativo;
 
   return (
     <header className="border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-4">
         {/* Logo */}
-        <Link to="/" className="flex-shrink-0">
+        <Link to="/" className="flex-shrink-0 flex items-center gap-1.5">
           <h1 className="text-2xl font-extrabold tracking-tight text-primary">
             CAMISA<span className="text-accent">10</span>
           </h1>
+          {verificado && (
+            <ShieldCheck className="w-5 h-5 text-green-500 fill-green-500/20 animate-pulse" title="Loja Verificada e Segura" />
+          )}
         </Link>
 
         {/* Search */}

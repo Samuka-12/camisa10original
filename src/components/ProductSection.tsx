@@ -6,6 +6,8 @@ interface Product {
   name: string;
   team: string;
   price: string;
+  priceNum?: number;
+  category?: string | string[];
   oldPrice?: string;
   externalCheckoutUrl?: string;
 }
@@ -26,7 +28,18 @@ const ProductSection = ({ title, products, id }: ProductSectionProps) => {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-7">
           {products.map((product, i) => (
-            <ProductCard key={product.id || i} {...product} />
+            <ProductCard 
+              key={product.id || i} 
+              id={product.id}
+              image={product.image}
+              name={product.name}
+              team={product.team}
+              price={product.price}
+              priceNum={product.priceNum}
+              category={product.category}
+              oldPrice={product.oldPrice}
+              externalCheckoutUrl={product.externalCheckoutUrl}
+            />
           ))}
         </div>
       </div>

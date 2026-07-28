@@ -11,13 +11,7 @@
 
 import { MessageCircle } from 'lucide-react';
 import { trackWhatsAppContact, getFbc, getFbp } from '@/lib/metaPixel';
-
-// Número do WhatsApp X1 — altere aqui se necessário
-const WHATSAPP_NUMBER = '5547983174463';
-const WHATSAPP_MESSAGE = encodeURIComponent(
-  'Olá! Vim pelo site da Camisa10 e gostaria de mais informações sobre os produtos.'
-);
-const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MESSAGE}`;
+import { useStoreConfig } from '@/contexts/StoreConfigContext';
 
 interface WhatsAppButtonProps {
   /** Número do WhatsApp (somente dígitos, com DDI). Ex: 5511999999999 */
@@ -29,11 +23,19 @@ interface WhatsAppButtonProps {
 }
 
 const WhatsAppButton = ({
-  phone = WHATSAPP_NUMBER,
-  message = WHATSAPP_MESSAGE,
+  phone,
+  message,
   source = 'whatsapp_x1',
 }: WhatsAppButtonProps) => {
-  const url = `https://wa.me/${phone}?text=${message}`;
+  const { config } = useStoreConfig();
+  const wa = config.whatsapp;
+
+  if (!wa?.ativo) return null;
+
+  const finalPhone = phone || wa.numero || '5547983174463';
+  const defaultMsg = 'Olá! Vim pelo site da Camisa10 e gostaria de mais informações sobre os produtos.';
+  const finalMessage = message || encodeURIComponent(defaultMsg);
+  const url = `https://wa.me/${finalPhone}?text=${finalMessage}`;
 
   const handleClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
