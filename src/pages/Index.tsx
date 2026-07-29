@@ -34,21 +34,26 @@ const Index = () => {
     fetchDbProducts();
   }, []);
 
+  const produtosOcultos = config.produtosOcultos || [];
+
   const getMergedProducts = (staticList: any[], categorySlug: string) => {
-    const parsedStatic = staticList.map(p => ({
-      id: p.id,
-      image: p.image,
-      name: p.name,
-      team: p.team,
-      price: p.price,
-      priceNum: p.priceNum,
-      category: p.category,
-      oldPrice: p.oldPrice,
-      externalCheckoutUrl: p.externalCheckoutUrl
-    }));
+    const parsedStatic = staticList
+      .filter(p => !produtosOcultos.includes(p.id))
+      .map(p => ({
+        id: p.id,
+        image: p.image,
+        name: p.name,
+        team: p.team,
+        price: p.price,
+        priceNum: p.priceNum,
+        category: p.category,
+        oldPrice: p.oldPrice,
+        externalCheckoutUrl: p.externalCheckoutUrl
+      }));
 
     const dynamicFiltered = dbProducts
       .filter(p => {
+        if (produtosOcultos.includes(p.id)) return false;
         const cat = p.category;
         if (Array.isArray(cat)) {
           return cat.map(c => c.toLowerCase()).includes(categorySlug);

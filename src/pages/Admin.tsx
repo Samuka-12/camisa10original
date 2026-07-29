@@ -355,6 +355,26 @@ export default function Admin() {
         setAba('vitrine');
     };
 
+    // PERMANENT PRODUCT REMOVAL — works for both DB and static products
+    const removerProdutoPermanente = async (prod: { id: string; nome: string; origem: string }) => {
+        if (!confirm(`⚠️ Remover PERMANENTEMENTE "${prod.nome}" da loja?\n\nEste produto será removido da vitrine e das páginas do cliente. Só voltará se você criar ele novamente.`)) return;
+
+        if (prod.origem === 'estatico') {
+            // Static product: add to hidden list in config
+            const ocultos = [...(localConfig.produtosOcultos || []), prod.id];
+            const updatedConfig = { ...localConfig, produtosOcultos: ocultos };
+            setLocalConfig(updatedConfig);
+            await handleSaveAll(updatedConfig);
+        } else {
+            // DB product: delete from Supabase
+            const { error } = await supabase.from('produtos').delete().eq('id', prod.id);
+            if (error) console.warn('Erro ao excluir do Supabase:', error.message);
+            await buscarProdutos();
+        }
+        alert('✅ Produto removido permanentemente da loja!');
+    };
+
+    // Legacy deletarProduto used for dynamic links from vitrine
     const deletarProduto = async (id: string) => {
         if (!confirm('Tem certeza que deseja excluir este produto da vitrine?')) return;
         const { error } = await supabase.from('produtos').delete().eq('id', id);
@@ -722,10 +742,13 @@ export default function Admin() {
     const initiateCheckouts = filteredMetaEvents.filter(e => e.event_name === 'InitiateCheckout').length;
 
     // COMBINED STORE PRODUCTS LIST (Static + Supabase — real products only for vitrine)
+    const produtosOcultos = localConfig.produtosOcultos || [];
+
     const realDbProducts = produtos.filter(p => {
         if (p.tipo === 'dinamico' || p.is_dynamic === true) return false;
         if (p.nome && (p.nome.startsWith('Camisetas -') || p.nome.toLowerCase().includes('dinamico'))) return false;
         if (!p.imagem_url && !p.image) return false;
+        if (produtosOcultos.includes(p.id)) return false;
         return true;
     });
 
@@ -739,15 +762,17 @@ export default function Admin() {
             team: p.team || 'Time',
             origem: 'db'
         })),
-        ...allProducts.map(p => ({
-            id: p.id,
-            nome: p.name,
-            preco: p.priceNum,
-            imagem: p.image,
-            category: p.category[0] || 'europeus',
-            team: p.team,
-            origem: 'estatico'
-        }))
+        ...allProducts
+            .filter(p => !produtosOcultos.includes(p.id))
+            .map(p => ({
+                id: p.id,
+                nome: p.name,
+                preco: p.priceNum,
+                imagem: p.image,
+                category: p.category[0] || 'europeus',
+                team: p.team,
+                origem: 'estatico'
+            }))
     ];
 
     // Dynamic products list (only tipo=dinamico or matching name pattern)
@@ -1055,11 +1080,13 @@ export default function Admin() {
                                                 <a href={`/produto/${prod.id}`} target="_blank" className="p-1.5 bg-slate-800 text-gray-300 hover:text-white rounded-lg flex items-center justify-center">
                                                     <ExternalLink size={14} />
                                                 </a>
-                                                {prod.origem === 'dinamico' && (
-                                                    <button onClick={() => deletarProduto(prod.id)} className="p-1.5 bg-red-900/40 text-red-300 hover:text-red-100 rounded-lg flex items-center justify-center">
-                                                        <Trash2 size={14} />
-                                                    </button>
-                                                )}
+                                                <button
+                                                    onClick={() => removerProdutoPermanente(prod)}
+                                                    title="Remover permanentemente da loja"
+                                                    className="p-1.5 bg-red-900/40 hover:bg-red-700 text-red-300 hover:text-white rounded-lg flex items-center justify-center transition-colors"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
                                             </div>
                                         </div>
                                     </div>

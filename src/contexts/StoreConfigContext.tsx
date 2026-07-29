@@ -106,6 +106,7 @@ export interface DescontoProdutoSpec {
 
 export interface StoreConfig {
   dashboardResetTime?: string;
+  produtosOcultos?: string[]; // IDs of permanently removed products (static ones hidden from vitrine)
   whatsapp: {
     ativo: boolean;
     numero: string;
