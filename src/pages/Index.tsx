@@ -44,11 +44,11 @@ const Index = () => {
       try {
         const { data } = await supabase.from('produtos').select('*');
         if (data) {
-          // Only vitrine products
+          // Only vitrine products (or products without explicit tipo)
           const realVitrineProducts = data.filter(p => {
             if (p.id === 'store_config' || p.id === STORE_CONFIG_ID) return false;
-            if (p.tipo === 'vitrine') return true;
-            return false;
+            if (p.tipo === 'dinamico' || p.category === 'dinamico') return false;
+            return true;
           });
           setDbProducts(realVitrineProducts);
         }

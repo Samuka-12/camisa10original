@@ -319,7 +319,7 @@ export default function Admin() {
         const allImgs = productImages.filter(i => i);
         const prodId = editingProdId || crypto.randomUUID();
 
-        const { error } = await supabase.from('produtos').upsert([{
+        const fullPayload: any = {
             id: prodId,
             nome: nomeProd,
             preco: precoNumerico,
@@ -331,7 +331,25 @@ export default function Admin() {
             description: descProd + (descVideoProd ? `\n\n[VÍDEO](${descVideoProd})` : ''),
             sizes: selectedSizes,
             tipo: 'vitrine'
-        }], { onConflict: 'id' });
+        };
+
+        let { error } = await supabase.from('produtos').upsert([fullPayload], { onConflict: 'id' });
+
+        // Fallback for DB schemas without tipo/sizes/images columns
+        if (error && (error.code === 'PGRST204' || error.message?.includes('column') || error.message?.includes('schema cache'))) {
+            const basicPayload: any = {
+                id: prodId,
+                nome: nomeProd,
+                preco: precoNumerico,
+                imagem_url: mainImg,
+                image: mainImg,
+                category: categoryProd,
+                team: teamProd,
+                description: descProd + (descVideoProd ? `\n\n[VÍDEO](${descVideoProd})` : '')
+            };
+            const fallbackRes = await supabase.from('produtos').upsert([basicPayload], { onConflict: 'id' });
+            error = fallbackRes.error;
+        }
 
         if (error) {
             toast.error('Erro ao salvar produto: ' + error.message);
@@ -832,12 +850,12 @@ export default function Admin() {
     // VITRINE PRODUCTS
     const produtosOcultos = localConfig.produtosOcultos || [];
 
-    // Only tipo=vitrine products from DB
+    // Only vitrine products from DB (or products without explicit tipo)
     const realDbProducts = produtos.filter(p => {
         if (p.id === 'store_config' || p.id === STORE_CONFIG_ID) return false;
         if (produtosOcultos.includes(p.id)) return false;
-        if (p.tipo === 'vitrine') return true;
-        return false;
+        if (p.tipo === 'dinamico' || p.category === 'dinamico') return false;
+        return true;
     });
 
     const allVitrineProducts = [
@@ -873,8 +891,8 @@ export default function Admin() {
     // Dynamic products (links)
     const dynamicDbProducts = produtos.filter(p => {
         if (p.id === 'store_config' || p.id === STORE_CONFIG_ID) return false;
-        if (p.tipo === 'vitrine') return false;
-        return true;
+        if (p.tipo === 'dinamico' || p.category === 'dinamico') return true;
+        return false;
     });
     const allDynLinks = [
         ...dynLinks,

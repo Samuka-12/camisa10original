@@ -57,7 +57,7 @@ const Category = () => {
         if (data) {
           const filtered = data.filter(p => {
             if (p.id === 'store_config' || p.id === STORE_CONFIG_ID) return false;
-            if (p.tipo !== 'vitrine') return false;
+            if (p.tipo === 'dinamico' || p.category === 'dinamico') return false;
             // Match by original slug or URL slug
             const cat = p.category;
             const matchCat = (c: string) => {
