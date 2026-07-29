@@ -5,7 +5,9 @@ import Footer from "@/components/Footer";
 import { getProductsByCategory, type Product } from "@/data/products";
 import { supabase } from "@/lib/supabase";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
-import { useStoreConfig, STORE_CONFIG_ID } from "@/contexts/StoreConfigContext";
+import { useStoreConfig } from "@/contexts/StoreConfigContext";
+
+const STORE_CONFIG_ID = '00000000-0000-0000-0000-000000000000';
 
 const categoryLabels: Record<string, string> = {
   selecoes: "Seleções",

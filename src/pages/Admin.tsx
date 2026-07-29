@@ -2,8 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import {
     useStoreConfig, PriceRule, FloatingStory, CatalogImage, Coupon,
-    VendaRealizada, GastoAnuncio, EstrategiaEscala, DescontoProdutoSpec, STORE_CONFIG_ID
+    VendaRealizada, GastoAnuncio, EstrategiaEscala, DescontoProdutoSpec
 } from '../contexts/StoreConfigContext';
+
+const STORE_CONFIG_ID = '00000000-0000-0000-0000-000000000000';
+
 import { allProducts } from '../data/products';
 import { getTeamPlayers, getTeamsWithPlayers } from '../data/teamPlayers';
 import {
@@ -19,7 +22,7 @@ function AnimatedBackground() {
     const moneyItems = Array.from({ length: 25 });
     return (
         <div aria-hidden="true" style={{ position: "fixed", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none", backgroundColor: "#050505" }}>
-            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.12 }}>
+            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.15 }}>
                 <img src="/gatuno.jpg" alt="Gatuno" style={{ width: "100%", height: "100%", objectFit: "contain", animation: "gatunoExtasia 4s cubic-bezier(0.4, 0, 0.2, 1) infinite", transformOrigin: "center bottom" }} />
             </div>
             {moneyItems.map((_, i) => {
@@ -29,7 +32,7 @@ function AnimatedBackground() {
                 const randomScale = 0.5 + Math.random() * 1.5;
                 const isDolar = Math.random() > 0.5;
                 return (
-                    <div key={i} style={{ position: "absolute", left: `${randomLeft}%`, top: "-10%", fontSize: `${24 * randomScale}px`, animation: `moneyRain ${randomDuration}s linear ${randomDelay}s infinite`, opacity: 0.35 }}>
+                    <div key={i} style={{ position: "absolute", left: `${randomLeft}%`, top: "-10%", fontSize: `${24 * randomScale}px`, animation: `moneyRain ${randomDuration}s linear ${randomDelay}s infinite`, opacity: 0.4 }}>
                         {isDolar ? "💵" : "💸"}
                     </div>
                 );
@@ -42,30 +45,29 @@ function AnimatedBackground() {
     );
 }
 
-type ActiveTab = 'dashboard' | 'vitrine' | 'novo' | 'dinamicos' | 'configuracoes' | 'stories' | 'precos' | 'imagens' | 'calculadora' | 'integracoes' | 'frontend';
-
 export default function Admin() {
     const { config, saveConfig } = useStoreConfig();
-
-    // Auth
     const [authorized, setAuthorized] = useState(false);
     const [authLoading, setAuthLoading] = useState(true);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loginError, setLoginError] = useState('');
 
-    // Navigation & Mobile menu
+    type ActiveTab = 'dashboard' | 'vitrine' | 'pedidos' | 'catalogo' | 'novo' | 'configuracoes' | 'stories' | 'precos' | 'imagens' | 'calculadora' | 'integracoes' | 'frontend';
     const [aba, setAba] = useState<ActiveTab>('dashboard');
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-    // Data
     const [pedidos, setPedidos] = useState<any[]>([]);
     const [produtos, setProdutos] = useState<any[]>([]);
     const [metaEvents, setMetaEvents] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
-    // Local config copy
+    // Local config copy synced with global config
     const [localConfig, setLocalConfig] = useState(config);
+
+    useEffect(() => {
+        if (config) {
+            setLocalConfig(config);
+        }
+    }, [config]);
 
     // NEW / EDIT PRODUCT FORM STATE
     const [editingProdId, setEditingProdId] = useState<string | null>(null);

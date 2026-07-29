@@ -6,7 +6,9 @@ import Footer from "@/components/Footer";
 import { selecoes, retro, europeus, brasileirao } from "@/data/products";
 import heroBannerAsset from "@/assets/hero-banner.jpg";
 import { supabase } from "@/lib/supabase";
-import { useStoreConfig, STORE_CONFIG_ID } from "@/contexts/StoreConfigContext";
+import { useStoreConfig } from "@/contexts/StoreConfigContext";
+
+const STORE_CONFIG_ID = '00000000-0000-0000-0000-000000000000';
 
 const Index = () => {
   const [dbProducts, setDbProducts] = useState<any[]>([]);
