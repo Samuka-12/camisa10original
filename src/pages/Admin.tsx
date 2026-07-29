@@ -74,6 +74,7 @@ export default function Admin() {
     const [nomeProd, setNomeProd] = useState('');
     const [precoProd, setPrecoProd] = useState('');
     const [productImages, setProductImages] = useState<string[]>(['', '', '', '', '', '']);
+    const [productVideos, setProductVideos] = useState<string[]>(['', '']);
     const [categoryProd, setCategoryProd] = useState('europeus');
     const [teamProd, setTeamProd] = useState('Personalizado');
     const [descProd, setDescProd] = useState('');
@@ -255,19 +256,55 @@ export default function Admin() {
         setTimeout(() => setSaveMsg(''), 4500);
     };
 
-    // AI Description
+    // AI Description Generator (Ultra Smart & Team-Aware)
     const handleGenerateAiDescription = (nomeProduto: string, time: string, setter: (v: string) => void) => {
         if (!nomeProduto) { alert('Preencha o Nome da Camisa primeiro!'); return; }
         setAiGenerating(true);
         setTimeout(() => {
-            const templates = [
-                `Vista o manto sagrado com orgulho! A Camiseta ${nomeProduto} do ${time} é ideal para o torcedor que quer carregar as glórias e a tradição do clube em todos os momentos. Confeccionada com tecido altamente tecnológico que absorve o suor e garante extremo conforto, esta peça traz detalhes bordados em alta definição e o design oficial da temporada 2026. Perfeita para empurrar o time na arquibancada ou esbanjar estilo no dia a dia. Adquira já a sua e sinta a energia do manto!`,
-                `A herança histórica e a paixão inabalável se encontram na nova Camiseta ${nomeProduto} do ${time}. Com acabamento premium e modelagem que proporciona ajuste anatômico perfeito ao corpo, ela combina a tradicional cor do clube com grafismos modernos inspirados na garra dos jogadores em campo. O tecido aerodinâmico de secagem rápida garante frescor absoluto do primeiro ao último minuto de jogo. Seja parte da história, garanta a sua agora!`,
-                `Desempenho de atleta e elegância de torcedor. A Camiseta ${nomeProduto} ${time} foi desenvolvida para os verdadeiros apaixonados por futebol. Seu design exclusivo celebra a rica história e as vitórias épicas do time. Feita com materiais sustentáveis de alta durabilidade, oferece leveza inigualável e respirabilidade inteligente no dia a dia. Uma edição indispensável para a sua coleção!`
-            ];
-            setter(templates[Math.floor(Math.random() * templates.length)]);
+            const teamUpper = (time || '').toLowerCase();
+            let teamContext = '';
+            if (teamUpper.includes('flamengo')) {
+                teamContext = `Celebrando a paixão avassaladora da Maior Nação do Mundo, esta peça carrega a mística das grandes conquistas no Maracanã e o orgulho rubro-negro.`;
+            } else if (teamUpper.includes('real madrid')) {
+                teamContext = `Inspirada na realeza do futebol mundial e na hegemonia incontestável de 15 títulos europeus, esta camisa exala a imponência do Santiago Bernabéu.`;
+            } else if (teamUpper.includes('barcelona')) {
+                teamContext = `Respeitando o lema 'Més que un club', o manto traz a tradição culé, o estilo inconfundível de jogo e a garra do Camp Nou.`;
+            } else if (teamUpper.includes('palmeiras')) {
+                teamContext = `Honrando a tradição da Tríplice Coroa e da Segunda Academia, a camisa do Verdão representa a obsessão por vitórias e a força da torcida que canta e vibra.`;
+            } else if (teamUpper.includes('são paulo') || teamUpper.includes('sao paulo')) {
+                teamContext = `Para o torcedor do Tricolor Paulista, soberano e multicampeão mundial, esta camisa traduz a elegância e a glória do MorumBIS.`;
+            } else if (teamUpper.includes('corinthians')) {
+                teamContext = `Representando a raça da Fiel Torcida e a tradição alvinegra, este manto é feito para quem vive e respira o Corinthians 90 minutos por jogo.`;
+            } else if (teamUpper.includes('brasil')) {
+                teamContext = `A única seleção pentacampeã do planeta! Vestir o manto amarelo e verde é carregar a história dos maiores craques que já pisaram em um gramado.`;
+            } else if (teamUpper.includes('argentina')) {
+                teamContext = `A camisa dos campeões do mundo! Com as cores albiceleste que consagraram lendas e emocionaram o futebol mundial.`;
+            } else if (teamUpper.includes('psg') || teamUpper.includes('paris')) {
+                teamContext = `Unindo o luxo da capital francesa à ousadia no futebol moderno, este manto celebra a nova era de glamour no Parque dos Príncipes.`;
+            } else {
+                teamContext = `Uma edição histórica e indispensável para qualquer colecionador e apaixonado por futebol de alto nível.`;
+            }
+
+            const template = `🔥 **EDIÇÃO OFICIAL 2026/27 — MANTO PREMIUM**
+
+Vista com orgulho a nova **${nomeProduto}**! ${teamContext}
+
+✨ **TECNOLOGIA & ACABAMENTO ATLETA:**
+- **Tecido AeroReady / DryFit Pro:** Microfuros de alta respirabilidade que absorvem o suor e mantêm o corpo seco do primeiro ao último minuto.
+- **Escudo e Detalhes Termoadaptados:** Aplicação em alta definição com costuras reforçadas e acabamento impecável.
+
+🏆 **TORCEDOR x JOGADOR — ESCOLHA SEU ESTILO:**
+- **Versão Torcedor:** Modelagem tradicional confortável, perfeita para o dia a dia, churrascos e arquibancada.
+- **Versão Jogador:** Modelagem slim ajustada ao corpo, a mesma tecnologia exata utilizada pelos atletas em campo (+R$ 20,00).
+- **Personalização Gráfica:** Adicione seu nome e número oficial com a fonte autêntica da temporada (+R$ 20,00).
+
+💬 *"Sensação de vestuário de atleta profissional! A qualidade do tecido e os detalhes do escudo impressionam."* — Torcedor Verificado
+
+GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
+
+            setter(template);
             setAiGenerating(false);
-        }, 1200);
+        }, 1000);
     };
 
     // PRODUCT CREATE / EDIT
@@ -293,6 +330,20 @@ export default function Admin() {
             imgs[0] = prod.imagem_url || prod.image;
         }
         setProductImages(imgs);
+
+        let vids: string[] = ['', ''];
+        if (prod.videos) {
+            try {
+                const parsed = typeof prod.videos === 'string' ? JSON.parse(prod.videos) : prod.videos;
+                if (Array.isArray(parsed)) {
+                    parsed.forEach((v: string, i: number) => { if (i < 2) vids[i] = v; });
+                }
+            } catch (_) {
+                if (typeof prod.videos === 'string') vids[0] = prod.videos;
+            }
+        }
+        setProductVideos(vids);
+
         setSelectedSizes(prod.sizes || ['P', 'M', 'G', 'GG', 'XGG']);
 
         const spec = (localConfig.precoGestao?.descontosEspecificos || []).find(d => d.produtoId === prod.id);
@@ -317,6 +368,7 @@ export default function Admin() {
         const precoNumerico = parseFloat(precoProd.replace(',', '.'));
         const mainImg = productImages.find(i => i) || '';
         const allImgs = productImages.filter(i => i);
+        const allVids = productVideos.filter(v => v);
         const prodId = editingProdId || crypto.randomUUID();
 
         const fullPayload: any = {
@@ -326,6 +378,7 @@ export default function Admin() {
             imagem_url: mainImg,
             image: mainImg,
             images: JSON.stringify(allImgs),
+            videos: JSON.stringify(allVids),
             category: categoryProd,
             team: teamProd,
             description: descProd + (descVideoProd ? `\n\n[VÍDEO](${descVideoProd})` : ''),
@@ -335,7 +388,7 @@ export default function Admin() {
 
         let { error } = await supabase.from('produtos').upsert([fullPayload], { onConflict: 'id' });
 
-        // Fallback for DB schemas without tipo/sizes/images columns
+        // Fallback for DB schemas without tipo/sizes/images/videos columns
         if (error && (error.code === 'PGRST204' || error.message?.includes('column') || error.message?.includes('schema cache'))) {
             const basicPayload: any = {
                 id: prodId,
@@ -1295,12 +1348,33 @@ export default function Admin() {
                                 )}
 
                                 <div>
-                                    <label className="block text-xs text-gray-400 font-bold mb-2">Fotos do Produto (Upload de até 6 fotos)</label>
+                                    <label className="block text-xs text-gray-400 font-bold mb-2">📷 Fotos do Produto (Upload de até 6 fotos)</label>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
                                         {[0, 1, 2, 3, 4, 5].map(idx => (
                                             <div key={idx} className="space-y-1">
                                                 <ImageUploader value={productImages[idx] || ''} onChange={url => { const updated = [...productImages]; updated[idx] = url; setProductImages(updated); }} />
                                                 <span className="text-[9px] text-gray-500 text-center block">Foto {idx + 1} {idx === 0 ? '(Capa)' : ''}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs text-gray-400 font-bold mb-2">🎥 Vídeos do Produto (Upload ou URL de até 2 vídeos)</label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {[0, 1].map(idx => (
+                                            <div key={idx} className="bg-slate-950 p-3 rounded-xl border border-white/10 space-y-2">
+                                                <span className="text-xs font-bold text-purple-300">Vídeo {idx + 1} {idx === 0 ? '(Principal)' : ''}</span>
+                                                <input
+                                                    value={productVideos[idx] || ''}
+                                                    onChange={e => {
+                                                        const updated = [...productVideos];
+                                                        updated[idx] = e.target.value;
+                                                        setProductVideos(updated);
+                                                    }}
+                                                    placeholder="Cole a URL do vídeo (.mp4)..."
+                                                    className="w-full bg-slate-900 text-white rounded-lg border border-white/10 p-2 text-xs"
+                                                />
                                             </div>
                                         ))}
                                     </div>

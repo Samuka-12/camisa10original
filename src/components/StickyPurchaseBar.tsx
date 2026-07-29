@@ -5,7 +5,8 @@ import { ShoppingCart } from 'lucide-react';
 
 interface StickyPurchaseBarProps {
   product: any;
-  selectedType: string;
+  selectedVersion?: 'Torcedor' | 'Jogador';
+  isCustomized?: boolean;
   customName?: string;
   customNumber?: string;
   customPhrase?: string;
@@ -13,7 +14,8 @@ interface StickyPurchaseBarProps {
 
 export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
   product,
-  selectedType,
+  selectedVersion = 'Torcedor',
+  isCustomized = false,
   customName,
   customNumber,
   customPhrase
@@ -53,8 +55,12 @@ export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
 
   if (!barConfig?.ativo || !isVisible) return null;
 
-  const adjustedPriceNum = getAdjustedPrice(product.priceNum, product.category, product.id);
-  const displayPrice = `R$ ${adjustedPriceNum.toFixed(2).replace('.', ',')}`;
+  const rawBasePrice = product.priceNum || 109.93;
+  let basePriceNum = getAdjustedPrice(rawBasePrice, product.category, product.id);
+  if (selectedVersion === 'Jogador') basePriceNum += 20;
+  if (isCustomized) basePriceNum += 20;
+
+  const displayPrice = `R$ ${basePriceNum.toFixed(2).replace('.', ',')}`;
 
   const handleBuy = () => {
     if (!selectedSize) {
@@ -62,14 +68,15 @@ export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
       return;
     }
     addItem(product, selectedSize, {
-      type: selectedType as any,
+      type: selectedVersion,
+      isCustomized,
       customName,
       customNumber,
-      customPhrase
+      customPhrase,
+      itemPrice: basePriceNum
     });
   };
 
-  // Pulse effect class mappings
   const pulse = config.pulseComprar;
   const pulseClass = pulse?.ativo ? 'animate-sticky-pulse' : '';
 
@@ -94,78 +101,67 @@ export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
     transition: 'transform 0.3s ease-in-out'
   };
 
-  // Button format & style
   const btnShape = barConfig.formato || 'rounded-xl';
   const btnStyle: React.CSSProperties = {
     background: barConfig.corBotao || '#dc2626',
-    borderRadius: barConfig.arredondamento || '12px',
-    color: '#ffffff',
-    fontWeight: 'bold',
-    fontSize: '14px',
-    padding: '10px 20px',
+    color: barConfig.corTexto || '#ffffff',
+    border: 'none',
+    padding: '10px 24px',
+    fontWeight: 900,
+    cursor: 'pointer',
+    fontSize: '13px',
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    border: 'none',
-    cursor: 'pointer',
-    transition: 'transform 0.15s'
+    boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+    whiteSpace: 'nowrap'
   };
 
   return (
-    <div style={barStyle} className="animate-slide-up">
-      <div className="container mx-auto flex items-center justify-between gap-4 max-w-6xl">
-        
-        {/* Product preview */}
-        <div className="flex items-center gap-3">
+    <div style={barStyle} className="animate-fade-in">
+      <div className="container mx-auto flex items-center justify-between gap-4 max-w-5xl">
+        <div className="hidden sm:flex items-center gap-3 min-w-0">
           <img 
-            src={product.image || "/placeholder.svg"} 
-            alt={product.name} 
-            className="w-12 h-12 object-contain bg-white/10 rounded-lg"
+            src={product.image || product.imagem_url || "/placeholder.svg"} 
+            alt={product.name}
+            className="w-10 h-10 object-contain bg-white/5 rounded-lg border border-white/10"
           />
-          <div className="hidden md:block">
-            <h4 className="text-sm font-bold text-white max-w-[200px] truncate">{product.name}</h4>
-            <p className="text-xs text-muted-foreground">{product.team}</p>
+          <div className="min-w-0">
+            <h4 className="text-xs font-bold text-white truncate max-w-[200px]">{product.name}</h4>
+            <p className="text-xs text-green-400 font-extrabold">{displayPrice}</p>
           </div>
-          <span className="text-base font-extrabold text-white ml-2">{displayPrice}</span>
         </div>
 
-        {/* Sizes & Buy Action */}
-        <div className="flex items-center gap-3">
-          {/* Size dropdown or selector */}
-          <select
-            value={selectedSize}
-            onChange={(e) => setSelectedSize(e.target.value)}
-            className="bg-neutral-800 border border-neutral-700 text-white rounded-lg px-2.5 py-2 text-xs font-semibold focus:outline-none"
-          >
-            <option value="">Tamanho</option>
-            {product.sizes?.map((size: string) => (
-              <option key={size} value={size}>{size}</option>
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+          <div className="flex items-center gap-1.5 bg-slate-900/80 border border-white/10 p-1 rounded-xl">
+            <span className="text-[10px] text-gray-400 font-bold px-2 hidden xs:inline">Tam:</span>
+            {(product.sizes || ['P', 'M', 'G', 'GG']).map((size: string) => (
+              <button
+                key={size}
+                type="button"
+                onClick={() => setSelectedSize(size)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition ${
+                  selectedSize === size
+                    ? "bg-purple-600 text-white shadow"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                {size}
+              </button>
             ))}
-          </select>
+          </div>
 
-          {/* Action button */}
           <button
+            type="button"
             onClick={handleBuy}
             style={btnStyle}
             className={`${btnShape} ${pulseClass} hover:opacity-90 active:scale-95`}
           >
-            <ShoppingCart className="w-4 h-4" />
-            <span className="hidden sm:inline">Adicionar</span>
+            <ShoppingCart size={16} />
+            <span>COMPRAR • {displayPrice}</span>
           </button>
         </div>
-
       </div>
-
-      <style>{`
-        @keyframes stickyPulse {
-          0% { transform: scale(1); box-shadow: 0 0 0 0 ${barConfig.corBotao || '#dc2626'}80; }
-          70% { transform: scale(${pulse?.tamanho || '1.05'}); box-shadow: 0 0 0 10px ${barConfig.corBotao || '#dc2626'}00; }
-          100% { transform: scale(1); box-shadow: 0 0 0 0 ${barConfig.corBotao || '#dc2626'}00; }
-        }
-        .animate-sticky-pulse {
-          animation: stickyPulse ${pulse?.velocidade === 'lento' ? '2.5s' : pulse?.velocidade === 'rapido' ? '1.2s' : '1.8s'} infinite ease-in-out;
-        }
-      `}</style>
     </div>
   );
 };

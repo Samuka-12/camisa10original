@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
-import { ArrowLeft, ShoppingCart, Check, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Check, ShieldCheck, Play } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getProductById } from "@/data/products";
@@ -11,7 +11,7 @@ import { CountdownTimer } from "@/components/CountdownTimer";
 import { StickyPurchaseBar } from "@/components/StickyPurchaseBar";
 import { supabase } from "@/lib/supabase";
 
-type JerseyType = 'Torcedor' | 'Jogador' | 'Personalizada';
+export type VersionType = 'Torcedor' | 'Jogador';
 
 const Product = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,12 +25,13 @@ const Product = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [added, setAdded] = useState(false);
 
-  const [selectedType, setSelectedType] = useState<JerseyType>('Torcedor');
+  const [selectedVersion, setSelectedVersion] = useState<VersionType>('Torcedor');
+  const [isCustomized, setIsCustomized] = useState(false);
   const [customName, setCustomName] = useState("");
   const [customNumber, setCustomNumber] = useState("");
   const [customPhrase, setCustomPhrase] = useState("");
 
-  // Load product from database if not found locally
+  // Load product from database or local catalog
   useEffect(() => {
     const loadProduct = async () => {
       setDbLoading(true);
@@ -46,15 +47,35 @@ const Product = () => {
             .eq('id', id)
             .single();
           if (data) {
+            let parsedImgs = [data.imagem_url || data.image];
+            if (data.images) {
+              try {
+                const parsed = typeof data.images === 'string' ? JSON.parse(data.images) : data.images;
+                if (Array.isArray(parsed) && parsed.length > 0) parsedImgs = parsed;
+              } catch (_) {}
+            }
+
+            let parsedVids: string[] = [];
+            if (data.videos) {
+              try {
+                const parsed = typeof data.videos === 'string' ? JSON.parse(data.videos) : data.videos;
+                if (Array.isArray(parsed)) parsedVids = parsed;
+              } catch (_) {
+                if (typeof data.videos === 'string') parsedVids = [data.videos];
+              }
+            }
+
+            const basePriceNum = data.preco || 109.93;
             setDbProduct({
               id: data.id,
               name: data.nome,
               team: data.team || 'Time',
-              price: `R$ ${data.preco.toFixed(2).replace('.', ',')}`,
-              priceNum: data.preco,
+              price: `R$ ${basePriceNum.toFixed(2).replace('.', ',')}`,
+              priceNum: basePriceNum,
               image: data.imagem_url || data.image,
-              images: [data.imagem_url || data.image],
-              sizes: ['P', 'M', 'G', 'GG', 'XGG'], // Default sizes
+              images: parsedImgs.filter(Boolean),
+              videos: parsedVids.filter(Boolean),
+              sizes: data.sizes || ['P', 'M', 'G', 'GG', 'XGG'],
               category: [data.category || 'europeus'],
               description: data.description || 'Sem descrição cadastrada.'
             });
@@ -71,10 +92,9 @@ const Product = () => {
 
   const product = dbProduct;
 
-  // Scroll to top and tracking
+  // Scroll to top and pixel tracking
   useEffect(() => {
     window.scrollTo(0, 0);
-    
     if (!product?.id) return;
     
     const timer = setTimeout(() => {
@@ -89,14 +109,35 @@ const Product = () => {
     return () => clearTimeout(timer);
   }, [product?.id]);
 
+  // Gallery media list (Images + Videos combined)
+  const mediaList = useMemo(() => {
+    if (!product) return [];
+    const list: Array<{ type: 'image' | 'video'; url: string }> = [];
+    if (product.images && Array.isArray(product.images)) {
+      product.images.forEach((img: string) => { if (img) list.push({ type: 'image', url: img }); });
+    } else if (product.image) {
+      list.push({ type: 'image', url: product.image });
+    }
+    if (product.videos && Array.isArray(product.videos)) {
+      product.videos.forEach((vid: string) => { if (vid) list.push({ type: 'video', url: vid }); });
+    }
+    return list;
+  }, [product]);
+
+  // Price calculations:
+  // Base = 109,93 (or custom base) + 20 for Jogador + 20 for Personalizada
   const adjustedPrice = useMemo(() => {
     if (!product) return 0;
-    let base = getAdjustedPrice(product.priceNum, product.category, product.id);
-    if (selectedType === 'Personalizada') {
-      base += 15;
+    const rawBasePrice = product.priceNum || 109.93;
+    let base = getAdjustedPrice(rawBasePrice, product.category, product.id);
+    if (selectedVersion === 'Jogador') {
+      base += 20;
+    }
+    if (isCustomized) {
+      base += 20;
     }
     return base;
-  }, [product, selectedType, getAdjustedPrice]);
+  }, [product, selectedVersion, isCustomized, getAdjustedPrice]);
 
   const displayPrice = useMemo(() => {
     return `R$ ${adjustedPrice.toFixed(2).replace('.', ',')}`;
@@ -105,10 +146,12 @@ const Product = () => {
   const handleAdd = () => {
     if (!selectedSize || !product) return;
     addItem(product, selectedSize, {
-      type: selectedType,
-      customName: selectedType === 'Personalizada' ? customName : undefined,
-      customNumber: selectedType === 'Personalizada' ? customNumber : undefined,
-      customPhrase: selectedType === 'Personalizada' ? customPhrase : undefined
+      type: selectedVersion,
+      isCustomized,
+      customName: isCustomized ? customName : undefined,
+      customNumber: isCustomized ? customNumber : undefined,
+      customPhrase: isCustomized ? customPhrase : undefined,
+      itemPrice: adjustedPrice
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
@@ -124,9 +167,9 @@ const Product = () => {
   const handleWhatsAppBuy = () => {
     if (!product) return;
     const waConfig = config.whatsapp;
-    const finalPhone = waConfig.numero || '5547983174463';
+    const finalPhone = waConfig?.numero || '5547983174463';
     
-    let template = waConfig.mensagensPersonalizadas?.[product.id] || 
+    let template = waConfig?.mensagensPersonalizadas?.[product.id] || 
       'Olá! Gostaria de comprar a camisa: *{nome_produto}*. Link: {link_produto}';
 
     const pageUrl = window.location.href;
@@ -169,11 +212,13 @@ const Product = () => {
   const pulseSpeed = pulse?.velocidade === 'lento' ? '2.5s' : pulse?.velocidade === 'rapido' ? '1.2s' : '1.8s';
   const pulseScale = pulse?.tamanho || '1.05';
 
+  const currentMedia = mediaList[selectedImage] || mediaList[0];
+
   return (
     <div className="min-h-screen bg-background relative">
       <Header />
       
-      {/* Countdown Timer at the Top */}
+      {/* Countdown Timer at Top */}
       <CountdownTimer productId={product.id} positionFilter="topo" />
 
       <div className="container mx-auto px-4 py-8">
@@ -182,53 +227,69 @@ const Product = () => {
         </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          {/* Image gallery */}
+          {/* Gallery with Photo & Video Support */}
           <div className="space-y-4">
-            <div className="aspect-square rounded-2xl overflow-hidden bg-secondary border border-border group cursor-zoom-in">
-              <img
-                src={product.images[selectedImage] || "/placeholder.svg"}
-                alt={product.name}
-                fetchPriority="high"
-                decoding="async"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  if (target.src !== "/placeholder.svg") {
-                    target.src = "/placeholder.svg";
-                  }
-                }}
-              />
+            <div className="aspect-square rounded-2xl overflow-hidden bg-secondary border border-border group relative">
+              {currentMedia?.type === 'video' ? (
+                <video
+                  src={currentMedia.url}
+                  controls
+                  autoPlay
+                  loop
+                  playsInline
+                  className="w-full h-full object-contain bg-black"
+                />
+              ) : (
+                <img
+                  src={currentMedia?.url || "/placeholder.svg"}
+                  alt={product.name}
+                  fetchPriority="high"
+                  decoding="async"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    if (target.src !== "/placeholder.svg") target.src = "/placeholder.svg";
+                  }}
+                />
+              )}
             </div>
-            {product.images.length > 1 && (
-              <div className="flex gap-3">
-                {product.images.map((img: string, i: number) => (
+
+            {/* Media Thumbnails (Images & Videos) */}
+            {mediaList.length > 1 && (
+              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+                {mediaList.map((media, i) => (
                   <button
                     key={i}
                     onClick={() => setSelectedImage(i)}
-                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
-                      i === selectedImage ? "border-primary" : "border-border hover:border-primary/50"
+                    className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${
+                      i === selectedImage ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"
                     }`}
                   >
-                    <img 
-                      src={img || "/placeholder.svg"} 
-                      alt="" 
-                      loading="lazy"
-                      decoding="async"
-                      className="w-full h-full object-cover" 
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        if (target.src !== "/placeholder.svg") {
-                          target.src = "/placeholder.svg";
-                        }
-                      }}
-                    />
+                    {media.type === 'video' ? (
+                      <div className="w-full h-full bg-black flex flex-col items-center justify-center text-white">
+                        <Play className="w-5 h-5 fill-white text-white" />
+                        <span className="text-[8px] font-bold mt-0.5">VÍDEO</span>
+                      </div>
+                    ) : (
+                      <img 
+                        src={media.url || "/placeholder.svg"} 
+                        alt="" 
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover" 
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          if (target.src !== "/placeholder.svg") target.src = "/placeholder.svg";
+                        }}
+                      />
+                    )}
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Details */}
+          {/* Product Details */}
           <div className="space-y-6">
             <div>
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{product.team}</p>
@@ -247,81 +308,126 @@ const Product = () => {
               <span className="text-3xl font-bold text-primary">{displayPrice}</span>
             </div>
 
-            {/* Type selector */}
-            <div>
-              <p className="text-sm font-semibold text-foreground mb-3">Versão da Camisa</p>
-              <div className="flex gap-2 flex-wrap">
-                {(['Torcedor', 'Jogador', 'Personalizada'] as JerseyType[]).map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => setSelectedType(type)}
-                    className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-all flex flex-col items-start ${
-                      selectedType === type
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border text-foreground hover:border-primary/50 hover:bg-secondary"
-                    }`}
-                  >
-                    <span>{type}</span>
-                    {type === 'Personalizada' && <span className="text-xs opacity-80">+ R$ 15,00</span>}
-                  </button>
-                ))}
+            {/* Version Selector (Torcedor / Jogador) */}
+            <div className="space-y-2">
+              <p className="text-sm font-semibold text-foreground">1. Escolha a Versão da Camisa</p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSelectedVersion('Torcedor')}
+                  className={`p-3.5 rounded-xl border text-left transition-all ${
+                    selectedVersion === 'Torcedor'
+                      ? "border-primary bg-primary/10 text-foreground ring-2 ring-primary/40"
+                      : "border-border text-muted-foreground hover:border-primary/50 bg-secondary/30"
+                  }`}
+                >
+                  <div className="font-bold text-sm text-foreground">Versão Torcedor</div>
+                  <div className="text-xs text-green-400 font-medium mt-0.5">Sem custo adicional</div>
+                  <div className="text-[10px] text-muted-foreground mt-1">Corte tradicional e confortável</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedVersion('Jogador')}
+                  className={`p-3.5 rounded-xl border text-left transition-all ${
+                    selectedVersion === 'Jogador'
+                      ? "border-primary bg-primary/10 text-foreground ring-2 ring-primary/40"
+                      : "border-border text-muted-foreground hover:border-primary/50 bg-secondary/30"
+                  }`}
+                >
+                  <div className="font-bold text-sm text-foreground flex items-center justify-between">
+                    <span>Versão Jogador</span>
+                    <span className="text-xs bg-purple-950 text-purple-300 px-1.5 py-0.5 rounded font-mono">+ R$ 20,00</span>
+                  </div>
+                  <div className="text-xs text-purple-400 font-medium mt-0.5">+ R$ 20,00 no valor final</div>
+                  <div className="text-[10px] text-muted-foreground mt-1">Ajuste slim e tecido oficial de jogo</div>
+                </button>
               </div>
             </div>
 
-            {/* Customization Inputs */}
-            {selectedType === 'Personalizada' && (
-              <div className="space-y-3 bg-secondary/50 p-4 rounded-xl border border-border">
-                <p className="text-sm font-semibold text-foreground">Detalhes da Personalização</p>
-                <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground font-medium">
-                    {config.personalizacaoCamiseta?.labelNome || 'Nome nas costas'}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder={config.personalizacaoCamiseta?.placeholderNome || 'Ex: NEYMAR JR'}
-                    value={customName}
-                    onChange={(e) => setCustomName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border bg-background text-sm text-foreground focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground font-medium">
-                    {config.personalizacaoCamiseta?.labelNumero || 'Número (Ex: 10)'}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder={config.personalizacaoCamiseta?.placeholderNumero || '10'}
-                    value={customNumber}
-                    onChange={(e) => setCustomNumber(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border bg-background text-sm text-foreground focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground font-medium">
-                    {config.personalizacaoCamiseta?.labelFrase || 'Frase personalizada (opcional)'}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder={config.personalizacaoCamiseta?.placeholderFrase || 'Ex: O melhor de todos'}
-                    value={customPhrase}
-                    onChange={(e) => setCustomPhrase(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border bg-background text-sm text-foreground focus:outline-none"
-                  />
-                </div>
-              </div>
-            )}
+            {/* Customization Toggle & Details */}
+            <div className="space-y-3">
+              <p className="text-sm font-semibold text-foreground">2. Personalização com Nome & Número</p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsCustomized(false)}
+                  className={`p-3 rounded-xl border text-left transition-all ${
+                    !isCustomized
+                      ? "border-primary bg-primary/10 text-foreground ring-2 ring-primary/40"
+                      : "border-border text-muted-foreground hover:border-primary/50 bg-secondary/30"
+                  }`}
+                >
+                  <div className="font-bold text-xs text-foreground">Sem Personalização</div>
+                  <div className="text-[10px] text-green-400 mt-0.5">R$ 0,00</div>
+                </button>
 
-            {/* Size selector */}
+                <button
+                  type="button"
+                  onClick={() => setIsCustomized(true)}
+                  className={`p-3 rounded-xl border text-left transition-all ${
+                    isCustomized
+                      ? "border-primary bg-primary/10 text-foreground ring-2 ring-primary/40"
+                      : "border-border text-muted-foreground hover:border-primary/50 bg-secondary/30"
+                  }`}
+                >
+                  <div className="font-bold text-xs text-foreground flex items-center justify-between">
+                    <span>Com Nome/Número</span>
+                    <span className="text-[10px] bg-purple-950 text-purple-300 px-1 py-0.5 rounded font-mono">+ R$ 20,00</span>
+                  </div>
+                  <div className="text-[10px] text-purple-400 mt-0.5">+ R$ 20,00 no valor final</div>
+                </button>
+              </div>
+
+              {isCustomized && (
+                <div className="space-y-3 bg-secondary/60 p-4 rounded-xl border border-border mt-3 animate-fade-in">
+                  <p className="text-xs font-bold text-foreground uppercase tracking-wider">Preencha seus dados de personalização</p>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground font-medium">Nome nas costas</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: NEYMAR JR"
+                      value={customName}
+                      onChange={(e) => setCustomName(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border bg-background text-sm text-foreground focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground font-medium">Número (Ex: 10)</label>
+                    <input
+                      type="text"
+                      placeholder="10"
+                      value={customNumber}
+                      onChange={(e) => setCustomNumber(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border bg-background text-sm text-foreground focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground font-medium">Frase personalizada (opcional)</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: O melhor de todos"
+                      value={customPhrase}
+                      onChange={(e) => setCustomPhrase(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border bg-background text-sm text-foreground focus:outline-none"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Size Selector */}
             <div>
-              <p className="text-sm font-semibold text-foreground mb-3">Tamanho</p>
+              <p className="text-sm font-semibold text-foreground mb-3">3. Selecione o Tamanho *</p>
               <div className="flex gap-2 flex-wrap">
                 {product.sizes?.map((size: string) => (
                   <button
                     key={size}
+                    type="button"
                     onClick={() => setSelectedSize(size)}
                     className={`px-5 py-2.5 rounded-lg border text-sm font-medium transition-all ${
                       selectedSize === size
-                        ? "border-primary bg-primary text-primary-foreground"
+                        ? "border-primary bg-primary text-primary-foreground font-bold shadow"
                         : "border-border text-foreground hover:border-primary/50 hover:bg-secondary"
                     }`}
                   >
@@ -330,14 +436,14 @@ const Product = () => {
                 ))}
               </div>
               {!selectedSize && (
-                <p className="text-xs text-muted-foreground mt-2">Selecione um tamanho</p>
+                <p className="text-xs text-red-400 mt-2 font-medium">⚠️ Por favor, selecione um tamanho para continuar</p>
               )}
             </div>
 
             {/* Countdown timer above buy button */}
             <CountdownTimer productId={product.id} positionFilter="acima_botao" />
 
-            {/* Add to cart */}
+            {/* Add to cart button */}
             <button
               onClick={handleAdd}
               disabled={!selectedSize}
@@ -346,7 +452,7 @@ const Product = () => {
                 '--pulse-speed': pulseSpeed,
                 '--pulse-scale': pulseScale
               } as React.CSSProperties : {}}
-              className={`w-full py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${
+              className={`w-full py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-lg ${
                 added
                   ? "bg-green-600 text-primary-foreground"
                   : `bg-accent text-accent-foreground hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed ${pulseClass}`
@@ -354,11 +460,11 @@ const Product = () => {
             >
               {added ? (
                 <>
-                  <Check className="h-5 w-5" /> Adicionado!
+                  <Check className="h-5 w-5" /> Adicionado ao Carrinho!
                 </>
               ) : (
                 <>
-                  <ShoppingCart className="h-5 w-5" /> Adicionar ao Carrinho
+                  <ShoppingCart className="h-5 w-5" /> Adicionar ao Carrinho • {displayPrice}
                 </>
               )}
             </button>
@@ -366,6 +472,7 @@ const Product = () => {
             {/* WhatsApp direct purchase button */}
             {config.whatsapp?.ativo && (
               <button
+                type="button"
                 onClick={handleWhatsAppBuy}
                 className="w-full py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba5a] text-white transition-all shadow-md"
               >
@@ -381,15 +488,15 @@ const Product = () => {
 
             {/* Description */}
             <div className="border-t border-border pt-6">
-              <h3 className="text-sm font-semibold text-foreground mb-2">Descrição</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-2">Descrição Completa</h3>
               <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{product.description}</p>
             </div>
 
             {/* Features */}
             <div className="grid grid-cols-2 gap-3">
-              {["Frete grátis acima de R$300", "Troca em até 30 dias", "Material premium", "Envio em 24h"].map((feat) => (
+              {["Frete grátis acima de R$300", "Troca em até 30 dias", "Material premium AeroReady", "Envio rápido e seguro"].map((feat) => (
                 <div key={feat} className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Check className="h-3 w-3 text-accent flex-shrink-0" />
+                  <Check className="h-3.5 w-3.5 text-accent flex-shrink-0" />
                   {feat}
                 </div>
               ))}
@@ -404,7 +511,8 @@ const Product = () => {
       {/* Sticky purchase bar */}
       <StickyPurchaseBar 
         product={product} 
-        selectedType={selectedType}
+        selectedVersion={selectedVersion}
+        isCustomized={isCustomized}
         customName={customName}
         customNumber={customNumber}
         customPhrase={customPhrase}

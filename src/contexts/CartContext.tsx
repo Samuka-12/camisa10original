@@ -9,6 +9,7 @@ export interface CartItem {
   size: string;
   quantity: number;
   type?: 'Torcedor' | 'Jogador' | 'Personalizada';
+  isCustomized?: boolean;
   customName?: string;
   customNumber?: string;
   customPhrase?: string;
@@ -144,11 +145,15 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         if (typeof p.priceNum === 'number') return p.priceNum;
         if (typeof p.preco === 'number') return p.preco;
         const rawPrice = p.preco || p.price || '0';
-        return parseFloat(String(rawPrice).replace(/[^\d,.]/g, '').replace(',', '.')) || 0;
+        return parseFloat(String(rawPrice).replace(/[^\d,.]/g, '').replace(',', '.')) || 109.93;
       };
 
-      const basePrice = getPrice(product);
-      const itemPrice = options?.type === 'Personalizada' ? basePrice + 15 : basePrice;
+      const basePrice = getPrice(product) || 109.93;
+      let addon = 0;
+      if (options?.type === 'Jogador') addon += 20;
+      if (options?.isCustomized || options?.type === 'Personalizada') addon += 20;
+
+      const itemPrice = (options as any)?.itemPrice ?? (basePrice + addon);
 
       return [...prev, {
         id: Math.random().toString(36).substr(2, 9),

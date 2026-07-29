@@ -62,11 +62,14 @@ export default function Checkout() {
         return 0;
       };
 
-      // Se houver overridePreco nos parâmetros da URL (como do link dinâmico), usa ele.
-      // Caso contrário, se for produto local, usa localProd.priceNum.
-      // Se não, usa 90.93 por padrão (ou o preço do banco de dados quando carregar).
-      const initialBasePrice = overridePreco ? parsePrice(overridePreco) : (localProd ? localProd.priceNum : 90.93);
-      const finalPrice = (initialBasePrice + (searchParams.get('type') === 'Personalizada' ? 15 : 0)) * qty;
+      const isPlayer = searchParams.get('type') === 'Jogador' || searchParams.get('version') === 'Jogador';
+      const isCustom = searchParams.get('type') === 'Personalizada' || searchParams.get('customized') === 'true';
+      let addon = 0;
+      if (isPlayer) addon += 20;
+      if (isCustom) addon += 20;
+
+      const initialBasePrice = overridePreco ? parsePrice(overridePreco) : (localProd ? localProd.priceNum : 109.93);
+      const finalPrice = (initialBasePrice + addon) * qty;
       const precoComDesconto = discount > 0 ? finalPrice * (1 - discount) : finalPrice;
 
       if (localProd) {
@@ -84,8 +87,8 @@ export default function Checkout() {
         .single()
         .then(({ data }) => {
           if (data) {
-            const dbBasePrice = overridePreco ? parsePrice(overridePreco) : (data.preco ? parsePrice(data.preco) : 90.93);
-            const dbFinalPrice = (dbBasePrice + (searchParams.get('type') === 'Personalizada' ? 15 : 0)) * qty;
+            const dbBasePrice = overridePreco ? parsePrice(overridePreco) : (data.preco ? parsePrice(data.preco) : 109.93);
+            const dbFinalPrice = (dbBasePrice + addon) * qty;
             const dbPrecoComDesconto = discount > 0 ? dbFinalPrice * (1 - discount) : dbFinalPrice;
 
             setProduto(prev => ({
