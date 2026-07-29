@@ -40,12 +40,13 @@ const Category = () => {
         if (data) {
           const filtered = data.filter(p => {
             if (p.id === 'store_config' || p.id === STORE_CONFIG_ID) return false;
-            if (p.tipo === 'dinamico' || p.is_dynamic === true) return false;
-            if (p.nome && (p.nome.startsWith('Camisetas -') || p.nome.toLowerCase().includes('dinamico'))) return false;
-            if (!p.imagem_url && !p.image) return false;
-            const cat = p.category;
-            if (Array.isArray(cat)) return cat.map((c: string) => c.toLowerCase()).includes(categoryKey.toLowerCase());
-            return typeof cat === 'string' && cat.toLowerCase() === categoryKey.toLowerCase();
+            if (p.tipo === 'vitrine') {
+              const cat = p.category;
+              if (Array.isArray(cat)) return cat.map((c: string) => c.toLowerCase()).includes(categoryKey.toLowerCase());
+              return typeof cat === 'string' && cat.toLowerCase() === categoryKey.toLowerCase();
+            }
+            // Exclude non-vitrine products (dynamic links, custom prices, cart images, etc.)
+            return false;
           });
           setDbProducts(filtered);
         }

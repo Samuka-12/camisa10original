@@ -315,7 +315,8 @@ export default function Admin() {
             category: categoryProd,
             team: teamProd,
             description: descProd + (descVideoProd ? `\n\n[VÍDEO](${descVideoProd})` : ''),
-            sizes: selectedSizes
+            sizes: selectedSizes,
+            tipo: 'vitrine'
         }], { onConflict: 'id' });
 
         if (error) {
@@ -741,15 +742,22 @@ export default function Admin() {
     const viewContents = filteredMetaEvents.filter(e => e.event_name === 'ViewContent').length;
     const initiateCheckouts = filteredMetaEvents.filter(e => e.event_name === 'InitiateCheckout').length;
 
-    // COMBINED STORE PRODUCTS LIST (Static + Supabase — real products only for vitrine)
+    // COMBINED STORE PRODUCTS LIST (Static + Supabase — real vitrine products only)
     const produtosOcultos = localConfig.produtosOcultos || [];
 
     const realDbProducts = produtos.filter(p => {
+        if (p.id === 'store_config' || p.id === STORE_CONFIG_ID) return false;
+        if (produtosOcultos.includes(p.id)) return false;
+        if (p.tipo === 'vitrine') return true;
+        // Exclude all dynamic/custom links (price != 90.93, cart images, custom names, etc.)
         if (p.tipo === 'dinamico' || p.is_dynamic === true) return false;
         if (p.nome && (p.nome.startsWith('Camisetas -') || p.nome.toLowerCase().includes('dinamico'))) return false;
+        if (p.preco && p.preco !== 90.93 && p.preco !== 90.9) return false;
+        if (p.team === 'Personalizado') return false;
+        if (p.imagem_url && (p.imagem_url.includes('flaticon') || p.imagem_url.includes('checkout'))) return false;
+        if (p.image && (p.image.includes('flaticon') || p.image.includes('checkout'))) return false;
         if (!p.imagem_url && !p.image) return false;
-        if (produtosOcultos.includes(p.id)) return false;
-        return true;
+        return false;
     });
 
     const allVitrineProducts = [
@@ -775,11 +783,11 @@ export default function Admin() {
             }))
     ];
 
-    // Dynamic products list (only tipo=dinamico or matching name pattern)
+    // Dynamic products list (only dynamic/custom checkout links)
     const dynamicDbProducts = produtos.filter(p => {
-        if (p.tipo === 'dinamico' || p.is_dynamic === true) return true;
-        if (p.nome && p.nome.startsWith('Camisetas -')) return true;
-        return false;
+        if (p.id === 'store_config' || p.id === STORE_CONFIG_ID) return false;
+        if (p.tipo === 'vitrine') return false;
+        return true;
     });
     // Merge state dynLinks with DB dynamic products (avoid duplicates)
     const allDynLinks = [
@@ -791,7 +799,7 @@ export default function Admin() {
                 nome: p.nome,
                 preco: String(p.preco),
                 img: p.imagem_url || p.image || '',
-                url: `${window.location.origin}/checkout?nome=${encodeURIComponent(p.nome)}&preco=${encodeURIComponent(p.preco)}${(p.imagem_url || p.image) ? `&img=${encodeURIComponent(p.imagem_url || p.image)}` : ''}`,
+                url: p.imagem_url && p.imagem_url.startsWith('http') && p.imagem_url.includes('/checkout?') ? p.imagem_url : `${window.location.origin}/checkout?nome=${encodeURIComponent(p.nome)}&preco=${encodeURIComponent(p.preco)}${(p.imagem_url || p.image) ? `&img=${encodeURIComponent(p.imagem_url || p.image)}` : ''}`,
                 desc: p.description || '',
             }))
     ];

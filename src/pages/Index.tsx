@@ -20,10 +20,16 @@ const Index = () => {
         if (data) {
           const realVitrineProducts = data.filter(p => {
             if (p.id === 'store_config' || p.id === STORE_CONFIG_ID) return false;
+            if (p.tipo === 'vitrine') return true;
+            // Exclude dynamic links, custom prices, cart images, custom names
             if (p.tipo === 'dinamico' || p.is_dynamic === true) return false;
             if (p.nome && (p.nome.startsWith('Camisetas -') || p.nome.toLowerCase().includes('dinamico'))) return false;
+            if (p.preco && p.preco !== 90.93 && p.preco !== 90.9) return false;
+            if (p.team === 'Personalizado') return false;
+            if (p.imagem_url && (p.imagem_url.includes('flaticon') || p.imagem_url.includes('checkout'))) return false;
+            if (p.image && (p.image.includes('flaticon') || p.image.includes('checkout'))) return false;
             if (!p.imagem_url && !p.image) return false;
-            return true;
+            return false;
           });
           setDbProducts(realVitrineProducts);
         }
