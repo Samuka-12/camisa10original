@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import {
     useStoreConfig, PriceRule, FloatingStory, CatalogImage, Coupon,
-    VendaRealizada, GastoAnuncio, EstrategiaEscala, DescontoProdutoSpec
+    VendaRealizada, GastoAnuncio, EstrategiaEscala, DescontoProdutoSpec, STORE_CONFIG_ID
 } from '../contexts/StoreConfigContext';
 import { allProducts } from '../data/products';
 import { getTeamPlayers, getTeamsWithPlayers } from '../data/teamPlayers';
@@ -204,13 +204,13 @@ export default function Admin() {
 
     const buscarProdutos = async () => {
         const { data } = await supabase.from('produtos').select('*').order('created_at', { ascending: false });
-        if (data) setProdutos(data.filter(p => p.id !== 'store_config' && p.id !== '00000000-0000-0000-0000-000000000000'));
+        if (data) setProdutos(data.filter(p => p.id !== 'store_config' && p.id !== STORE_CONFIG_ID));
     };
 
     const buscarMetaEvents = async () => {
         try {
-            const { data } = await supabase.from('meta_events').select('event_name, created_at').order('created_at', { ascending: false }).limit(1000);
-            if (data) setMetaEvents(data);
+            const { data, error } = await supabase.from('meta_events').select('event_name, created_at').order('created_at', { ascending: false }).limit(1000);
+            if (data && !error) setMetaEvents(data);
         } catch (_) {}
     };
 
