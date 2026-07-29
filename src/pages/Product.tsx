@@ -91,7 +91,7 @@ const Product = () => {
 
   const adjustedPrice = useMemo(() => {
     if (!product) return 0;
-    let base = getAdjustedPrice(product.priceNum, product.category);
+    let base = getAdjustedPrice(product.priceNum, product.category, product.id);
     if (selectedType === 'Personalizada') {
       base += 15;
     }

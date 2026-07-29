@@ -16,7 +16,7 @@ interface ProductCardProps {
 const ProductCard = ({ id, image, name, team, price, priceNum, category, oldPrice }: ProductCardProps) => {
   const { getAdjustedPrice, config } = useStoreConfig();
 
-  const finalPriceNum = priceNum && category ? getAdjustedPrice(priceNum, category) : null;
+  const finalPriceNum = priceNum && category ? getAdjustedPrice(priceNum, category, id) : null;
   const displayPrice = finalPriceNum !== null ? `R$ ${finalPriceNum.toFixed(2).replace('.', ',')}` : price;
 
   const pulse = config.pulseComprar;

@@ -1,22 +1,31 @@
 import { useState, useCallback } from "react";
-import { UploadCloud, X, Loader2, Image as ImageIcon } from "lucide-react";
+import { UploadCloud, X, Loader2, Image as ImageIcon, Video as VideoIcon } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
-
 interface ImageUploaderProps {
-  onUploadSuccess: (url: string) => void;
+  onUploadSuccess?: (url: string) => void;
   currentImageUrl?: string;
   onRemoveImage?: () => void;
+  value?: string;
+  onChange?: (url: string) => void;
+  accept?: string;
+  allowVideo?: boolean;
 }
 
 export const ImageUploader = ({
   onUploadSuccess,
   currentImageUrl,
   onRemoveImage,
+  value,
+  onChange,
+  accept,
+  allowVideo = true,
 }: ImageUploaderProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+
+  const displayUrl = currentImageUrl || value || "";
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -29,12 +38,14 @@ export const ImageUploader = ({
   }, []);
 
   const uploadFile = async (file: File) => {
-    if (!file.type.startsWith("image/")) {
-      toast.error("Por favor, envie apenas imagens.");
+    const isImage = file.type.startsWith("image/");
+    const isVideo = file.type.startsWith("video/");
+
+    if (!isImage && !isVideo) {
+      toast.error("Por favor, envie um arquivo de imagem ou vídeo válido.");
       return;
     }
 
-    // Checking roughly 5MB limit or let it pass since user mentioned heavy images? User said 2000x2000px heavy images. Let's allow.
     setIsUploading(true);
 
     try {
@@ -42,11 +53,11 @@ export const ImageUploader = ({
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { data, error } = await supabase.storage
-        .from("camisetas") // Name of the bucket
+      const { error } = await supabase.storage
+        .from("camisetas")
         .upload(filePath, file, {
           cacheControl: "3600",
-          upsert: false,
+          upsert: true,
         });
 
       if (error) {
@@ -57,9 +68,19 @@ export const ImageUploader = ({
         .from("camisetas")
         .getPublicUrl(filePath);
 
-      onUploadSuccess(publicUrlData.publicUrl);
+      const publicUrl = publicUrlData.publicUrl;
+
+      if (typeof onUploadSuccess === "function") {
+        onUploadSuccess(publicUrl);
+      }
+      if (typeof onChange === "function") {
+        onChange(publicUrl);
+      }
+
+      toast.success("Upload realizado com sucesso!");
     } catch (error: any) {
-      toast.error(`Erro no upload: ${error.message || "Desconhecido"}`);
+      console.error("[ImageUploader] Upload error:", error);
+      toast.error(`Erro no upload: ${error?.message || "Ocorreu uma falha ao enviar o arquivo."}`);
     } finally {
       setIsUploading(false);
     }
@@ -85,21 +106,42 @@ export const ImageUploader = ({
     }
   };
 
-  if (currentImageUrl) {
+  const handleRemove = () => {
+    if (typeof onRemoveImage === "function") {
+      onRemoveImage();
+    }
+    if (typeof onChange === "function") {
+      onChange("");
+    }
+  };
+
+  const isVideoUrl = (url: string) => {
+    return url.match(/\.(mp4|webm|ogg|mov)(\?.*)?$/i) !== null;
+  };
+
+  if (displayUrl) {
     return (
-      <div className="relative rounded-2xl border-2 border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center p-2 group">
-        <img
-          src={currentImageUrl}
-          alt="Preview"
-          className="max-h-[300px] w-auto object-contain rounded-xl"
-        />
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+      <div className="relative rounded-2xl border-2 border-gray-200 overflow-hidden bg-gray-900 flex items-center justify-center p-2 group min-h-[160px]">
+        {isVideoUrl(displayUrl) ? (
+          <video
+            src={displayUrl}
+            controls
+            className="max-h-[300px] w-auto object-contain rounded-xl"
+          />
+        ) : (
+          <img
+            src={displayUrl}
+            alt="Preview"
+            className="max-h-[300px] w-auto object-contain rounded-xl"
+          />
+        )}
+        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
           <button
             type="button"
-            onClick={onRemoveImage}
-            className="p-3 bg-white text-red-600 rounded-full hover:bg-red-50 transition-colors shadow-lg"
+            onClick={handleRemove}
+            className="p-3 bg-red-600 hover:bg-red-700 text-white rounded-full transition-colors shadow-lg flex items-center gap-1 text-xs font-bold"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" /> Remover
           </button>
         </div>
       </div>
@@ -108,8 +150,8 @@ export const ImageUploader = ({
 
   return (
     <div
-      className={`relative flex flex-col items-center justify-center w-full min-h-[250px] p-6 border-2 border-dashed rounded-2xl transition-colors cursor-pointer bg-gray-50/50 hover:bg-gray-50 ${
-        dragActive ? "border-primary bg-primary/5" : "border-gray-300"
+      className={`relative flex flex-col items-center justify-center w-full min-h-[180px] p-6 border-2 border-dashed rounded-2xl transition-colors cursor-pointer bg-slate-900/40 hover:bg-slate-900/60 ${
+        dragActive ? "border-purple-500 bg-purple-500/10" : "border-slate-700"
       }`}
       onDragEnter={handleDrag}
       onDragLeave={handleDrag}
@@ -119,28 +161,25 @@ export const ImageUploader = ({
       <input
         type="file"
         id="image-upload"
-        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed z-10"
         onChange={handleChange}
         disabled={isUploading}
-        accept="image/*"
+        accept={accept || (allowVideo ? "image/*,video/*" : "image/*")}
       />
-      
+
       {isUploading ? (
-        <div className="flex flex-col items-center gap-3 text-primary">
+        <div className="flex flex-col items-center gap-3 text-purple-400">
           <Loader2 className="w-10 h-10 animate-spin" />
-          <p className="font-medium">Enviando mockup...</p>
+          <p className="font-medium text-sm">Enviando arquivo...</p>
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-4 text-gray-500 pointer-events-none text-center">
-          <div className="p-4 bg-white rounded-full shadow-sm">
-            <UploadCloud className="w-8 h-8 text-primary" />
+        <div className="flex flex-col items-center gap-3 text-gray-400 pointer-events-none text-center">
+          <div className="p-3 bg-purple-600/20 rounded-full shadow-sm">
+            <UploadCloud className="w-8 h-8 text-purple-400" />
           </div>
           <div>
-            <p className="font-semibold text-gray-700">Clique para upar ou arraste a imagem</p>
-            <p className="text-sm mt-1 text-gray-500">Suporta JPG, PNG e WebP</p>
-            <p className="text-xs mt-2 text-gray-400 max-w-[200px] leading-relaxed">
-              Resoluções altas como 2000x2000px são ideais para melhor visualização
-            </p>
+            <p className="font-semibold text-white text-sm">Clique para enviar ou arraste foto/vídeo</p>
+            <p className="text-xs mt-1 text-gray-400">Suporta JPG, PNG, WebP, MP4, WebM</p>
           </div>
         </div>
       )}

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { isProductDiscountUsed, isCouponUsed } from '../lib/customerDiscounts';
 
 export const STORE_CONFIG_ID = '00000000-0000-0000-0000-000000000000';
 
@@ -486,7 +487,24 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
     return true;
   };
 
+  const [discountsVersion, setDiscountsVersion] = useState(0);
+
+  useEffect(() => {
+    const handleDiscountsUpdated = () => {
+      setDiscountsVersion(prev => prev + 1);
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('camisa10_discounts_updated', handleDiscountsUpdated);
+      return () => window.removeEventListener('camisa10_discounts_updated', handleDiscountsUpdated);
+    }
+  }, []);
+
   const getAdjustedPrice = (productPrice: number, productCategory: string | string[], productId?: string): number => {
+    // Se o cliente já utilizou o desconto deste produto em uma compra anterior, retorna preço normal sem desconto
+    if (productId && isProductDiscountUsed(productId)) {
+      return productPrice;
+    }
+
     let finalPrice = productPrice;
     const rules = config.precoGestao?.regras || [];
     const cats = Array.isArray(productCategory) ? productCategory : [productCategory];
@@ -514,6 +532,9 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
   };
 
   const getActiveCoupon = (code: string, productId?: string, category?: string): Coupon | null => {
+    if (!code || isCouponUsed(code)) {
+      return null;
+    }
     const cupons = config.precoGestao?.cupons || [];
     const coupon = cupons.find(c => {
       if (!c.ativo) return false;

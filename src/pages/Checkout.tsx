@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useCart } from '../contexts/CartContext';
+import { registerUsedDiscountsFromOrder } from '../lib/customerDiscounts';
 import { allProducts } from '../data/products';
 import { User, Mail, CreditCard, MapPin, Phone, Calendar, Hash, Lock, ShieldCheck, QrCode, Copy, CheckCheck, Clock, CheckCircle2 } from 'lucide-react';
 
@@ -145,6 +146,10 @@ export default function Checkout() {
         valor_total: produto.preco,
         cupom_aplicado: discount > 0 ? 'CAMISA10' : null
       }]);
+
+      if (statusPagamento === 'pix_generated' || statusPagamento === 'paid') {
+        registerUsedDiscountsFromOrder(cartItems, discount > 0 ? 'CAMISA10' : undefined);
+      }
       
       if (error) console.error("Erro Supabase:", error);
     } catch (e) {

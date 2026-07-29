@@ -1,6 +1,6 @@
 /**
  * Meta Pixel + Conversions API (CAPI) — Camisa10
- * Pixel ID: 4980340808962720
+ * Pixel ID: 2081548536080257
  *
  * Este módulo centraliza todos os eventos do Meta Pixel (browser) e
  * prepara os payloads para a API de Conversões (server-side via Netlify Function).
@@ -20,7 +20,7 @@
  *  por ambos os canais, evitando dupla contagem nas campanhas.
  */
 
-export const META_PIXEL_ID = '4980340808962720';
+export const META_PIXEL_ID = '2081548536080257';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 

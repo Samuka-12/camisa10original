@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
+import { isCouponUsed } from "@/lib/customerDiscounts";
+import { toast } from "sonner";
 import type { Product } from "@/data/products";
 import { applyTripleCrownDiscount, type TripleCrownResult } from "@/lib/tripleCrown";
 
@@ -134,10 +136,22 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const applyCoupon = useCallback(() => {
-    if (coupon.toUpperCase() === "CAMISA10") {
+    const cleanCoupon = coupon.trim().toUpperCase();
+    if (!cleanCoupon) {
+      setDiscount(0);
+      return;
+    }
+    if (isCouponUsed(cleanCoupon)) {
+      toast.error("Este cupom já foi utilizado em uma compra anterior e só é válido 1 vez por cliente.");
+      setDiscount(0);
+      return;
+    }
+    if (cleanCoupon === "CAMISA10") {
       setDiscount(0.1);
+      toast.success("Cupom de 10% aplicado com sucesso!");
     } else {
       setDiscount(0);
+      toast.error("Cupom inválido ou expirado.");
     }
   }, [coupon]);
 

@@ -53,7 +53,7 @@ export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
 
   if (!barConfig?.ativo || !isVisible) return null;
 
-  const adjustedPriceNum = getAdjustedPrice(product.priceNum, product.category);
+  const adjustedPriceNum = getAdjustedPrice(product.priceNum, product.category, product.id);
   const displayPrice = `R$ ${adjustedPriceNum.toFixed(2).replace('.', ',')}`;
 
   const handleBuy = () => {

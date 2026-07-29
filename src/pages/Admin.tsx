@@ -17,6 +17,7 @@ import {
     MessageSquare, Truck, Clock, Percent, ListFilter, CheckCircle, Smartphone
 } from 'lucide-react';
 import { ImageUploader } from '@/components/admin/ImageUploader';
+import { toast } from 'sonner';
 
 function AnimatedBackground() {
     const moneyItems = Array.from({ length: 25 });
@@ -556,13 +557,15 @@ export default function Admin() {
         setStoryUploadingVideo(true);
         try {
             const ext = file.name.split('.').pop();
-            const fileName = `stories/${Date.now()}.${ext}`;
+            const fileName = `stories/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
             const { error } = await supabase.storage.from('camisetas').upload(fileName, file, { upsert: true });
             if (error) throw error;
             const { data: urlData } = supabase.storage.from('camisetas').getPublicUrl(fileName);
             setStoryVideoUrl(urlData.publicUrl);
+            toast.success('Vídeo do Story enviado com sucesso!');
         } catch (e: any) {
-            alert('Erro ao fazer upload: ' + e.message);
+            console.error('[StoryVideoUploadError]', e);
+            toast.error('Erro no upload do vídeo: ' + (e.message || 'Falha ao enviar arquivo.'));
         } finally {
             setStoryUploadingVideo(false);
         }
@@ -1810,7 +1813,7 @@ export default function Admin() {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div className="bg-slate-950 p-3 rounded-xl border border-white/5">
                                         <span className="text-[10px] text-gray-500 font-bold uppercase block">Meta Pixel ID</span>
-                                        <span className="text-xs font-mono text-white font-bold">1590849999312410</span>
+                                        <span className="text-xs font-mono text-white font-bold">2081548536080257</span>
                                     </div>
                                     <div className="bg-slate-950 p-3 rounded-xl border border-white/5">
                                         <span className="text-[10px] text-gray-500 font-bold uppercase block">Eventos Rastreados</span>
