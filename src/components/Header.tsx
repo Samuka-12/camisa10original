@@ -10,6 +10,8 @@ const Header = () => {
   const { openCart, totalItems } = useCart();
   const { config } = useStoreConfig();
   const verificado = config.verificadoLoja?.ativo;
+  const posicao = config.verificadoLoja?.posicao || 'todos';
+  const showVerificado = verificado && (posicao === 'topo' || posicao === 'todos');
 
   const fe = config.frontend;
 
@@ -24,7 +26,7 @@ const Header = () => {
           <h1 className="text-2xl font-extrabold tracking-tight text-primary">
             CAMISA<span className="text-accent">10</span>
           </h1>
-          {verificado && (
+          {showVerificado && (
             <ShieldCheck className="w-5 h-5 text-green-500 fill-green-500/20 animate-pulse" title="Loja Verificada e Segura" />
           )}
         </Link>

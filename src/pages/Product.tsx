@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
-import { ArrowLeft, ShoppingCart, Check } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Check, ShieldCheck } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getProductById } from "@/data/products";
@@ -232,7 +232,12 @@ const Product = () => {
           <div className="space-y-6">
             <div>
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{product.team}</p>
-              <h1 className="text-3xl font-bold text-foreground mt-1">{product.name}</h1>
+              <h1 className="text-3xl font-bold text-foreground mt-1 flex items-center gap-2">
+                {product.name}
+                {config.verificadoLoja?.ativo && (config.verificadoLoja?.posicao === 'produtos' || config.verificadoLoja?.posicao === 'todos') && (
+                  <ShieldCheck className="w-6 h-6 text-green-500 fill-green-500/20 animate-pulse" title="Loja Verificada e Segura" />
+                )}
+              </h1>
             </div>
 
             <div className="flex items-baseline gap-3">

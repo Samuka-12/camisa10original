@@ -1,10 +1,13 @@
 import { Link } from "react-router-dom";
-import { Instagram } from "lucide-react";
+import { Instagram, ShieldCheck } from "lucide-react";
 import { useStoreConfig } from "@/contexts/StoreConfigContext";
 
 const Footer = () => {
   const { config } = useStoreConfig();
   const fe = config.frontend;
+  const verificado = config.verificadoLoja?.ativo;
+  const posicao = config.verificadoLoja?.posicao || 'todos';
+  const showVerificado = verificado && (posicao === 'rodape' || posicao === 'todos');
 
   const bgStyle = fe?.footerBg ? { backgroundColor: fe.footerBg } : {};
   const textColor = fe?.footerTextColor || undefined;
@@ -15,8 +18,11 @@ const Footer = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Brand */}
           <div>
-            <h3 className="text-xl font-extrabold mb-4" style={{ color: textColor }}>
+            <h3 className="text-xl font-extrabold mb-4 flex items-center gap-2" style={{ color: textColor }}>
               CAMISA<span className="text-accent">10</span>
+              {showVerificado && (
+                <ShieldCheck className="w-5 h-5 text-green-500 fill-green-500/20 animate-pulse" title="Loja Verificada e Segura" />
+              )}
             </h3>
             <p className="text-sm opacity-75 leading-relaxed" style={{ color: textColor }}>
               As melhores camisetas de futebol do mundo. Originais e retrô com entrega para todo o Brasil.

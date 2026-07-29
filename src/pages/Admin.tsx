@@ -85,6 +85,7 @@ export default function Admin() {
     const [prodTempoLimitado, setProdTempoLimitado] = useState(false);
     const [prodFreteGratis, setProdFreteGratis] = useState(false);
     const [prodEstadoFreteGratis, setProdEstadoFreteGratis] = useState('');
+    const [prodCidadeFreteGratis, setProdCidadeFreteGratis] = useState('');
 
     // DYNAMIC PRODUCT LINK FORM & EDITING
     const [editingDynId, setEditingDynId] = useState<string | null>(null);
@@ -284,11 +285,13 @@ export default function Admin() {
             setProdTempoLimitado(!!spec.tempoLimitado);
             setProdFreteGratis(!!spec.freteGratis);
             setProdEstadoFreteGratis(spec.estadoFreteGratis || '');
+            setProdCidadeFreteGratis(spec.cidadeFreteGratis || '');
         } else {
             setProdDescontoPercent('0');
             setProdTempoLimitado(false);
             setProdFreteGratis(false);
             setProdEstadoFreteGratis('');
+            setProdCidadeFreteGratis('');
         }
 
         setAba('novo');
@@ -327,7 +330,8 @@ export default function Admin() {
             descontoPercent: parseFloat(prodDescontoPercent) || 0,
             tempoLimitado: prodTempoLimitado,
             freteGratis: prodFreteGratis,
-            estadoFreteGratis: prodEstadoFreteGratis || undefined
+            estadoFreteGratis: prodEstadoFreteGratis || undefined,
+            cidadeFreteGratis: prodCidadeFreteGratis || undefined
         };
 
         let updatedSpecs = [...currentSpecs];
@@ -346,7 +350,7 @@ export default function Admin() {
 
         // Reset form
         setEditingProdId(null); setNomeProd(''); setPrecoProd(''); setProductImages(['', '', '', '', '', '']); setDescProd(''); setDescVideoProd(''); setSelectedPlayer('');
-        setProdDescontoPercent('0'); setProdTempoLimitado(false); setProdFreteGratis(false); setProdEstadoFreteGratis('');
+        setProdDescontoPercent('0'); setProdTempoLimitado(false); setProdFreteGratis(false); setProdEstadoFreteGratis(''); setProdCidadeFreteGratis('');
         await buscarProdutos();
         setAba('vitrine');
     };
@@ -358,23 +362,48 @@ export default function Admin() {
         await buscarProdutos();
     };
 
-    // DYNAMIC LINKS
-    const gerarLinkDinamico = () => {
+    // DYNAMIC LINKS — persist to Supabase with tipo='dinamico'
+    const gerarLinkDinamico = async () => {
         if (!dynNome || !dynPreco) { alert('Preencha nome e preço!'); return; }
         const base = window.location.origin;
         const url = `${base}/checkout?nome=${encodeURIComponent(dynNome)}&preco=${encodeURIComponent(dynPreco)}${dynImg ? `&img=${encodeURIComponent(dynImg)}` : ''}`;
-        
+        const precoNum = parseFloat(dynPreco.replace(',', '.')) || 0;
+
         if (editingDynId) {
+            // Update in state
             setDynLinks(prev => prev.map(l => l.id === editingDynId ? { id: editingDynId, nome: dynNome, preco: dynPreco, img: dynImg, url, desc: dynDesc } : l));
+            // Update in Supabase
+            await supabase.from('produtos').update({
+                nome: dynNome,
+                preco: precoNum,
+                imagem_url: dynImg || null,
+                image: dynImg || null,
+                description: dynDesc || '',
+            }).eq('id', editingDynId);
             setEditingDynId(null);
             alert('✅ Link dinâmico atualizado com sucesso!');
         } else {
-            const newLink = { id: crypto.randomUUID(), nome: dynNome, preco: dynPreco, img: dynImg, url, desc: dynDesc };
+            const newId = crypto.randomUUID();
+            const newLink = { id: newId, nome: dynNome, preco: dynPreco, img: dynImg, url, desc: dynDesc };
             setDynLinks(prev => [newLink, ...prev]);
-            alert('✅ Link dinâmico gerado com sucesso!');
+            // Persist in Supabase
+            await supabase.from('produtos').upsert([{
+                id: newId,
+                nome: dynNome,
+                preco: precoNum,
+                imagem_url: dynImg || null,
+                image: dynImg || null,
+                category: 'dinamico',
+                tipo: 'dinamico',
+                description: dynDesc || '',
+                team: 'Link Dinâmico',
+                sizes: [],
+            }], { onConflict: 'id' });
+            alert('✅ Link dinâmico gerado e salvo!');
         }
 
         setDynNome(''); setDynPreco(''); setDynImg(''); setDynDesc('');
+        await buscarProdutos();
     };
 
     const handleStartEditDynLink = (link: any) => {
@@ -383,6 +412,13 @@ export default function Admin() {
         setDynPreco(link.preco);
         setDynImg(link.img || '');
         setDynDesc(link.desc || '');
+    };
+
+    const deletarDynLink = async (id: string) => {
+        if (!confirm('Remover este link dinâmico?')) return;
+        setDynLinks(prev => prev.filter(l => l.id !== id));
+        await supabase.from('produtos').delete().eq('id', id);
+        await buscarProdutos();
     };
 
     const copiarLink = (id: string, url: string) => {
@@ -660,28 +696,48 @@ export default function Admin() {
         alert('✅ Mensagem do produto salva!');
     };
 
-    // DASHBOARD COMPUTED STATS
-    const totalLeads = pedidos.length;
-    const pedidosPagosList = pedidos.filter(p => p.status === 'paid' || p.status === 'approved');
+    // DASHBOARD RESET FILTER
+    const dashResetTime = localConfig.dashboardResetTime ? new Date(localConfig.dashboardResetTime) : null;
+    const filteredPedidos = dashResetTime ? pedidos.filter(p => new Date(p.created_at) >= dashResetTime) : pedidos;
+    const filteredMetaEvents = dashResetTime ? metaEvents.filter(e => new Date(e.created_at) >= dashResetTime) : metaEvents;
+
+    const handleResetDashboard = async () => {
+        if (!confirm('Isso vai zerar o dashboard e começar a contar apenas novas informações a partir de agora. Continuar?')) return;
+        const updatedConfig = { ...localConfig, dashboardResetTime: new Date().toISOString() };
+        setLocalConfig(updatedConfig);
+        await handleSaveAll(updatedConfig);
+        alert('✅ Dashboard zerado! A partir de agora, apenas novos dados serão contados.');
+    };
+
+    // DASHBOARD COMPUTED STATS (using filtered data)
+    const totalLeads = filteredPedidos.length;
+    const pedidosPagosList = filteredPedidos.filter(p => p.status === 'paid' || p.status === 'approved');
     const pedidosPagos = pedidosPagosList.length;
     const totalFaturamento = pedidosPagosList.reduce((acc, p) => acc + (parseFloat(p.valor_total) || 0), 0);
     const taxaConversao = totalLeads > 0 ? ((pedidosPagos / totalLeads) * 100).toFixed(1) : '0.0';
     const ticketMedio = pedidosPagos > 0 ? (totalFaturamento / pedidosPagos).toFixed(2) : '0.00';
 
-    const pageViews = metaEvents.filter(e => e.event_name === 'PageView').length || Math.max(totalLeads * 3, 12);
-    const viewContents = metaEvents.filter(e => e.event_name === 'ViewContent').length || Math.max(totalLeads * 2, 8);
-    const initiateCheckouts = metaEvents.filter(e => e.event_name === 'InitiateCheckout').length || totalLeads;
+    const pageViews = filteredMetaEvents.filter(e => e.event_name === 'PageView').length;
+    const viewContents = filteredMetaEvents.filter(e => e.event_name === 'ViewContent').length;
+    const initiateCheckouts = filteredMetaEvents.filter(e => e.event_name === 'InitiateCheckout').length;
 
-    // COMBINED STORE PRODUCTS LIST (Static + Supabase)
+    // COMBINED STORE PRODUCTS LIST (Static + Supabase — real products only for vitrine)
+    const realDbProducts = produtos.filter(p => {
+        if (p.tipo === 'dinamico' || p.is_dynamic === true) return false;
+        if (p.nome && (p.nome.startsWith('Camisetas -') || p.nome.toLowerCase().includes('dinamico'))) return false;
+        if (!p.imagem_url && !p.image) return false;
+        return true;
+    });
+
     const allVitrineProducts = [
-        ...produtos.map(p => ({
+        ...realDbProducts.map(p => ({
             id: p.id,
             nome: p.nome,
             preco: p.preco,
             imagem: p.imagem_url || p.image,
             category: Array.isArray(p.category) ? p.category[0] : (p.category || 'europeus'),
             team: p.team || 'Time',
-            origem: 'dinamico'
+            origem: 'db'
         })),
         ...allProducts.map(p => ({
             id: p.id,
@@ -692,6 +748,27 @@ export default function Admin() {
             team: p.team,
             origem: 'estatico'
         }))
+    ];
+
+    // Dynamic products list (only tipo=dinamico or matching name pattern)
+    const dynamicDbProducts = produtos.filter(p => {
+        if (p.tipo === 'dinamico' || p.is_dynamic === true) return true;
+        if (p.nome && p.nome.startsWith('Camisetas -')) return true;
+        return false;
+    });
+    // Merge state dynLinks with DB dynamic products (avoid duplicates)
+    const allDynLinks = [
+        ...dynLinks,
+        ...dynamicDbProducts
+            .filter(p => !dynLinks.find(l => l.id === p.id))
+            .map(p => ({
+                id: p.id,
+                nome: p.nome,
+                preco: String(p.preco),
+                img: p.imagem_url || p.image || '',
+                url: `${window.location.origin}/checkout?nome=${encodeURIComponent(p.nome)}&preco=${encodeURIComponent(p.preco)}${(p.imagem_url || p.image) ? `&img=${encodeURIComponent(p.imagem_url || p.image)}` : ''}`,
+                desc: p.description || '',
+            }))
     ];
 
     // Filter image bank by album and search
@@ -868,6 +945,18 @@ export default function Admin() {
                     {/* 1. DASHBOARD */}
                     {aba === 'dashboard' && (
                         <div className="space-y-5">
+                            {/* Reset Dashboard */}
+                            <div className="flex items-center justify-between bg-slate-900/40 border border-white/5 p-3 rounded-xl">
+                                <div>
+                                    <p className="text-xs font-bold text-white">Contagem de estatísticas</p>
+                                    <p className="text-[11px] text-gray-500">
+                                        {dashResetTime ? `Zerado em: ${dashResetTime.toLocaleString('pt-BR')}` : 'Mostrando dados de todos os tempos'}
+                                    </p>
+                                </div>
+                                <button onClick={handleResetDashboard} className="bg-red-900/60 hover:bg-red-800 text-red-300 font-bold px-3 py-2 rounded-xl text-xs border border-red-500/30 flex items-center gap-1.5">
+                                    🔴 ZERAR DASHBOARD
+                                </button>
+                            </div>
                             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                                 {[
                                     ['💰 Faturamento Total', `R$ ${totalFaturamento.toFixed(2).replace('.', ',')}`, 'text-green-400'],
@@ -1067,6 +1156,18 @@ export default function Admin() {
                                         <label htmlFor="freteGratisProd" className="text-xs text-gray-300 font-bold cursor-pointer">Frete Grátis Exclusivo</label>
                                     </div>
                                 </div>
+                                {prodFreteGratis && (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                                        <div>
+                                            <label className="block text-xs text-gray-400 font-bold mb-1">🚚 Frete Grátis exclusivo para Estado (ex: SC, SP)</label>
+                                            <input value={prodEstadoFreteGratis} onChange={e => setProdEstadoFreteGratis(e.target.value)} placeholder="Ex: SC (deixe em branco para todos)" style={input} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-400 font-bold mb-1">🏙️ Frete Grátis exclusivo para Cidade (opcional)</label>
+                                            <input value={prodCidadeFreteGratis} onChange={e => setProdCidadeFreteGratis(e.target.value)} placeholder="Ex: Florianópolis (deixe em branco para todo o estado)" style={input} />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <button type="submit" style={btnSave}>
@@ -1090,15 +1191,16 @@ export default function Admin() {
                                 <button onClick={gerarLinkDinamico} style={btnSave}>{editingDynId ? '💾 SALVAR ALTERAÇÕES NO LINK' : '🔗 GERAR LINK DINÂMICO'}</button>
                             </div>
 
-                            {dynLinks.length > 0 && (
+                            {allDynLinks.length > 0 && (
                                 <div className="bg-slate-900/40 border border-white/5 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-3">
-                                    <h3 className="text-xs sm:text-sm font-bold text-white">Links Gerados ({dynLinks.length})</h3>
-                                    {dynLinks.map(link => (
+                                    <h3 className="text-xs sm:text-sm font-bold text-white">Links Gerados ({allDynLinks.length})</h3>
+                                    {allDynLinks.map(link => (
                                         <div key={link.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-slate-950/40 border border-white/5 p-3.5 rounded-xl gap-2">
                                             <div className="flex-1 min-w-0">
                                                 <div className="font-bold text-xs sm:text-sm text-white">{link.nome}</div>
                                                 <div className="text-green-400 font-black text-xs">R$ {parseFloat(link.preco).toFixed(2).replace('.', ',')}</div>
                                                 <div className="text-[10px] text-gray-500 truncate mt-0.5">{link.url}</div>
+                                                {link.desc && <div className="text-[10px] text-gray-400 mt-0.5 italic">{link.desc}</div>}
                                             </div>
                                             <div className="flex gap-1.5 w-full sm:w-auto">
                                                 <button onClick={() => handleStartEditDynLink(link)} className="p-2 bg-purple-600/30 text-purple-300 hover:text-white rounded-lg text-xs font-bold flex items-center gap-1">
@@ -1108,7 +1210,7 @@ export default function Admin() {
                                                     {copiedId === link.id ? <Check size={11} /> : <Copy size={11} />}
                                                 </button>
                                                 <a href={link.url} target="_blank" style={{ ...btnV, textDecoration: 'none' }}><ExternalLink size={11} /></a>
-                                                <button onClick={() => setDynLinks(prev => prev.filter(l => l.id !== link.id))} style={{ ...btnV, background: '#ef4444', boxShadow: 'none' }}><Trash2 size={11} /></button>
+                                                <button onClick={() => deletarDynLink(link.id)} style={{ ...btnV, background: '#ef4444', boxShadow: 'none' }}><Trash2 size={11} /></button>
                                             </div>
                                         </div>
                                     ))}
@@ -1120,6 +1222,46 @@ export default function Admin() {
                     {/* 5. CONFIGURAÇÕES BANNERS & WIDGETS */}
                     {aba === 'configuracoes' && localConfig && (
                         <div className="space-y-5 max-w-4xl">
+                            {/* Selo Verificado */}
+                            <div className="bg-slate-900/40 border border-white/5 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-sm sm:text-md font-bold text-white flex items-center gap-2">
+                                        ✅ Selo de Loja Verificada
+                                    </h3>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <span className="text-xs text-gray-400">{localConfig.verificadoLoja?.ativo ? 'Ativo' : 'Inativo'}</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={!!localConfig.verificadoLoja?.ativo}
+                                            onChange={async e => {
+                                                const updated = { ...localConfig, verificadoLoja: { ...localConfig.verificadoLoja, ativo: e.target.checked } };
+                                                setLocalConfig(updated);
+                                                await handleSaveAll(updated);
+                                            }}
+                                            className="w-5 h-5 accent-purple-600"
+                                        />
+                                    </label>
+                                </div>
+                                <div>
+                                    <label className="block text-xs text-gray-400 font-bold mb-1">Posição do Selo na Loja</label>
+                                    <select
+                                        value={localConfig.verificadoLoja?.posicao || 'todos'}
+                                        onChange={async e => {
+                                            const updated = { ...localConfig, verificadoLoja: { ...localConfig.verificadoLoja, posicao: e.target.value as any } };
+                                            setLocalConfig(updated);
+                                            await handleSaveAll(updated);
+                                        }}
+                                        className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs"
+                                    >
+                                        <option value="todos">Em todos os lugares (Topo + Rodapé + Produtos)</option>
+                                        <option value="topo">Apenas no Topo (Header)</option>
+                                        <option value="rodape">Apenas no Rodapé (Footer)</option>
+                                        <option value="produtos">Apenas nas Páginas de Produto e Categorias</option>
+                                    </select>
+                                    <p className="text-[11px] text-gray-500 mt-1">A desativação é permanente até você ativar novamente.</p>
+                                </div>
+                            </div>
+
                             {/* Banner Rotativo (Marquee Topo) */}
                             <div className="bg-slate-900/40 border border-white/5 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-4">
                                 <div className="flex items-center justify-between">
@@ -1128,7 +1270,7 @@ export default function Admin() {
                                     </h3>
                                     <label className="flex items-center gap-2 cursor-pointer">
                                         <span className="text-xs text-gray-400">{localConfig.bannerTopo?.ativo ? 'Ativo' : 'Inativo'}</span>
-                                        <input type="checkbox" checked={localConfig.bannerTopo?.ativo} onChange={e => setLocalConfig({ ...localConfig, bannerTopo: { ...localConfig.bannerTopo, ativo: e.target.checked } })} className="w-5 h-5 accent-purple-600" />
+                                        <input type="checkbox" checked={!!localConfig.bannerTopo?.ativo} onChange={async e => { const updated = { ...localConfig, bannerTopo: { ...localConfig.bannerTopo, ativo: e.target.checked } }; setLocalConfig(updated); await handleSaveAll(updated); }} className="w-5 h-5 accent-purple-600" />
                                     </label>
                                 </div>
                                 {localConfig.bannerTopo?.ativo && (
@@ -1169,7 +1311,7 @@ export default function Admin() {
                                     <h3 className="text-sm sm:text-md font-bold text-white">📍 Banner Geolocalizado</h3>
                                     <label className="flex items-center gap-2 cursor-pointer">
                                         <span className="text-xs text-gray-400">{localConfig.bannerGeolocalizado?.ativo ? 'Ativo' : 'Inativo'}</span>
-                                        <input type="checkbox" checked={localConfig.bannerGeolocalizado?.ativo} onChange={e => setLocalConfig({ ...localConfig, bannerGeolocalizado: { ...localConfig.bannerGeolocalizado, ativo: e.target.checked } })} className="w-5 h-5 accent-purple-600" />
+                                        <input type="checkbox" checked={!!localConfig.bannerGeolocalizado?.ativo} onChange={async e => { const updated = { ...localConfig, bannerGeolocalizado: { ...localConfig.bannerGeolocalizado, ativo: e.target.checked } }; setLocalConfig(updated); await handleSaveAll(updated); }} className="w-5 h-5 accent-purple-600" />
                                     </label>
                                 </div>
                                 {localConfig.bannerGeolocalizado?.ativo && (

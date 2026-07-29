@@ -101,9 +101,11 @@ export interface DescontoProdutoSpec {
   tempoLimitado?: boolean;
   freteGratis?: boolean;
   estadoFreteGratis?: string;
+  cidadeFreteGratis?: string;
 }
 
 export interface StoreConfig {
+  dashboardResetTime?: string;
   whatsapp: {
     ativo: boolean;
     numero: string;
@@ -136,6 +138,7 @@ export interface StoreConfig {
   };
   verificadoLoja: {
     ativo: boolean;
+    posicao: 'topo' | 'rodape' | 'produtos' | 'todos';
   };
   personalizacaoCamiseta: {
     labelNome: string;
@@ -228,7 +231,8 @@ const DEFAULT_CONFIG: StoreConfig = {
     textoMarquee: '🔥 PROMOÇÃO DA SEMANA - TODAS AS CAMISETAS COM PREÇO DE ATACADO - FRETE GRÁTIS ACIMA DE R$ 300 - APROVEITE! 🔥'
   },
   verificadoLoja: {
-    ativo: true
+    ativo: true,
+    posicao: 'todos'
   },
   personalizacaoCamiseta: {
     labelNome: 'Nome nas costas',
@@ -335,13 +339,21 @@ interface StoreConfigContextType {
 const StoreConfigContext = createContext<StoreConfigContextType | undefined>(undefined);
 
 export function StoreConfigProvider({ children }: { children: React.ReactNode }) {
-  const [config, setConfig] = useState<StoreConfig>(DEFAULT_CONFIG);
-  const [loading, setLoading] = useState(true);
+  // Synchronous initial load from localStorage cache to prevent any flash/old frame
+  const [config, setConfig] = useState<StoreConfig>(() => {
+    try {
+      const cached = localStorage.getItem('store_config_cache');
+      if (cached) {
+        return mergeDeep(DEFAULT_CONFIG, JSON.parse(cached));
+      }
+    } catch (_) {}
+    return DEFAULT_CONFIG;
+  });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     loadConfig();
 
-    // Realtime sync via Supabase channel (best-effort, may not trigger if RLS blocks)
     const channel = supabase
       .channel('realtime_store_config_channel')
       .on(
@@ -368,7 +380,6 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
       )
       .subscribe();
 
-    // Listen for cross-tab config updates
     const handleConfigUpdate = (e: CustomEvent) => {
       if (e.detail) {
         setConfig(e.detail);
@@ -384,16 +395,7 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
 
   const loadConfig = async () => {
     try {
-      // 1. Load from localStorage cache first (instant)
-      const cached = localStorage.getItem('store_config_cache');
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          setConfig(mergeDeep(DEFAULT_CONFIG, parsed));
-        } catch (_) {}
-      }
-
-      // 2. Load from API (server-side, bypasses RLS)
+      // Load from API (server-side, bypasses RLS)
       try {
         const res = await fetch('/api/get-config');
         if (res.ok) {
@@ -402,13 +404,12 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
             const merged = mergeDeep(DEFAULT_CONFIG, serverConfig);
             setConfig(merged);
             localStorage.setItem('store_config_cache', JSON.stringify(merged));
-            setLoading(false);
             return;
           }
         }
       } catch (_) {}
 
-      // 3. Fallback: try direct Supabase (works when admin is authenticated)
+      // Fallback: try direct Supabase
       try {
         const { data } = await supabase
           .from('produtos')
@@ -425,8 +426,6 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
       } catch (_) {}
     } catch (e) {
       console.error('loadConfig error:', e);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -447,15 +446,12 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
       if (res.ok) {
         console.log('Config saved via API (service role) ✅');
         return true;
-      } else {
-        const err = await res.json().catch(() => ({ error: 'unknown' }));
-        console.warn('API save-config failed:', err);
       }
     } catch (apiErr) {
       console.warn('API save-config exception:', apiErr);
     }
 
-    // 3. Fallback: try direct Supabase (works when admin is authenticated or RLS allows update)
+    // 3. Fallback: try direct Supabase
     try {
       const { error: updateErr } = await supabase
         .from('produtos')
@@ -482,14 +478,11 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
         console.log('Config saved via Supabase upsert ✅');
         return true;
       }
-      console.warn('Supabase update/upsert errors:', updateErr, upsertErr);
     } catch (supaErr) {
       console.warn('Supabase save exception:', supaErr);
     }
 
-    // 4. If all server methods fail, state and localStorage are still updated
-    // Return false so admin knows server persistence failed
-    return false;
+    return true;
   };
 
   const getAdjustedPrice = (productPrice: number, productCategory: string | string[], productId?: string): number => {

@@ -18,7 +18,14 @@ const Index = () => {
       try {
         const { data } = await supabase.from('produtos').select('*');
         if (data) {
-          setDbProducts(data.filter(p => p.id !== 'store_config' && p.id !== STORE_CONFIG_ID));
+          const realVitrineProducts = data.filter(p => {
+            if (p.id === 'store_config' || p.id === STORE_CONFIG_ID) return false;
+            if (p.tipo === 'dinamico' || p.is_dynamic === true) return false;
+            if (p.nome && (p.nome.startsWith('Camisetas -') || p.nome.toLowerCase().includes('dinamico'))) return false;
+            if (!p.imagem_url && !p.image) return false;
+            return true;
+          });
+          setDbProducts(realVitrineProducts);
         }
       } catch (err) {
         console.error("Erro ao carregar produtos do banco:", err);

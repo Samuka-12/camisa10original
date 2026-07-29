@@ -1,9 +1,11 @@
 import { useParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getProductsByCategory, type Product } from "@/data/products";
-import { useCart } from "@/contexts/CartContext";
-import { ArrowLeft } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { ArrowLeft, ShieldCheck } from "lucide-react";
+import { useStoreConfig, STORE_CONFIG_ID } from "@/contexts/StoreConfigContext";
 
 const categoryLabels: Record<string, string> = {
   selecoes: "Seleções",
@@ -23,7 +25,55 @@ const Category = () => {
   const { slug } = useParams<{ slug: string }>();
   const categoryKey = categoryKeys[slug || ""] || slug || "";
   const label = categoryLabels[slug || ""] || slug || "";
-  const products = getProductsByCategory(categoryKey);
+  const staticProducts = getProductsByCategory(categoryKey);
+  const { config } = useStoreConfig();
+  const verificado = config.verificadoLoja?.ativo;
+  const posicao = config.verificadoLoja?.posicao || 'todos';
+  const showVerificado = verificado && (posicao === 'produtos' || posicao === 'todos');
+
+  const [dbProducts, setDbProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchCategoryProducts = async () => {
+      try {
+        const { data } = await supabase.from('produtos').select('*');
+        if (data) {
+          const filtered = data.filter(p => {
+            if (p.id === 'store_config' || p.id === STORE_CONFIG_ID) return false;
+            if (p.tipo === 'dinamico' || p.is_dynamic === true) return false;
+            if (p.nome && (p.nome.startsWith('Camisetas -') || p.nome.toLowerCase().includes('dinamico'))) return false;
+            if (!p.imagem_url && !p.image) return false;
+            const cat = p.category;
+            if (Array.isArray(cat)) return cat.map((c: string) => c.toLowerCase()).includes(categoryKey.toLowerCase());
+            return typeof cat === 'string' && cat.toLowerCase() === categoryKey.toLowerCase();
+          });
+          setDbProducts(filtered);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar produtos da categoria:", err);
+      }
+    };
+    fetchCategoryProducts();
+  }, [categoryKey]);
+
+  const allProducts = [
+    ...staticProducts.map(p => ({
+      id: p.id,
+      image: p.image,
+      name: p.name,
+      team: p.team,
+      price: p.price,
+      oldPrice: p.oldPrice,
+    })),
+    ...dbProducts.map(p => ({
+      id: p.id,
+      image: p.imagem_url || p.image,
+      name: p.nome,
+      team: p.team || 'Time',
+      price: `R$ ${parseFloat(p.preco).toFixed(2).replace('.', ',')}`,
+      oldPrice: undefined,
+    })),
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -35,12 +85,15 @@ const Category = () => {
         <div className="flex items-center gap-3 mb-8">
           <div className="w-1 h-8 bg-accent rounded-full" />
           <h1 className="text-3xl font-bold text-foreground">{label}</h1>
+          {showVerificado && (
+            <ShieldCheck className="w-6 h-6 text-green-500 fill-green-500/20 animate-pulse" title="Loja Verificada e Segura" />
+          )}
         </div>
-        {products.length === 0 ? (
+        {allProducts.length === 0 ? (
           <p className="text-muted-foreground">Nenhum produto encontrado nesta categoria.</p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {products.map((p) => (
+            {allProducts.map((p) => (
               <CategoryProductCard key={p.id} product={p} />
             ))}
           </div>
@@ -51,7 +104,7 @@ const Category = () => {
   );
 };
 
-const CategoryProductCard = ({ product }: { product: Product }) => {
+const CategoryProductCard = ({ product }: { product: any }) => {
   return (
     <Link
       to={`/produto/${product.id}`}
@@ -63,6 +116,10 @@ const CategoryProductCard = ({ product }: { product: Product }) => {
           alt={product.name}
           loading="lazy"
           className="max-w-[78%] max-h-[78%] object-contain group-hover:scale-105 transition-transform duration-500"
+          onError={(e) => {
+            const t = e.target as HTMLImageElement;
+            if (t.src !== '/placeholder.svg') t.src = '/placeholder.svg';
+          }}
         />
       </div>
       <div className="p-4">
