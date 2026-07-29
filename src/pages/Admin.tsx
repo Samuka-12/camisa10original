@@ -55,6 +55,7 @@ export default function Admin() {
 
     type ActiveTab = 'dashboard' | 'vitrine' | 'pedidos' | 'catalogo' | 'novo' | 'configuracoes' | 'stories' | 'precos' | 'imagens' | 'calculadora' | 'integracoes' | 'frontend';
     const [aba, setAba] = useState<ActiveTab>('dashboard');
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [pedidos, setPedidos] = useState<any[]>([]);
     const [produtos, setProdutos] = useState<any[]>([]);
     const [metaEvents, setMetaEvents] = useState<any[]>([]);
