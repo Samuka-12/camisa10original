@@ -366,8 +366,8 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
     const salvarProduto = async (e: React.FormEvent) => {
         e.preventDefault();
         const precoNumerico = parseFloat(precoProd.replace(',', '.'));
-        const mainImg = productImages.find(i => i) || '';
         const allImgs = productImages.filter(i => i);
+        const mainImg = allImgs[0] || '';
         const allVids = productVideos.filter(v => v);
         const prodId = editingProdId || crypto.randomUUID();
 
@@ -434,10 +434,13 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
 
         toast.success(editingProdId ? '✅ Produto atualizado com sucesso!' : '✅ Produto cadastrado na vitrine!');
 
+        // Resetar formulário
         setEditingProdId(null); setNomeProd(''); setPrecoProd(''); setProductImages(['', '', '', '', '', '']); setDescProd(''); setDescVideoProd(''); setSelectedPlayer('');
         setProdDescontoPercent('0'); setProdTempoLimitado(false); setProdFreteGratis(false); setProdEstadoFreteGratis(''); setProdCidadeFreteGratis('');
+        // Primeiro atualizar a lista de produtos, depois trocar de aba para garantir dados frescos na vitrine
         await buscarProdutos();
-        setAba('vitrine');
+        // Pequeno delay para garantir que o state foi atualizado antes de renderizar a vitrine
+        setTimeout(() => setAba('vitrine'), 80);
     };
 
     const removerProdutoPermanente = async (prod: { id: string; nome: string; origem: string }) => {
@@ -459,23 +462,31 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
     const gerarLinkDinamico = async () => {
         if (!dynNome || !dynPreco) { alert('Preencha nome e preço!'); return; }
         const base = window.location.origin;
+        // Construir URL com os valores atuais do form
         const url = `${base}/checkout?nome=${encodeURIComponent(dynNome)}&preco=${encodeURIComponent(dynPreco)}${dynImg ? `&img=${encodeURIComponent(dynImg)}` : ''}`;
         const precoNum = parseFloat(dynPreco.replace(',', '.')) || 0;
 
         if (editingDynId) {
-            setDynLinks(prev => prev.map(l => l.id === editingDynId ? { id: editingDynId, nome: dynNome, preco: dynPreco, img: dynImg, url, desc: dynDesc } : l));
+            // Atualizar no banco
             await supabase.from('produtos').update({ nome: dynNome, preco: precoNum, imagem_url: dynImg || null, image: dynImg || null, description: dynDesc || '' }).eq('id', editingDynId);
+            // Atualizar state local com URL reconstruída a partir dos novos valores
+            setDynLinks(prev => prev.map(l =>
+                l.id === editingDynId
+                    ? { id: editingDynId, nome: dynNome, preco: dynPreco, img: dynImg, url, desc: dynDesc }
+                    : l
+            ));
             setEditingDynId(null);
             toast.success('✅ Link dinâmico atualizado!');
         } else {
             const newId = crypto.randomUUID();
             const newLink = { id: newId, nome: dynNome, preco: dynPreco, img: dynImg, url, desc: dynDesc };
-            setDynLinks(prev => [newLink, ...prev]);
             await supabase.from('produtos').upsert([{ id: newId, nome: dynNome, preco: precoNum, imagem_url: dynImg || null, image: dynImg || null, category: 'dinamico', tipo: 'dinamico', description: dynDesc || '', team: 'Link Dinâmico', sizes: [] }], { onConflict: 'id' });
+            setDynLinks(prev => [newLink, ...prev]);
             toast.success('✅ Link dinâmico gerado e salvo!');
         }
 
         setDynNome(''); setDynPreco(''); setDynImg(''); setDynDesc('');
+        // Atualizar a lista completa de produtos para refletir as mudanças
         await buscarProdutos();
     };
 
@@ -934,12 +945,19 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
             }))
     ];
 
-    // Filtered vitrine for admin display
-    const filteredVitrineProducts = allVitrineProducts.filter(p => {
-        const matchSearch = !vitrineSearch || p.nome.toLowerCase().includes(vitrineSearch.toLowerCase()) || p.team.toLowerCase().includes(vitrineSearch.toLowerCase());
-        const matchCat = vitrineCatFilter === 'todas' || p.category.toLowerCase() === vitrineCatFilter.toLowerCase();
-        return matchSearch && matchCat;
-    });
+    // Helper: normaliza string removendo acentos e espaços para comparação
+    const normalizeSlug = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+
+    // Filtered vitrine for admin display (com normalização de acentos na categoria)
+    const filteredVitrineProducts = allVitrineProducts
+        .filter(p => {
+            const matchSearch = !vitrineSearch || p.nome.toLowerCase().includes(vitrineSearch.toLowerCase()) || p.team.toLowerCase().includes(vitrineSearch.toLowerCase());
+            const matchCat = vitrineCatFilter === 'todas' ||
+                normalizeSlug(p.category) === normalizeSlug(vitrineCatFilter) ||
+                p.category.toLowerCase() === vitrineCatFilter.toLowerCase();
+            return matchSearch && matchCat;
+        })
+        .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
     // Dynamic products (links)
     const dynamicDbProducts = produtos.filter(p => {

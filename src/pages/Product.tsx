@@ -47,12 +47,25 @@ const Product = () => {
             .eq('id', id)
             .single();
           if (data) {
-            let parsedImgs = [data.imagem_url || data.image];
+            // Parse robusto: suporta string JSON, array já parseado e fallback para imagem_url
+            let parsedImgs: string[] = [];
             if (data.images) {
               try {
                 const parsed = typeof data.images === 'string' ? JSON.parse(data.images) : data.images;
-                if (Array.isArray(parsed) && parsed.length > 0) parsedImgs = parsed;
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                  parsedImgs = parsed.filter(Boolean);
+                }
               } catch (_) {}
+            }
+            // Se não encontrou imagens no campo images, usar imagem_url/image como fallback
+            if (parsedImgs.length === 0) {
+              const fallback = data.imagem_url || data.image;
+              if (fallback) parsedImgs = [fallback];
+            }
+            // Garantir que a imagem principal (imagem_url) sempre seja a primeira se não estiver na lista
+            const mainImg = data.imagem_url || data.image;
+            if (mainImg && !parsedImgs.includes(mainImg)) {
+              parsedImgs = [mainImg, ...parsedImgs];
             }
 
             let parsedVids: string[] = [];
