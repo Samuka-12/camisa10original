@@ -57,7 +57,9 @@ const Category = () => {
         if (data) {
           const filtered = data.filter(p => {
             if (p.id === 'store_config' || p.id === STORE_CONFIG_ID) return false;
-            if (p.tipo === 'dinamico' || p.category === 'dinamico') return false;
+            if (p.tipo === 'dinamico' || p.category === 'dinamico' || p.team === 'Link Dinâmico') return false;
+            const pNum = parseFloat(String(p.preco || 0));
+            if (pNum > 0 && Math.abs(pNum - 109.93) > 0.01) return false;
             // Match by original slug or URL slug
             const cat = p.category;
             const matchCat = (c: string) => {

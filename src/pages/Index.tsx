@@ -47,7 +47,9 @@ const Index = () => {
           // Only vitrine products (or products without explicit tipo)
           const realVitrineProducts = data.filter(p => {
             if (p.id === 'store_config' || p.id === STORE_CONFIG_ID) return false;
-            if (p.tipo === 'dinamico' || p.category === 'dinamico') return false;
+            if (p.tipo === 'dinamico' || p.category === 'dinamico' || p.team === 'Link Dinâmico') return false;
+            const pNum = parseFloat(String(p.preco || 0));
+            if (pNum > 0 && Math.abs(pNum - 109.93) > 0.01) return false;
             return true;
           });
           setDbProducts(realVitrineProducts);

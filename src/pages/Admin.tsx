@@ -365,11 +365,16 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
 
     const salvarProduto = async (e: React.FormEvent) => {
         e.preventDefault();
-        const precoNumerico = parseFloat(precoProd.replace(',', '.'));
+        const precoNumerico = parseFloat(precoProd.replace(',', '.')) || 109.93;
         const allImgs = productImages.filter(i => i);
         const mainImg = allImgs[0] || '';
         const allVids = productVideos.filter(v => v);
         const prodId = editingProdId || crypto.randomUUID();
+
+        // Embed images and videos metadata into description as a 100% reliable fallback
+        const galleryMeta = `\n\n<!-- GALLERY:${JSON.stringify({ images: allImgs, videos: allVids, sizes: selectedSizes })} -->`;
+        const cleanDesc = descProd.replace(/<!-- GALLERY:.*? -->/g, '').trim();
+        const fullDesc = cleanDesc + (descVideoProd ? `\n\n[VÍDEO](${descVideoProd})` : '') + galleryMeta;
 
         const fullPayload: any = {
             id: prodId,
@@ -381,7 +386,7 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
             videos: JSON.stringify(allVids),
             category: categoryProd,
             team: teamProd,
-            description: descProd + (descVideoProd ? `\n\n[VÍDEO](${descVideoProd})` : ''),
+            description: fullDesc,
             sizes: selectedSizes,
             tipo: 'vitrine'
         };
@@ -398,7 +403,7 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
                 image: mainImg,
                 category: categoryProd,
                 team: teamProd,
-                description: descProd + (descVideoProd ? `\n\n[VÍDEO](${descVideoProd})` : '')
+                description: fullDesc
             };
             const fallbackRes = await supabase.from('produtos').upsert([basicPayload], { onConflict: 'id' });
             error = fallbackRes.error;
@@ -911,44 +916,100 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
     const totalGastosAds = (localConfig.calculadoraAds?.gastosDetalhados || []).reduce((a, g) => a + g.valor, 0);
     const roas = totalGastosAds > 0 ? (totalFaturamento / totalGastosAds).toFixed(2) : '—';
 
-    // VITRINE PRODUCTS
+    // Helper: normaliza slug para comparação
+    const normalizeSlug = (s: string) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+
+    // Canonical category determination helper
+    const getCanonicalCategory = (rawCat: string | string[], teamName: string = ''): { id: string; label: string } => {
+        const catStr = Array.isArray(rawCat) ? rawCat.join(' ') : (rawCat || '');
+        const normCat = normalizeSlug(catStr);
+        const normTeam = normalizeSlug(teamName);
+
+        if (normCat.includes('selec') || normTeam.includes('selecao') || normTeam.includes('brasil') || normTeam.includes('argentina') || normTeam.includes('espanha') || normTeam.includes('franca') || normTeam.includes('alemanha') || normTeam.includes('italia') || normTeam.includes('portugal') || normTeam.includes('holanda') || normTeam.includes('inglaterra') || normTeam.includes('uruguai') || normTeam.includes('japao') || normTeam.includes('marrocos') || normTeam.includes('cabo-verde') || normTeam.includes('paraguai') || normTeam.includes('suica')) {
+            if (!normCat.includes('retro') && !normCat.includes('historica')) {
+                return { id: 'seleções', label: 'Seleções' };
+            }
+        }
+        if (normCat.includes('brasileir') || normCat.includes('brasil') || normTeam.includes('flamengo') || normTeam.includes('palmeiras') || normTeam.includes('sao-paulo') || normTeam.includes('corinthians') || normTeam.includes('gremio') || normTeam.includes('internacional') || normTeam.includes('vasco') || normTeam.includes('botafogo') || normTeam.includes('fluminense') || normTeam.includes('cruzeiro') || normTeam.includes('atletico') || normTeam.includes('santos') || normTeam.includes('bahia') || normTeam.includes('fortaleza')) {
+            if (!normCat.includes('retro') && !normCat.includes('historica')) {
+                return { id: 'brasileirão', label: 'Brasileirão' };
+            }
+        }
+        if (normCat.includes('retro') || normCat.includes('historica')) {
+            return { id: 'retrô', label: 'Históricas' };
+        }
+        if (normCat.includes('europeu') || normTeam.includes('real-madrid') || normTeam.includes('barcelona') || normTeam.includes('psg') || normTeam.includes('bayern') || normTeam.includes('city') || normTeam.includes('liverpool') || normTeam.includes('arsenal') || normTeam.includes('chelsea') || normTeam.includes('united') || normTeam.includes('juventus') || normTeam.includes('milan') || normTeam.includes('inter') || normTeam.includes('dortmund') || normTeam.includes('benfica') || normTeam.includes('porto') || normTeam.includes('ajax')) {
+            return { id: 'europeus', label: 'Europeus' };
+        }
+
+        // Check against dynamic categories in config
+        if (localConfig.categorias && localConfig.categorias.length > 0) {
+            const dyn = localConfig.categorias.find(c =>
+                normalizeSlug(c.slug) === normCat || normalizeSlug(c.label) === normCat
+            );
+            if (dyn) return { id: dyn.slug || dyn.label, label: dyn.label };
+        }
+
+        return { id: normCat || 'europeus', label: rawCat ? String(rawCat) : 'Europeus' };
+    };
+
+    // Standard store categories order (matches the storefront exactly)
+    const vitrineSections = [
+        { id: 'seleções', title: 'Seleções', icon: '🏆' },
+        { id: 'brasileirão', title: 'Brasileirão', icon: '🇧🇷' },
+        { id: 'retrô', title: 'Históricas (Retrô)', icon: '📜' },
+        { id: 'europeus', title: 'Europeus', icon: '🇪🇺' },
+        ...((localConfig.categorias || [])
+            .filter(c => !['selecoes', 'seleçoes', 'seleções', 'brasileirao', 'brasileirão', 'retro', 'retrô', 'europeus'].includes(normalizeSlug(c.slug)))
+            .map(c => ({ id: c.slug || c.label, title: c.label, icon: '📂' }))
+        )
+    ];
+
+    // VITRINE PRODUCTS (Strictly price 109.93 or standard vitrine, excluding custom payment dynamic links)
     const produtosOcultos = localConfig.produtosOcultos || [];
 
-    // Only vitrine products from DB (or products without explicit tipo)
     const realDbProducts = produtos.filter(p => {
         if (p.id === 'store_config' || p.id === STORE_CONFIG_ID) return false;
         if (produtosOcultos.includes(p.id)) return false;
-        if (p.tipo === 'dinamico' || p.category === 'dinamico') return false;
+        if (p.tipo === 'dinamico' || p.category === 'dinamico' || p.team === 'Link Dinâmico') return false;
+        const pNum = parseFloat(String(p.preco || 0));
+        // Strict: custom price dynamic links (e.g. 250, 300, etc.) are excluded from vitrine
+        if (pNum > 0 && Math.abs(pNum - 109.93) > 0.01) return false;
         return true;
     });
 
     const allVitrineProducts = [
-        ...realDbProducts.map(p => ({
-            id: p.id,
-            nome: p.nome,
-            preco: p.preco,
-            imagem: p.imagem_url || p.image,
-            category: Array.isArray(p.category) ? p.category[0] : (p.category || 'europeus'),
-            team: p.team || 'Time',
-            origem: 'db'
-        })),
+        ...realDbProducts.map(p => {
+            const catObj = getCanonicalCategory(p.category, p.team);
+            return {
+                id: p.id,
+                nome: p.nome,
+                preco: 109.93,
+                imagem: p.imagem_url || p.image,
+                category: catObj.id,
+                categoryLabel: catObj.label,
+                team: p.team || 'Time',
+                origem: 'db'
+            };
+        }),
         ...allProducts
             .filter(p => !produtosOcultos.includes(p.id))
-            .map(p => ({
-                id: p.id,
-                nome: p.name,
-                preco: p.priceNum,
-                imagem: p.image,
-                category: p.category[0] || 'europeus',
-                team: p.team,
-                origem: 'estatico'
-            }))
+            .map(p => {
+                const catObj = getCanonicalCategory(p.category, p.team);
+                return {
+                    id: p.id,
+                    nome: p.name,
+                    preco: p.priceNum || 109.93,
+                    imagem: p.image,
+                    category: catObj.id,
+                    categoryLabel: catObj.label,
+                    team: p.team,
+                    origem: 'estatico'
+                };
+            })
     ];
 
-    // Helper: normaliza string removendo acentos e espaços para comparação
-    const normalizeSlug = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
-
-    // Filtered vitrine for admin display (com normalização de acentos na categoria)
+    // Filtered vitrine for admin display
     const filteredVitrineProducts = allVitrineProducts
         .filter(p => {
             const matchSearch = !vitrineSearch || p.nome.toLowerCase().includes(vitrineSearch.toLowerCase()) || p.team.toLowerCase().includes(vitrineSearch.toLowerCase());
@@ -959,10 +1020,12 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
         })
         .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
-    // Dynamic products (links)
+    // Dynamic products (links de pagamento customizados / atacado)
     const dynamicDbProducts = produtos.filter(p => {
         if (p.id === 'store_config' || p.id === STORE_CONFIG_ID) return false;
-        if (p.tipo === 'dinamico' || p.category === 'dinamico') return true;
+        if (p.tipo === 'dinamico' || p.category === 'dinamico' || p.team === 'Link Dinâmico') return true;
+        const pNum = parseFloat(String(p.preco || 0));
+        if (pNum > 0 && Math.abs(pNum - 109.93) > 0.01) return true;
         return false;
     });
     const allDynLinks = [
@@ -1251,11 +1314,16 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
                     {/* 2. VITRINE DA LOJA */}
                     {/* ═══════════════════════════════════════════════ */}
                     {aba === 'vitrine' && (
-                        <div className="space-y-4">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                                <p className="text-xs text-gray-400">Gerencie todos os produtos ativos na loja ({allVitrineProducts.length} total).</p>
-                                <button onClick={() => { setEditingProdId(null); setNomeProd(''); setPrecoProd(''); setProductImages(['', '', '', '', '', '']); setAba('novo'); }} style={btnSave} className="w-auto px-4 py-2 text-xs">
-                                    + ADICIONAR PRODUTO
+                        <div className="space-y-6">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-900/40 p-4 rounded-2xl border border-white/5">
+                                <div>
+                                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                                        🏪 Vitrine Oficial da Loja (Preço Padrão R$ 109,93)
+                                    </h3>
+                                    <p className="text-xs text-gray-400">Produtos organizados por categoria na mesma ordem da loja real ({allVitrineProducts.length} itens ativos).</p>
+                                </div>
+                                <button onClick={() => { setEditingProdId(null); setNomeProd(''); setPrecoProd('109.93'); setProductImages(['', '', '', '', '', '']); setAba('novo'); }} style={btnSave} className="w-auto px-4 py-2 text-xs">
+                                    + ADICIONAR PRODUTO NA VITRINE
                                 </button>
                             </div>
 
@@ -1273,7 +1341,7 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
                                     className="bg-slate-800 text-white rounded-xl border border-white/10 p-2.5 focus:outline-none text-xs"
                                 >
                                     <option value="todas">Todas as Categorias</option>
-                                    {availableCategories.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                                    {vitrineSections.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
                                 </select>
                             </div>
 
@@ -1281,43 +1349,64 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
                                 <p className="text-center text-gray-500 text-sm py-8">Nenhum produto encontrado com os filtros aplicados.</p>
                             )}
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                {filteredVitrineProducts.map(prod => (
-                                    <div key={prod.id} className="bg-slate-900/60 border border-white/10 rounded-2xl overflow-hidden flex flex-col">
-                                        <div className="h-44 bg-slate-950 relative overflow-hidden">
-                                            {prod.imagem ? (
-                                                <img src={prod.imagem} alt={prod.nome} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs">Sem foto</div>
-                                            )}
-                                            <span className="absolute top-2 left-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-bold text-gray-300 uppercase">
-                                                {prod.team}
-                                            </span>
-                                            <span className="absolute top-2 right-2 bg-purple-900/80 px-2 py-0.5 rounded text-[9px] font-bold text-purple-300 uppercase">
-                                                {prod.category}
-                                            </span>
-                                        </div>
-                                        <div className="p-3.5 flex-1 flex flex-col justify-between space-y-3">
-                                            <div>
-                                                <h4 className="font-bold text-xs text-white line-clamp-2">{prod.nome}</h4>
-                                                <p className="text-green-400 font-black text-sm mt-1">R$ {parseFloat(String(prod.preco)).toFixed(2).replace('.', ',')}</p>
-                                                <p className="text-[9px] text-gray-600 font-mono mt-0.5">ID: {prod.id.substring(0, 12)}...</p>
+                            {vitrineSections
+                                .filter(sec => vitrineCatFilter === 'todas' || normalizeSlug(sec.id) === normalizeSlug(vitrineCatFilter))
+                                .map(sec => {
+                                    const secProducts = filteredVitrineProducts.filter(p => normalizeSlug(p.category) === normalizeSlug(sec.id));
+                                    if (secProducts.length === 0 && vitrineCatFilter !== 'todas') return null;
+                                    if (secProducts.length === 0) return null;
+
+                                    return (
+                                        <div key={sec.id} className="bg-slate-950/60 border border-white/10 rounded-2xl p-4 space-y-4">
+                                            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-lg">{sec.icon}</span>
+                                                    <h3 className="font-black text-sm sm:text-base text-white tracking-wide">{sec.title}</h3>
+                                                    <span className="text-xs bg-purple-900/60 text-purple-300 font-bold px-2 py-0.5 rounded-full border border-purple-500/30">
+                                                        {secProducts.length} {secProducts.length === 1 ? 'produto' : 'produtos'}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div className="flex gap-2 pt-2 border-t border-white/5">
-                                                <button onClick={() => handleStartEditProduct(prod)} className="flex-1 bg-purple-600/30 hover:bg-purple-600 text-purple-200 hover:text-white text-[11px] font-bold py-1.5 rounded-lg flex items-center justify-center gap-1">
-                                                    <Edit2 size={12} /> Editar
-                                                </button>
-                                                <a href={`/produto/${prod.id}`} target="_blank" className="p-1.5 bg-slate-800 text-gray-300 hover:text-white rounded-lg flex items-center justify-center">
-                                                    <ExternalLink size={14} />
-                                                </a>
-                                                <button onClick={() => removerProdutoPermanente(prod)} className="p-1.5 bg-red-900/40 hover:bg-red-700 text-red-300 hover:text-white rounded-lg flex items-center justify-center transition-colors">
-                                                    <Trash2 size={14} />
-                                                </button>
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                                {secProducts.map(prod => (
+                                                    <div key={prod.id} className="bg-slate-900/80 border border-white/10 rounded-xl overflow-hidden flex flex-col hover:border-purple-500/40 transition-all">
+                                                        <div className="h-44 bg-slate-950 relative overflow-hidden">
+                                                            {prod.imagem ? (
+                                                                <img src={prod.imagem} alt={prod.nome} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs">Sem foto</div>
+                                                            )}
+                                                            <span className="absolute top-2 left-2 bg-black/70 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-bold text-gray-200 uppercase border border-white/10">
+                                                                {prod.team}
+                                                            </span>
+                                                            <span className="absolute top-2 right-2 bg-emerald-950/90 border border-emerald-500/40 px-2 py-0.5 rounded text-[10px] font-black text-emerald-400">
+                                                                R$ 109,93
+                                                            </span>
+                                                        </div>
+                                                        <div className="p-3 flex-1 flex flex-col justify-between space-y-2">
+                                                            <div>
+                                                                <h4 className="font-bold text-xs text-white line-clamp-2">{prod.nome}</h4>
+                                                                <p className="text-[10px] text-gray-400 font-mono mt-1">Categoria: {sec.title}</p>
+                                                            </div>
+                                                            <div className="flex gap-2 pt-2 border-t border-white/5">
+                                                                <button onClick={() => handleStartEditProduct(prod)} className="flex-1 bg-purple-600/30 hover:bg-purple-600 text-purple-200 hover:text-white text-[11px] font-bold py-1.5 rounded-lg flex items-center justify-center gap-1">
+                                                                    <Edit2 size={12} /> Editar
+                                                                </button>
+                                                                <a href={`/produto/${prod.id}`} target="_blank" className="p-1.5 bg-slate-800 text-gray-300 hover:text-white rounded-lg flex items-center justify-center">
+                                                                    <ExternalLink size={14} />
+                                                                </a>
+                                                                <button onClick={() => removerProdutoPermanente(prod)} className="p-1.5 bg-red-900/40 hover:bg-red-700 text-red-300 hover:text-white rounded-lg flex items-center justify-center transition-colors">
+                                                                    <Trash2 size={14} />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
+                                    );
+                                })}
                         </div>
                     )}
 

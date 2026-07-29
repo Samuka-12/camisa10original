@@ -47,8 +47,10 @@ const Product = () => {
             .eq('id', id)
             .single();
           if (data) {
-            // Parse robusto: suporta string JSON, array já parseado e fallback para imagem_url
+            // Parse robusto: suporta string JSON, array já parseado, meta tag na descrição e fallback
             let parsedImgs: string[] = [];
+            let parsedVids: string[] = [];
+
             if (data.images) {
               try {
                 const parsed = typeof data.images === 'string' ? JSON.parse(data.images) : data.images;
@@ -57,7 +59,34 @@ const Product = () => {
                 }
               } catch (_) {}
             }
-            // Se não encontrou imagens no campo images, usar imagem_url/image como fallback
+
+            if (data.videos) {
+              try {
+                const parsed = typeof data.videos === 'string' ? JSON.parse(data.videos) : data.videos;
+                if (Array.isArray(parsed)) parsedVids = parsed.filter(Boolean);
+              } catch (_) {
+                if (typeof data.videos === 'string') parsedVids = [data.videos];
+              }
+            }
+
+            // Fallback: Tentar extrair GALLERY meta da descrição se disponível
+            let rawDesc = data.description || '';
+            const galleryMatch = rawDesc.match(/<!-- GALLERY:(.*?) -->/);
+            if (galleryMatch && galleryMatch[1]) {
+              try {
+                const meta = JSON.parse(galleryMatch[1]);
+                if (parsedImgs.length <= 1 && Array.isArray(meta.images) && meta.images.length > 0) {
+                  parsedImgs = meta.images.filter(Boolean);
+                }
+                if (parsedVids.length === 0 && Array.isArray(meta.videos) && meta.videos.length > 0) {
+                  parsedVids = meta.videos.filter(Boolean);
+                }
+              } catch (_) {}
+            }
+            // Limpar tag META da descrição exibida para o cliente
+            const cleanDesc = rawDesc.replace(/<!-- GALLERY:.*? -->/g, '').trim();
+
+            // Se não encontrou imagens no campo images ou meta, usar imagem_url/image como fallback
             if (parsedImgs.length === 0) {
               const fallback = data.imagem_url || data.image;
               if (fallback) parsedImgs = [fallback];
@@ -66,16 +95,6 @@ const Product = () => {
             const mainImg = data.imagem_url || data.image;
             if (mainImg && !parsedImgs.includes(mainImg)) {
               parsedImgs = [mainImg, ...parsedImgs];
-            }
-
-            let parsedVids: string[] = [];
-            if (data.videos) {
-              try {
-                const parsed = typeof data.videos === 'string' ? JSON.parse(data.videos) : data.videos;
-                if (Array.isArray(parsed)) parsedVids = parsed;
-              } catch (_) {
-                if (typeof data.videos === 'string') parsedVids = [data.videos];
-              }
             }
 
             const basePriceNum = data.preco || 109.93;
@@ -90,7 +109,7 @@ const Product = () => {
               videos: parsedVids.filter(Boolean),
               sizes: data.sizes || ['P', 'M', 'G', 'GG', 'XGG'],
               category: [data.category || 'europeus'],
-              description: data.description || 'Sem descrição cadastrada.'
+              description: cleanDesc || 'Sem descrição cadastrada.'
             });
           }
         } catch (err) {
@@ -126,7 +145,7 @@ const Product = () => {
   const mediaList = useMemo(() => {
     if (!product) return [];
     const list: Array<{ type: 'image' | 'video'; url: string }> = [];
-    if (product.images && Array.isArray(product.images)) {
+    if (product.images && Array.isArray(product.images) && product.images.length > 0) {
       product.images.forEach((img: string) => { if (img) list.push({ type: 'image', url: img }); });
     } else if (product.image) {
       list.push({ type: 'image', url: product.image });
@@ -264,6 +283,34 @@ const Product = () => {
                     if (target.src !== "/placeholder.svg") target.src = "/placeholder.svg";
                   }}
                 />
+              )}
+
+              {/* Navigation arrows for carousel if mediaList > 1 */}
+              {mediaList.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedImage((prev) => (prev === 0 ? mediaList.length - 1 : prev - 1));
+                    }}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 text-white font-bold text-xl flex items-center justify-center backdrop-blur-sm transition-all shadow-lg hover:scale-110 z-10"
+                    title="Anterior"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedImage((prev) => (prev === mediaList.length - 1 ? 0 : prev + 1));
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 text-white font-bold text-xl flex items-center justify-center backdrop-blur-sm transition-all shadow-lg hover:scale-110 z-10"
+                    title="Próxima"
+                  >
+                    ›
+                  </button>
+                </>
               )}
             </div>
 
