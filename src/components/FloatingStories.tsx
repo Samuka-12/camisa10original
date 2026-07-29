@@ -5,20 +5,26 @@ import { getProductById, allProducts } from '../data/products';
 import { supabase } from '../lib/supabase';
 import { X, Play, ShoppingCart } from 'lucide-react';
 
+// Helper: returns CSS animation duration string based on velocity
+function getPulseDuration(vel?: string) {
+  if (vel === 'lento') return '2.4s';
+  if (vel === 'rapido') return '0.8s';
+  return '1.4s'; // normal
+}
+
 export const FloatingStories: React.FC = () => {
   const { config } = useStoreConfig();
   const location = useLocation();
   const navigate = useNavigate();
   const [activeStory, setActiveStory] = useState<FloatingStory | null>(null);
   const [dbProducts, setDbProducts] = useState<any[]>([]);
-  
+
   // Dragging state
   const [positions, setPositions] = useState<Record<string, { x: number; y: number }>>({});
   const dragInfo = useRef<{ id: string; startX: number; startY: number; posX: number; posY: number; hasMoved: boolean } | null>(null);
 
   const stories = config.stories?.lista || [];
 
-  // Fetch db products to check links in stories
   useEffect(() => {
     const fetchDbProducts = async () => {
       try {
@@ -29,12 +35,10 @@ export const FloatingStories: React.FC = () => {
     fetchDbProducts();
   }, [activeStory]);
 
-  // Extract product ID from URL if on product page
   const pathParts = location.pathname.split('/');
   const isProductPage = pathParts[1] === 'produto';
   const currentProductId = isProductPage ? pathParts[2] : null;
 
-  // Filter stories based on visibility settings
   const visibleStories = stories.filter(story => {
     if (story.visibilidade === 'global') return true;
     if (story.visibilidade === 'inicial' && (location.pathname === '/' || location.pathname === '')) return true;
@@ -50,7 +54,6 @@ export const FloatingStories: React.FC = () => {
 
   if (visibleStories.length === 0) return null;
 
-  // Find linked product (either from allProducts or Supabase dbProducts)
   const getLinkedProduct = (productId: string) => {
     const local = getProductById(productId);
     if (local) return { ...local, priceNum: local.priceNum };
@@ -68,7 +71,6 @@ export const FloatingStories: React.FC = () => {
     return null;
   };
 
-  // Drag handlers
   const handleMouseDown = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
     const currentPos = positions[id] || { x: window.innerWidth - 90, y: 150 + visibleStories.indexOf(visibleStories.find(s => s.id === id)!) * 90 };
@@ -127,7 +129,7 @@ export const FloatingStories: React.FC = () => {
 
   const handleTouchMove = (e: TouchEvent) => {
     if (!dragInfo.current) return;
-    e.preventDefault(); // Prevent scrolling while dragging
+    e.preventDefault();
     const touch = e.touches[0];
     const { id, startX, startY, posX, posY } = dragInfo.current;
     const deltaX = touch.clientX - startX;
@@ -158,11 +160,26 @@ export const FloatingStories: React.FC = () => {
 
   return (
     <>
+      {/* Pulse animation style block */}
+      <style>{`
+        @keyframes storyPulseAnim {
+          0%, 100% { box-shadow: 0 0 0 0 var(--story-pulse-color, rgba(124,58,237,0.6)); transform: scale(1); }
+          50% { box-shadow: 0 0 0 calc(var(--story-pulse-size, 8) * 1px) transparent; transform: scale(var(--story-pulse-scale, 1.06)); }
+        }
+      `}</style>
+
       {/* Floating story bubbles */}
       {visibleStories.map((story, index) => {
         const defaultX = window.innerWidth - 90;
         const defaultY = 150 + index * 95;
         const pos = positions[story.id] || { x: defaultX, y: defaultY };
+
+        // Story-specific colors (fallback to defaults)
+        const ringColor = story.corFundo || 'linear-gradient(to top right, #7c3aed, #ec4899, #eab308)';
+        const btnColor = story.corBotao || '#7c3aed';
+        const pulseActive = story.pulseAtivo !== false; // default true
+        const pulseDuration = getPulseDuration(story.pulseVelocidade);
+        const pulseSize = story.pulseTamanho || '8';
 
         return (
           <div
@@ -188,15 +205,66 @@ export const FloatingStories: React.FC = () => {
             }}
             className="group hover:scale-105 active:cursor-grabbing"
           >
-            {/* Story Ring */}
-            <div className="w-[70px] h-[70px] rounded-full p-[3px] bg-gradient-to-tr from-purple-600 via-pink-600 to-yellow-500 animate-pulse shadow-xl">
-              <div className="w-full h-full rounded-full border border-black bg-slate-900 flex items-center justify-center overflow-hidden relative">
-                <Play className="w-6 h-6 text-white drop-shadow-md z-10 fill-white" />
-                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors" />
+            {/* Story Ring with custom or default gradient */}
+            <div
+              style={{
+                width: '70px',
+                height: '70px',
+                borderRadius: '50%',
+                padding: '3px',
+                background: ringColor.startsWith('linear') ? ringColor : `linear-gradient(135deg, ${ringColor}, ${btnColor})`,
+                boxShadow: pulseActive ? `0 0 0 0 ${btnColor}55` : '0 4px 20px rgba(0,0,0,0.3)',
+                animation: pulseActive ? `storyPulseAnim ${pulseDuration} ease-in-out infinite` : 'none',
+                ['--story-pulse-color' as any]: `${btnColor}66`,
+                ['--story-pulse-size' as any]: pulseSize,
+                ['--story-pulse-scale' as any]: '1.06',
+              }}
+            >
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  borderRadius: '50%',
+                  border: '2px solid black',
+                  backgroundColor: story.corFundo || '#1e293b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                  position: 'relative'
+                }}
+              >
+                <Play
+                  style={{
+                    width: '24px',
+                    height: '24px',
+                    color: story.corFonte || '#ffffff',
+                    fill: story.corFonte || '#ffffff',
+                    filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))',
+                    zIndex: 10
+                  }}
+                />
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)', transition: 'background 0.2s' }} />
               </div>
             </div>
-            {/* Tiny tag */}
-            <span className="text-[10px] bg-black/80 text-white px-2 py-0.5 rounded-full mt-1 font-bold whitespace-nowrap shadow border border-white/10 max-w-[80px] overflow-hidden text-ellipsis">
+            {/* Label */}
+            <span
+              style={{
+                fontSize: '10px',
+                background: story.corFundo ? `${story.corFundo}dd` : 'rgba(0,0,0,0.8)',
+                color: story.corFonte || '#ffffff',
+                padding: '2px 8px',
+                borderRadius: '20px',
+                marginTop: '4px',
+                fontWeight: 700,
+                whiteSpace: 'nowrap',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                maxWidth: '80px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+              }}
+            >
               {story.nome || "Story"}
             </span>
           </div>
@@ -205,25 +273,22 @@ export const FloatingStories: React.FC = () => {
 
       {/* Story Video Modal Overlay */}
       {activeStory && (
-        <div 
+        <div
           className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in"
           onClick={() => setActiveStory(null)}
         >
-          {/* Close button */}
-          <button 
+          <button
             onClick={() => setActiveStory(null)}
             className="absolute top-4 right-4 p-3 bg-white/10 text-white rounded-full hover:bg-white/20 transition shadow-lg z-50"
           >
             <X className="w-6 h-6" />
           </button>
 
-          {/* Modal Container */}
-          <div 
+          <div
             className="relative w-full max-w-[450px] bg-neutral-900 rounded-3xl overflow-hidden border border-white/10 shadow-2xl flex flex-col items-center"
             onClick={(e) => e.stopPropagation()}
             style={{ maxHeight: '90vh' }}
           >
-            {/* Video Box */}
             <div className="relative w-full aspect-[9/16] bg-black flex-1 flex items-center justify-center overflow-hidden">
               <video
                 src={activeStory.videoUrl}
@@ -235,7 +300,6 @@ export const FloatingStories: React.FC = () => {
               />
             </div>
 
-            {/* Bottom info section */}
             <div className="w-full bg-neutral-900/95 border-t border-white/10 p-4">
               {activeStory.tipoViculo === 'produto' && activeStory.produtoId ? (() => {
                 const prod = getLinkedProduct(activeStory.produtoId);
@@ -243,8 +307,8 @@ export const FloatingStories: React.FC = () => {
 
                 return (
                   <div className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5">
-                    <img 
-                      src={prod.image || "/placeholder.svg"} 
+                    <img
+                      src={prod.image || "/placeholder.svg"}
                       alt={prod.name}
                       className="w-14 h-14 object-contain bg-white/10 rounded-xl"
                     />
@@ -258,7 +322,8 @@ export const FloatingStories: React.FC = () => {
                         setActiveStory(null);
                         navigate(`/produto/${prod.id}`);
                       }}
-                      className="bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-xl transition shadow flex items-center justify-center"
+                      style={{ backgroundColor: activeStory.corBotao || '#7c3aed' }}
+                      className="hover:opacity-80 text-white p-3 rounded-xl transition shadow flex items-center justify-center"
                       title="Ver Produto / Comprar"
                     >
                       <ShoppingCart className="w-5 h-5" />
@@ -266,8 +331,26 @@ export const FloatingStories: React.FC = () => {
                   </div>
                 );
               })() : (
-                <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 border border-purple-500/20 p-3.5 rounded-2xl text-center">
-                  <p className="text-white text-sm font-extrabold tracking-wide uppercase">
+                <div
+                  style={{
+                    background: activeStory.corFundo
+                      ? `linear-gradient(135deg, ${activeStory.corFundo}88, ${activeStory.corBotao || '#7c3aed'}88)`
+                      : 'linear-gradient(135deg, rgba(88,28,135,0.5), rgba(157,23,77,0.5))',
+                    borderRadius: '16px',
+                    padding: '14px',
+                    textAlign: 'center',
+                    border: '1px solid rgba(255,255,255,0.1)'
+                  }}
+                >
+                  <p
+                    style={{
+                      color: activeStory.corFonte || '#ffffff',
+                      fontSize: '14px',
+                      fontWeight: 800,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}
+                  >
                     {activeStory.textoPromo || "Confira nossas ofertas exclusivas!"}
                   </p>
                 </div>

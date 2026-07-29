@@ -1,11 +1,10 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
-import { isCouponUsed } from "@/lib/customerDiscounts";
 import { toast } from "sonner";
 import type { Product } from "@/data/products";
 import { applyTripleCrownDiscount, type TripleCrownResult } from "@/lib/tripleCrown";
 
 export interface CartItem {
-  id: string; // Unique ID per cart item to distinguish custom items
+  id: string;
   product: Product;
   size: string;
   quantity: number;
@@ -43,6 +42,42 @@ export const useCart = () => {
   return ctx;
 };
 
+// Internal applyCoupon resolver — reads cupons from StoreConfig stored in localStorage
+function resolveCouponDiscount(code: string): number {
+  try {
+    const raw = localStorage.getItem('store_config_cache');
+    if (!raw) return 0;
+    const cfg = JSON.parse(raw);
+    const cupons: any[] = cfg?.precoGestao?.cupons || [];
+    const now = new Date();
+    const found = cupons.find((c: any) => {
+      if (!c.ativo) return false;
+      if ((c.codigo || '').toUpperCase().trim() !== code.toUpperCase().trim()) return false;
+      if (c.dataValidade && new Date(c.dataValidade) < now) return false;
+      return true;
+    });
+    if (found) return (parseFloat(found.desconto) || 0) / 100;
+    return 0;
+  } catch (_) {
+    return 0;
+  }
+}
+
+function getCouponName(code: string): string {
+  try {
+    const raw = localStorage.getItem('store_config_cache');
+    if (!raw) return '';
+    const cfg = JSON.parse(raw);
+    const cupons: any[] = cfg?.precoGestao?.cupons || [];
+    const found = cupons.find((c: any) =>
+      c.ativo && (c.codigo || '').toUpperCase().trim() === code.toUpperCase().trim()
+    );
+    return found ? (found.nome || found.codigo) : '';
+  } catch (_) {
+    return '';
+  }
+}
+
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>(() => {
     try {
@@ -61,7 +96,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     return Number(localStorage.getItem("camisa10_discount")) || 0;
   });
 
-  // Persistir sempre que o carrinho ou cupom mudar
   useEffect(() => {
     localStorage.setItem("camisa10_cart", JSON.stringify(items));
   }, [items]);
@@ -71,15 +105,28 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("camisa10_discount", discount.toString());
   }, [coupon, discount]);
 
+  // Re-validate coupon when StoreConfig updates (e.g., coupon deactivated)
+  useEffect(() => {
+    const handleConfigUpdate = () => {
+      if (coupon && discount > 0) {
+        const newDiscount = resolveCouponDiscount(coupon);
+        if (newDiscount === 0) {
+          setDiscount(0);
+        }
+      }
+    };
+    window.addEventListener('storeConfigUpdated', handleConfigUpdate);
+    return () => window.removeEventListener('storeConfigUpdated', handleConfigUpdate);
+  }, [coupon, discount]);
+
   const openCart = useCallback(() => setIsOpen(true), []);
   const closeCart = useCallback(() => setIsOpen(false), []);
 
   const addItem = useCallback((product: Product, size: string, options?: Omit<CartItem, 'id' | 'product' | 'size' | 'quantity' | 'itemPrice'>) => {
     setItems((prev) => {
-      // Find exact same configuration
       const existing = prev.find(
-        (i) => i.product.id === product.id && 
-               i.size === size && 
+        (i) => i.product.id === product.id &&
+               i.size === size &&
                i.type === options?.type &&
                i.customName === options?.customName &&
                i.customNumber === options?.customNumber &&
@@ -92,25 +139,24 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             : i
         );
       }
-      
+
       const getPrice = (p: any) => {
         if (typeof p.priceNum === 'number') return p.priceNum;
         if (typeof p.preco === 'number') return p.preco;
         const rawPrice = p.preco || p.price || '0';
         return parseFloat(String(rawPrice).replace(/[^\d,.]/g, '').replace(',', '.')) || 0;
       };
-      
+
       const basePrice = getPrice(product);
-      
       const itemPrice = options?.type === 'Personalizada' ? basePrice + 15 : basePrice;
 
-      return [...prev, { 
+      return [...prev, {
         id: Math.random().toString(36).substr(2, 9),
-        product, 
-        size, 
-        quantity: 1, 
+        product,
+        size,
+        quantity: 1,
         itemPrice,
-        ...options 
+        ...options
       }];
     });
     setIsOpen(true);
@@ -141,17 +187,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       setDiscount(0);
       return;
     }
-    if (isCouponUsed(cleanCoupon)) {
-      toast.error("Este cupom já foi utilizado em uma compra anterior e só é válido 1 vez por cliente.");
-      setDiscount(0);
-      return;
-    }
-    if (cleanCoupon === "CAMISA10") {
-      setDiscount(0.1);
-      toast.success("Cupom de 10% aplicado com sucesso!");
+
+    // Read discount from StoreConfig (real coupons from admin)
+    const discountValue = resolveCouponDiscount(cleanCoupon);
+    if (discountValue > 0) {
+      setDiscount(discountValue);
+      const name = getCouponName(cleanCoupon);
+      toast.success(`Cupom "${name || cleanCoupon}" aplicado! ${Math.round(discountValue * 100)}% de desconto.`);
     } else {
       setDiscount(0);
-      toast.error("Cupom inválido ou expirado.");
+      toast.error("Cupom inválido, expirado ou não ativo.");
     }
   }, [coupon]);
 
@@ -161,13 +206,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const totalItems = items.reduce((s, i) => s + i.quantity, 0);
-
   const subtotal = items.reduce((s, i) => s + (i.itemPrice || 0) * i.quantity, 0);
-
   const tripleCrown = applyTripleCrownDiscount(items);
-
-  const totalPrice =
-    Number((subtotal - tripleCrown.totalDiscount) * (1 - discount)) || 0;
+  const totalPrice = Number((subtotal - tripleCrown.totalDiscount) * (1 - discount)) || 0;
 
   return (
     <CartContext.Provider

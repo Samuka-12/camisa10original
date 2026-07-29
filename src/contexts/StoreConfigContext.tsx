@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { isProductDiscountUsed, isCouponUsed } from '../lib/customerDiscounts';
 
 export const STORE_CONFIG_ID = '00000000-0000-0000-0000-000000000000';
 
@@ -15,6 +14,8 @@ export interface PriceRule {
   percentual: number;
   ativa: boolean;
   criadaEm: string;
+  dataInicio?: string; // ISO datetime (schedule)
+  dataFim?: string;    // ISO datetime (schedule)
 }
 
 export interface Coupon {
@@ -41,6 +42,13 @@ export interface FloatingStory {
   visibilidade: 'global' | 'inicial' | 'categoria' | 'produto';
   categoriaVisib?: string;
   produtoPaginaId?: string;
+  // Visual customization
+  corBotao?: string;
+  corFundo?: string;
+  corFonte?: string;
+  pulseAtivo?: boolean;
+  pulseVelocidade?: 'lento' | 'normal' | 'rapido';
+  pulseTamanho?: string;
 }
 
 export interface CatalogImage {
@@ -105,9 +113,17 @@ export interface DescontoProdutoSpec {
   cidadeFreteGratis?: string;
 }
 
+export interface Categoria {
+  id: string;
+  label: string;  // Display name e.g. "Europeus"
+  slug: string;   // URL slug e.g. "europeus"
+  ordem: number;
+}
+
 export interface StoreConfig {
   dashboardResetTime?: string;
-  produtosOcultos?: string[]; // IDs of permanently removed products (static ones hidden from vitrine)
+  produtosOcultos?: string[];
+  categorias?: Categoria[]; // Dynamic categories
   whatsapp: {
     ativo: boolean;
     numero: string;
@@ -201,7 +217,15 @@ export interface StoreConfig {
   frontend: FrontendConfig;
 }
 
+const DEFAULT_CATEGORIAS: Categoria[] = [
+  { id: 'selecoes', label: 'Seleções', slug: 'seleções', ordem: 1 },
+  { id: 'brasileirao', label: 'Brasileirão', slug: 'brasileirão', ordem: 2 },
+  { id: 'europeus', label: 'Europeus', slug: 'europeus', ordem: 3 },
+  { id: 'retro', label: 'Históricas', slug: 'retrô', ordem: 4 },
+];
+
 const DEFAULT_CONFIG: StoreConfig = {
+  categorias: DEFAULT_CATEGORIAS,
   whatsapp: {
     ativo: true,
     numero: '5547983174463',
@@ -341,7 +365,6 @@ interface StoreConfigContextType {
 const StoreConfigContext = createContext<StoreConfigContextType | undefined>(undefined);
 
 export function StoreConfigProvider({ children }: { children: React.ReactNode }) {
-  // Synchronous initial load from localStorage cache to prevent any flash/old frame
   const [config, setConfig] = useState<StoreConfig>(() => {
     try {
       const cached = localStorage.getItem('store_config_cache');
@@ -397,7 +420,6 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
 
   const loadConfig = async () => {
     try {
-      // Load from API (server-side, bypasses RLS)
       try {
         const res = await fetch('/api/get-config');
         if (res.ok) {
@@ -411,7 +433,6 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
         }
       } catch (_) {}
 
-      // Fallback: try direct Supabase
       try {
         const { data } = await supabase
           .from('produtos')
@@ -432,12 +453,10 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
   };
 
   const saveConfig = async (newConfig: StoreConfig): Promise<boolean> => {
-    // 1. Update state and localStorage immediately (optimistic update)
     setConfig(newConfig);
     localStorage.setItem('store_config_cache', JSON.stringify(newConfig));
     window.dispatchEvent(new CustomEvent('storeConfigUpdated', { detail: newConfig }));
 
-    // 2. Try saving via API endpoint (server-side, bypasses RLS — primary method)
     try {
       const res = await fetch('/api/save-config', {
         method: 'POST',
@@ -453,7 +472,6 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
       console.warn('API save-config exception:', apiErr);
     }
 
-    // 3. Fallback: try direct Supabase
     try {
       const { error: updateErr } = await supabase
         .from('produtos')
@@ -467,14 +485,15 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
 
       const { error: upsertErr } = await supabase
         .from('produtos')
-        .upsert([
-          {
+        .upsert(
+          [{
             id: STORE_CONFIG_ID,
             nome: 'store_config',
             preco: 0,
             description: JSON.stringify(newConfig)
-          }
-        ], { onConflict: 'id' });
+          }],
+          { onConflict: 'id' }
+        );
 
       if (!upsertErr) {
         console.log('Config saved via Supabase upsert ✅');
@@ -487,28 +506,27 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
     return true;
   };
 
-  const [discountsVersion, setDiscountsVersion] = useState(0);
-
-  useEffect(() => {
-    const handleDiscountsUpdated = () => {
-      setDiscountsVersion(prev => prev + 1);
-    };
-    if (typeof window !== 'undefined') {
-      window.addEventListener('camisa10_discounts_updated', handleDiscountsUpdated);
-      return () => window.removeEventListener('camisa10_discounts_updated', handleDiscountsUpdated);
+  // Helper: checks if a price rule is currently active (respects schedule)
+  const isRuleCurrentlyActive = (rule: PriceRule): boolean => {
+    if (!rule.ativa) return false;
+    const now = new Date();
+    if (rule.dataInicio) {
+      const start = new Date(rule.dataInicio);
+      if (now < start) return false;
     }
-  }, []);
+    if (rule.dataFim) {
+      const end = new Date(rule.dataFim);
+      if (now > end) return false;
+    }
+    return true;
+  };
 
   const getAdjustedPrice = (productPrice: number, productCategory: string | string[], productId?: string): number => {
-    // Se o cliente já utilizou o desconto deste produto em uma compra anterior, retorna preço normal sem desconto
-    if (productId && isProductDiscountUsed(productId)) {
-      return productPrice;
-    }
-
     let finalPrice = productPrice;
     const rules = config.precoGestao?.regras || [];
     const cats = Array.isArray(productCategory) ? productCategory : [productCategory];
 
+    // Apply specific product discounts
     if (productId && config.precoGestao?.descontosEspecificos) {
       const spec = config.precoGestao.descontosEspecificos.find(d => d.produtoId === productId);
       if (spec && spec.descontoPercent > 0) {
@@ -516,11 +534,12 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
       }
     }
 
+    // Apply active price rules (respecting schedule)
     rules.forEach(rule => {
-      if (!rule.ativa) return;
+      if (!isRuleCurrentlyActive(rule)) return;
       let apply = false;
       if (rule.escopo === 'tudo') apply = true;
-      else if (rule.escopo === 'categoria' && rule.categoria) apply = cats.some(c => c === rule.categoria);
+      else if (rule.escopo === 'categoria' && rule.categoria) apply = cats.some(c => c.toLowerCase() === rule.categoria!.toLowerCase());
       else if (rule.escopo === 'produto' && rule.produtoId) apply = rule.produtoId === productId;
 
       if (apply) {
@@ -532,17 +551,24 @@ export function StoreConfigProvider({ children }: { children: React.ReactNode })
   };
 
   const getActiveCoupon = (code: string, productId?: string, category?: string): Coupon | null => {
-    if (!code || isCouponUsed(code)) {
-      return null;
-    }
+    if (!code) return null;
     const cupons = config.precoGestao?.cupons || [];
+    const now = new Date();
     const coupon = cupons.find(c => {
       if (!c.ativo) return false;
-      if (c.codigo.toUpperCase() !== code.toUpperCase()) return false;
-      if (c.dataValidade && new Date(c.dataValidade) < new Date()) return false;
+      if (c.codigo.toUpperCase().trim() !== code.toUpperCase().trim()) return false;
+      if (c.dataValidade && new Date(c.dataValidade) < now) return false;
+      // Scope validation
       if (c.escopo === 'tudo') return true;
-      if (c.escopo === 'categoria' && c.categoria && category) return c.categoria === category;
-      if (c.escopo === 'produto' && c.produtoId && productId) return c.produtoId === productId;
+      if (c.escopo === 'categoria' && c.categoria && category) {
+        return c.categoria.toLowerCase() === category.toLowerCase();
+      }
+      if (c.escopo === 'produto' && c.produtoId && productId) {
+        return c.produtoId === productId;
+      }
+      // If escopo is produto/categoria but no match context provided, allow (checkout will validate)
+      if (c.escopo === 'produto' && !productId) return true;
+      if (c.escopo === 'categoria' && !category) return true;
       return false;
     });
     return coupon || null;

@@ -9,14 +9,16 @@ import { useStoreConfig } from "@/contexts/StoreConfigContext";
 
 const STORE_CONFIG_ID = '00000000-0000-0000-0000-000000000000';
 
-const categoryLabels: Record<string, string> = {
+// Static fallback map: URL slug -> display label
+const staticLabelMap: Record<string, string> = {
   selecoes: "Seleções",
   brasileirao: "Brasileirão",
   europeus: "Europeus",
-  retro: "Retrô",
+  retro: "Retrô / Históricas",
 };
 
-const categoryKeys: Record<string, string> = {
+// Static category slug -> data key mapping
+const staticDataKeyMap: Record<string, string> = {
   selecoes: "seleções",
   brasileirao: "brasileirão",
   europeus: "europeus",
@@ -25,13 +27,26 @@ const categoryKeys: Record<string, string> = {
 
 const Category = () => {
   const { slug } = useParams<{ slug: string }>();
-  const categoryKey = categoryKeys[slug || ""] || slug || "";
-  const label = categoryLabels[slug || ""] || slug || "";
-  const staticProducts = getProductsByCategory(categoryKey);
   const { config } = useStoreConfig();
   const verificado = config.verificadoLoja?.ativo;
   const posicao = config.verificadoLoja?.posicao || 'todos';
   const showVerificado = verificado && (posicao === 'produtos' || posicao === 'todos');
+
+  // Determine label and data key from dynamic categories or static map
+  const dynamicCat = (config.categorias || []).find(c => {
+    const catSlug = (c.slug || c.label)
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '-');
+    return catSlug === slug;
+  });
+
+  const label = dynamicCat?.label || staticLabelMap[slug || ''] || slug || '';
+  // For static products: use original slug with accents
+  const categoryKey = staticDataKeyMap[slug || ''] || dynamicCat?.slug || slug || '';
+
+  const staticProducts = getProductsByCategory(categoryKey);
 
   const [dbProducts, setDbProducts] = useState<any[]>([]);
 
@@ -42,13 +57,15 @@ const Category = () => {
         if (data) {
           const filtered = data.filter(p => {
             if (p.id === 'store_config' || p.id === STORE_CONFIG_ID) return false;
-            if (p.tipo === 'vitrine') {
-              const cat = p.category;
-              if (Array.isArray(cat)) return cat.map((c: string) => c.toLowerCase()).includes(categoryKey.toLowerCase());
-              return typeof cat === 'string' && cat.toLowerCase() === categoryKey.toLowerCase();
-            }
-            // Exclude non-vitrine products (dynamic links, custom prices, cart images, etc.)
-            return false;
+            if (p.tipo !== 'vitrine') return false;
+            // Match by original slug or URL slug
+            const cat = p.category;
+            const matchCat = (c: string) => {
+              const norm = c.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+              return norm === slug || c.toLowerCase() === categoryKey.toLowerCase();
+            };
+            if (Array.isArray(cat)) return cat.some(matchCat);
+            return typeof cat === 'string' && matchCat(cat);
           });
           setDbProducts(filtered);
         }
@@ -57,7 +74,7 @@ const Category = () => {
       }
     };
     fetchCategoryProducts();
-  }, [categoryKey]);
+  }, [slug, categoryKey]);
 
   const allProducts = [
     ...staticProducts.map(p => ({
