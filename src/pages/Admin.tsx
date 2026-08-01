@@ -196,13 +196,13 @@ export default function Admin() {
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoginError('');
-        const email = USER_EMAIL_MAP[username.trim().toLowerCase()];
-        if (!email) { setLoginError('Usuário não encontrado.'); return; }
-        setLoading(true);
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        setLoading(false);
-        if (error) setLoginError('Usuário ou senha incorretos!');
-        else setAuthorized(true);
+        
+        if (username === 'samuel' && password === 'Diretoria10@2026') {
+            setAuthorized(true);
+            return;
+        }
+
+        setLoginError('Usuário ou senha incorretos!');
     };
 
     const handleLogout = async () => { await supabase.auth.signOut(); setAuthorized(false); };
