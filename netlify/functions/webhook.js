@@ -22,7 +22,7 @@
 
 const PIXEL_ID     = process.env.META_PIXEL_ID     || '2081548536080257';
 const ACCESS_TOKEN = process.env.META_ACCESS_TOKEN || '';
-const SUPABASE_URL = process.env.SUPABASE_URL      || 'https://kffjkhyhhjpkwzfrcvzh.supabase.co';
+const SUPABASE_URL = process.env.SUPABASE_URL      || 'https://xnadtzeyynoblrbncltt.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
 const CAPI_URL     = `https://graph.facebook.com/v19.0/${PIXEL_ID}/events`;
 

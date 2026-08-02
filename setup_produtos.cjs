@@ -20,9 +20,9 @@ if (fs.existsSync(envPath)) {
 }
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
-  SUPABASE_URL = 'https://kffjkhyhhjpkwzfrcvzh.supabase.co';
+  SUPABASE_URL = 'https://xnadtzeyynoblrbncltt.supabase.co';
   // Anon key - funciona para RLS que já liberamos
-  SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmpraHloaGpwa3d6ZnJjdnpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0ODgyNDcsImV4cCI6MjA5MjA2NDI0N30.AObuo3zHyMe_ffM78FOWIiUcDrU8W3JyvZMa5h-rBCs';
+  SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuYWR0emV5eW5vYmxyYm5jbHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2NjUxNjksImV4cCI6MjEwMTI0MTE2OX0.rRFwNQn_AjcY48QmaDczfww0ND3R5MC0_6UzumAJhzM';
 }
 
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
@@ -53,7 +53,7 @@ async function main() {
     } else {
       console.log('\n⚠️  Colunas faltando:', missing.join(', '));
       console.log('\nExecute o seguinte SQL no Dashboard do Supabase:');
-      console.log('https://supabase.com/dashboard/project/kffjkhyhhjpkwzfrcvzh/sql/new');
+      console.log('https://supabase.com/dashboard/project/xnadtzeyynoblrbncltt/sql/new');
       const sqlPath = path.join(__dirname, 'supabase', 'migrations', '20260729_produtos_columns.sql');
       if (fs.existsSync(sqlPath)) {
         console.log('\n--- SQL A EXECUTAR ---');

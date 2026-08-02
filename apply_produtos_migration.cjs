@@ -3,8 +3,8 @@
 
 const { createClient } = require('@supabase/supabase-js');
 
-const SUPABASE_URL = 'https://kffjkhyhhjpkwzfrcvzh.supabase.co';
-const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmpraHloaGpwa3d6ZnJjdnpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0ODgyNDcsImV4cCI6MjA5MjA2NDI0N30.AObuo3zHyMe_ffM78FOWIiUcDrU8W3JyvZMa5h-rBCs';
+const SUPABASE_URL = 'https://xnadtzeyynoblrbncltt.supabase.co';
+const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuYWR0emV5eW5vYmxyYm5jbHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2NjUxNjksImV4cCI6MjEwMTI0MTE2OX0.rRFwNQn_AjcY48QmaDczfww0ND3R5MC0_6UzumAJhzM';
 
 const supabase = createClient(SUPABASE_URL, ANON_KEY);
 
@@ -52,7 +52,7 @@ UPDATE public.produtos SET tipo = 'config' WHERE id = '00000000-0000-0000-0000-0
   if (rpcError) {
     console.log('\n⚠️  RPC exec_sql não disponível:', rpcError.message);
     console.log('\n🚨 AÇÃO NECESSÁRIA: Execute manualmente no Supabase Dashboard SQL Editor:');
-    console.log('https://supabase.com/dashboard/project/kffjkhyhhjpkwzfrcvzh/sql/new');
+    console.log('https://supabase.com/dashboard/project/xnadtzeyynoblrbncltt/sql/new');
     console.log('\nCole e execute o SQL acima.');
   } else {
     console.log('✅ SQL aplicado com sucesso!');

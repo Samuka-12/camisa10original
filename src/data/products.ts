@@ -1,4 +1,4 @@
-const BASE_URL = "https://kffjkhyhhjpkwzfrcvzh.supabase.co/storage/v1/object/public/camisetas";
+const BASE_URL = "https://xnadtzeyynoblrbncltt.supabase.co/storage/v1/object/public/camisetas";
 
 export interface Product {
   id: string;

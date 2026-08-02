@@ -13,13 +13,13 @@
  * Variáveis de ambiente necessárias no Netlify:
  *   META_PIXEL_ID         = 2081548536080257
  *   META_ACCESS_TOKEN     = EAAShZBr3MwJsBR1DcfngA17838taRRTl67baJJdapxJARjZBrdFMYxZCVBGo4v8KxZAfSG6GwZAPWb98fJyG7O9a4ZB7MZCw1lotpZBsn6U6e9zGypWy6bOa1TReh6fNaa5NBHz10ZBXGZCzmZBLZCb7AITZB7wZCiOfSbQNPZC1RHm17ZAHxGsFDckbVOhM1QvIFUAj6gZDZD
- *   SUPABASE_URL          = https://kffjkhyhhjpkwzfrcvzh.supabase.co
+ *   SUPABASE_URL          = https://xnadtzeyynoblrbncltt.supabase.co
  *   SUPABASE_SERVICE_KEY  = (chave service_role do Supabase — maior privilégio)
  */
 
 const PIXEL_ID     = process.env.META_PIXEL_ID     || '2081548536080257';
 const ACCESS_TOKEN = process.env.META_ACCESS_TOKEN || '';
-const SUPABASE_URL = process.env.SUPABASE_URL      || 'https://kffjkhyhhjpkwzfrcvzh.supabase.co';
+const SUPABASE_URL = process.env.SUPABASE_URL      || 'https://xnadtzeyynoblrbncltt.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
 
 const CAPI_URL = `https://graph.facebook.com/v19.0/${PIXEL_ID}/events`;

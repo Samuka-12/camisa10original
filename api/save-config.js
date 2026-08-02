@@ -7,7 +7,7 @@
  * Body: { config: StoreConfig }
  */
 
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://kffjkhyhhjpkwzfrcvzh.supabase.co';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://xnadtzeyynoblrbncltt.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
 
 const CONFIG_UUID = '00000000-0000-0000-0000-000000000000';

@@ -2536,7 +2536,7 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
                                     <h3 className="text-sm font-bold text-white flex items-center gap-2">🗄️ Supabase PostgreSQL Database & Realtime</h3>
                                     <span className="bg-purple-950 text-purple-400 border border-purple-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1"><CheckCircle size={12} /> BANCO ONLINE</span>
                                 </div>
-                                <p className="text-xs text-gray-400">Instância ativa: <code className="text-purple-300">kffjkhyhhjpkwzfrcvzh.supabase.co</code></p>
+                                <p className="text-xs text-gray-400">Instância ativa: <code className="text-purple-300">xnadtzeyynoblrbncltt.supabase.co</code></p>
                             </div>
                         </div>
                     )}

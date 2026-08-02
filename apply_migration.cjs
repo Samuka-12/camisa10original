@@ -4,8 +4,8 @@
 const { createClient } = require('@supabase/supabase-js');
 const https = require('https');
 
-const SUPABASE_URL = 'https://kffjkhyhhjpkwzfrcvzh.supabase.co';
-const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmpraHloaGpwa3d6ZnJjdnpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0ODgyNDcsImV4cCI6MjA5MjA2NDI0N30.AObuo3zHyMe_ffM78FOWIiUcDrU8W3JyvZMa5h-rBCs';
+const SUPABASE_URL = 'https://xnadtzeyynoblrbncltt.supabase.co';
+const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuYWR0emV5eW5vYmxyYm5jbHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2NjUxNjksImV4cCI6MjEwMTI0MTE2OX0.rRFwNQn_AjcY48QmaDczfww0ND3R5MC0_6UzumAJhzM';
 
 const supabase = createClient(SUPABASE_URL, ANON_KEY);
 
@@ -51,7 +51,7 @@ async function applyMigration(email, password) {
     console.log('RPC exec_sql nao disponivel:', rpcError.message);
     console.log('');
     console.log('Por favor, execute o seguinte SQL manualmente no Supabase Dashboard:');
-    console.log('https://supabase.com/dashboard/project/kffjkhyhhjpkwzfrcvzh/sql/new');
+    console.log('https://supabase.com/dashboard/project/xnadtzeyynoblrbncltt/sql/new');
     console.log('');
     console.log(SQL);
   } else {

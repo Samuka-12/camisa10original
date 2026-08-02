@@ -1,0 +1,53 @@
+{
+  "url": "https://kffjkhyhhjpkwzfrcvzh.supabase.co",
+  "timestamp": "2026-08-01T21:33:20.306Z",
+  "tables": {
+    "produtos": {
+      "exists": false,
+      "error": "Service for this project is restricted due to the following violations: exceed_cached_egress_quota. The project owner must upgrade their plan or remove spend caps to restore service.",
+      "status": 402
+    },
+    "checkouts": {
+      "exists": false,
+      "error": "Service for this project is restricted due to the following violations: exceed_cached_egress_quota. The project owner must upgrade their plan or remove spend caps to restore service.",
+      "status": 402
+    },
+    "meta_events": {
+      "exists": false,
+      "error": "Service for this project is restricted due to the following violations: exceed_cached_egress_quota. The project owner must upgrade their plan or remove spend caps to restore service.",
+      "status": 402
+    },
+    "store_config": {
+      "exists": false,
+      "error": "Service for this project is restricted due to the following violations: exceed_cached_egress_quota. The project owner must upgrade their plan or remove spend caps to restore service.",
+      "status": 402
+    },
+    "users": {
+      "exists": false,
+      "error": "Service for this project is restricted due to the following violations: exceed_cached_egress_quota. The project owner must upgrade their plan or remove spend caps to restore service.",
+      "status": 402
+    },
+    "profiles": {
+      "exists": false,
+      "error": "Service for this project is restricted due to the following violations: exceed_cached_egress_quota. The project owner must upgrade their plan or remove spend caps to restore service.",
+      "status": 402
+    },
+    "orders": {
+      "exists": false,
+      "error": "Service for this project is restricted due to the following violations: exceed_cached_egress_quota. The project owner must upgrade their plan or remove spend caps to restore service.",
+      "status": 402
+    }
+  },
+  "buckets": [],
+  "storageFiles": [],
+  "httpStatus": {
+    "table_produtos": 402,
+    "table_checkouts": 402,
+    "table_meta_events": 402,
+    "table_store_config": 402,
+    "table_users": 402,
+    "table_profiles": 402,
+    "table_orders": 402
+  },
+  "bucketsError": "Service for this project is restricted due to the following violations: exceed_cached_egress_quota. The project owner must upgrade their plan or remove spend caps to restore service."
+}
