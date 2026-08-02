@@ -401,6 +401,8 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
                 preco: precoNumerico,
                 imagem_url: mainImg,
                 image: mainImg,
+                images: JSON.stringify(allImgs),
+                videos: JSON.stringify(allVids),
                 category: categoryProd,
                 team: teamProd,
                 description: fullDesc
