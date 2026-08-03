@@ -393,22 +393,41 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
 
         let { error } = await supabase.from('produtos').upsert([fullPayload], { onConflict: 'id' });
 
-        // Fallback for DB schemas without tipo/sizes/images/videos columns
-        if (error && (error.code === 'PGRST204' || error.message?.includes('column') || error.message?.includes('schema cache'))) {
-            const basicPayload: any = {
+        // Fallback nível 1: se o banco não tem a coluna 'videos' ou 'tipo'
+        if (error && (error.code === 'PGRST204' || error.message?.includes('videos') || error.message?.includes('column') || error.message?.includes('schema cache'))) {
+            console.warn('[Admin] Tentando fallback de salvamento sem a coluna videos:', error.message);
+            const payloadNoVideos: any = {
                 id: prodId,
                 nome: nomeProd,
                 preco: precoNumerico,
                 imagem_url: mainImg,
                 image: mainImg,
                 images: JSON.stringify(allImgs),
-                videos: JSON.stringify(allVids),
                 category: categoryProd,
                 team: teamProd,
-                description: fullDesc
+                description: fullDesc,
+                sizes: selectedSizes,
+                tipo: 'vitrine'
             };
-            const fallbackRes = await supabase.from('produtos').upsert([basicPayload], { onConflict: 'id' });
-            error = fallbackRes.error;
+            const fb1Res = await supabase.from('produtos').upsert([payloadNoVideos], { onConflict: 'id' });
+            error = fb1Res.error;
+
+            // Fallback nível 2: se o banco tem apenas esquema básico
+            if (error && (error.code === 'PGRST204' || error.message?.includes('column') || error.message?.includes('schema cache'))) {
+                console.warn('[Admin] Tentando fallback de salvamento em esquema básico:', error.message);
+                const basicPayload: any = {
+                    id: prodId,
+                    nome: nomeProd,
+                    preco: precoNumerico,
+                    imagem_url: mainImg,
+                    image: mainImg,
+                    category: categoryProd,
+                    team: teamProd,
+                    description: fullDesc
+                };
+                const fb2Res = await supabase.from('produtos').upsert([basicPayload], { onConflict: 'id' });
+                error = fb2Res.error;
+            }
         }
 
         if (error) {

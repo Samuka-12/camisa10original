@@ -20,7 +20,7 @@
 const PIXEL_ID     = process.env.META_PIXEL_ID     || '2081548536080257';
 const ACCESS_TOKEN = process.env.META_ACCESS_TOKEN || '';
 const SUPABASE_URL = process.env.SUPABASE_URL      || 'https://xnadtzeyynoblrbncltt.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuYWR0emV5eW5vYmxyYm5jbHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2NjUxNjksImV4cCI6MjEwMTI0MTE2OX0.rRFwNQn_AjcY48QmaDczfww0ND3R5MC0_6UzumAJhzM';
 
 const CAPI_URL = `https://graph.facebook.com/v19.0/${PIXEL_ID}/events`;
 

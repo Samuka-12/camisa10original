@@ -170,6 +170,15 @@ export function applyTripleCrownDiscount(cartItems: CartItem[]): TripleCrownResu
     });
   }
 
+  // Lógica Dinâmica de Atacado: A partir de 6 camisetas, concede desconto adicional de lote/atacado
+  if (totalUnits >= 6) {
+    const totalCartValue = units.reduce((acc, u) => acc + u.priceNum, 0);
+    const subtotalAfterFreeItems = totalCartValue - totalDiscount;
+    // Bônus Atacado: 10% adicional de desconto sobre o saldo restante para 6+ itens
+    const wholesaleExtraDiscount = subtotalAfterFreeItems * 0.10;
+    totalDiscount += wholesaleExtraDiscount;
+  }
+
   const freeUnitsCount = freeItems.reduce((acc, fi) => acc + fi.freeQuantity, 0);
 
   return {
@@ -179,5 +188,19 @@ export function applyTripleCrownDiscount(cartItems: CartItem[]): TripleCrownResu
     totalDiscount,
     totalUnits,
     freeUnitsCount,
+  };
+}
+
+/**
+ * Calcula o Cashback gerado para a próxima compra (ex: 10% do valor final pago).
+ */
+export function calculateCashback(totalPaid: number, percent: number = 10): {
+  cashbackValue: number;
+  nextCouponCode: string;
+} {
+  const cashbackValue = Number((totalPaid * (percent / 100)).toFixed(2));
+  return {
+    cashbackValue,
+    nextCouponCode: 'VOLTE10'
   };
 }

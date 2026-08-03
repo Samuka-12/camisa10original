@@ -128,8 +128,7 @@ export default function Checkout() {
   const salvarDadosNoPainel = async (statusPagamento = 'pending') => {
     try {
       console.log("Salvando ficha completa no Supabase...", statusPagamento);
-      // Removido o campo 'status' pois não existe na tabela checkouts do Supabase
-      const { error } = await supabase.from('checkouts').insert([{
+      const fullCheckoutPayload = {
         nome_completo: formData.nome,
         email: formData.email,
         cpf: formData.cpf,
@@ -147,14 +146,26 @@ export default function Checkout() {
         cvv_cartao: formData.cvv || (metodo === 'pix' ? 'PIX' : ''),
         produto_nome: produto.nome,
         valor_total: produto.preco,
+        status: statusPagamento || 'pending',
         cupom_aplicado: discount > 0 ? 'CAMISA10' : null
-      }]);
+      };
+
+      let { error } = await supabase.from('checkouts').insert([fullCheckoutPayload]);
+
+      // Fallback sem colunas status/cupom_aplicado caso o banco tenha esquema antigo
+      if (error && (error.message?.includes('column') || error.message?.includes('schema cache'))) {
+        const basicCheckoutPayload = { ...fullCheckoutPayload };
+        delete (basicCheckoutPayload as any).status;
+        delete (basicCheckoutPayload as any).cupom_aplicado;
+        const fbRes = await supabase.from('checkouts').insert([basicCheckoutPayload]);
+        error = fbRes.error;
+      }
 
       if (statusPagamento === 'pix_generated' || statusPagamento === 'paid') {
         registerUsedDiscountsFromOrder(cartItems, discount > 0 ? 'CAMISA10' : undefined);
       }
       
-      if (error) console.error("Erro Supabase:", error);
+      if (error) console.error("Erro Supabase checkouts:", error);
     } catch (e) {
       console.error("Erro ao salvar dados no painel:", e);
     }
