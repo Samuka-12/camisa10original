@@ -55,7 +55,7 @@ export default function Admin() {
     const [password, setPassword] = useState('');
     const [loginError, setLoginError] = useState('');
 
-    type ActiveTab = 'dashboard' | 'vitrine' | 'novo' | 'dinamicos' | 'configuracoes' | 'stories' | 'pulse' | 'precos' | 'imagens' | 'calculadora' | 'integracoes' | 'frontend' | 'categorias';
+    type ActiveTab = 'dashboard' | 'vitrine' | 'novo' | 'dinamicos' | 'configuracoes' | 'stories' | 'pulse' | 'precos' | 'imagens' | 'calculadora' | 'integracoes' | 'frontend' | 'categorias' | 'venda-manual';
     const [aba, setAba] = useState<ActiveTab>('dashboard');
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [pedidos, setPedidos] = useState<any[]>([]);
@@ -897,6 +897,68 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
         toast.success('✅ Categoria removida!');
     };
 
+    // VENDA MANUAL STATES
+    const [manualNome, setManualNome] = useState('');
+    const [manualEmail, setManualEmail] = useState('');
+    const [manualTelefone, setManualTelefone] = useState('');
+    const [manualProduto, setManualProduto] = useState('');
+    const [manualValor, setManualValor] = useState('');
+    const [manualOrigem, setManualOrigem] = useState<'checkout' | 'link_externo' | 'manual' | 'whatsapp' | 'instagram' | 'tiktok' | 'facebook'>('manual');
+    const [manualObs, setManualObs] = useState('');
+    const [manualSaving, setManualSaving] = useState(false);
+    const [manualSuccess, setManualSuccess] = useState<string | null>(null);
+
+    const handleRegistrarVendaManual = async () => {
+        if (!manualNome || !manualProduto || !manualValor) {
+            toast.error('Preencha nome, produto e valor!');
+            return;
+        }
+        const valorNum = parseFloat(manualValor);
+        if (isNaN(valorNum) || valorNum <= 0) {
+            toast.error('Valor deve ser um número positivo!');
+            return;
+        }
+
+        setManualSaving(true);
+        try {
+            const res = await fetch('/api/register-manual-sale', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nome: manualNome,
+                    email: manualEmail,
+                    telefone: manualTelefone,
+                    produto: manualProduto,
+                    valor: valorNum,
+                    origem: manualOrigem,
+                    observacao: manualObs,
+                }),
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                toast.error(data.error || 'Erro ao registrar venda');
+                return;
+            }
+
+            toast.success(`✅ Venda registrada! Order ID: ${data.order_id}`);
+            setManualSuccess(`Venda registrada com sucesso! Order ID: ${data.order_id}${data.capi_sent ? ' | Purchase enviado ao Meta CAPI' : ''}`);
+
+            // Limpa formulário
+            setManualNome(''); setManualEmail(''); setManualTelefone('');
+            setManualProduto(''); setManualValor(''); setManualObs('');
+            setManualOrigem('manual');
+
+            // Atualiza pedidos
+            await buscarPedidos();
+        } catch (err: any) {
+            toast.error('Erro ao registrar venda: ' + err.message);
+        } finally {
+            setManualSaving(false);
+            setTimeout(() => setManualSuccess(null), 10000);
+        }
+    };
+
     const handleReorderCategoria = async (id: string, direction: 'up' | 'down') => {
         const cats = [...(localConfig.categorias || [])].sort((a, b) => a.ordem - b.ordem);
         const idx = cats.findIndex(c => c.id === id);
@@ -1134,6 +1196,7 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
         ['integracoes', <Activity size={16} />, 'Integrações'],
         ['frontend', <Palette size={16} />, 'Editar Frontend'],
         ['categorias', <List size={16} />, 'Categorias da Loja'],
+        ['venda-manual', <DollarSign size={16} />, 'Venda Manual'],
     ];
 
     return (
@@ -1221,6 +1284,7 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
                                 {aba === 'integracoes' && '🔗 Integrações'}
                                 {aba === 'frontend' && '🎨 Editar Frontend'}
                                 {aba === 'categorias' && '📂 Categorias da Loja'}
+                                {aba === 'venda-manual' && '💰 Registrar Venda Manual'}
                             </h1>
                         </div>
                         <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -2616,7 +2680,159 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
                     )}
 
                     {/* ═══════════════════════════════════════════════ */}
-                    {/* 13. CATEGORIAS DA LOJA */}
+                    {/* 14. VENDA MANUAL */}
+                    {/* ═══════════════════════════════════════════════ */}
+                    {aba === 'venda-manual' && (
+                        <div className="space-y-6">
+                            <div className="bg-gradient-to-r from-purple-900/40 to-blue-900/40 border border-purple-500/20 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-5">
+                                <div>
+                                    <h2 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
+                                        <DollarSign size={20} className="text-purple-400" /> Registrar Venda Manual
+                                    </h2>
+                                    <p className="text-xs text-gray-400 mt-1">
+                                        Registre vendas feitas fora do checkout (WhatsApp, Instagram, TikTok, etc.).
+                                        O evento <strong>Purchase</strong> é enviado automaticamente para o Meta CAPI
+                                        com hashing SHA-256 e deduplicação.
+                                    </p>
+                                </div>
+
+                                {manualSuccess && (
+                                    <div className="bg-green-900/30 border border-green-500/30 text-green-300 text-xs font-bold p-3 rounded-xl">
+                                        ✅ {manualSuccess}
+                                    </div>
+                                )}
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-[11px] text-gray-400 font-bold mb-1">Nome do Cliente *</label>
+                                        <input
+                                            value={manualNome}
+                                            onChange={e => setManualNome(e.target.value)}
+                                            placeholder="João Silva"
+                                            style={input}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] text-gray-400 font-bold mb-1">Email</label>
+                                        <input
+                                            type="email"
+                                            value={manualEmail}
+                                            onChange={e => setManualEmail(e.target.value)}
+                                            placeholder="joao@email.com"
+                                            style={input}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] text-gray-400 font-bold mb-1">Telefone / WhatsApp</label>
+                                        <input
+                                            value={manualTelefone}
+                                            onChange={e => setManualTelefone(e.target.value)}
+                                            placeholder="11999999999"
+                                            style={input}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] text-gray-400 font-bold mb-1">Produto *</label>
+                                        <input
+                                            value={manualProduto}
+                                            onChange={e => setManualProduto(e.target.value)}
+                                            placeholder="Camiseta Manto Sagrado - P"
+                                            style={input}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] text-gray-400 font-bold mb-1">Valor (R$) *</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            value={manualValor}
+                                            onChange={e => setManualValor(e.target.value)}
+                                            placeholder="139.90"
+                                            style={input}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] text-gray-400 font-bold mb-1">Origem da Venda</label>
+                                        <select
+                                            value={manualOrigem}
+                                            onChange={e => setManualOrigem(e.target.value as any)}
+                                            className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs"
+                                        >
+                                            <option value="manual">Manual (Outra)</option>
+                                            <option value="whatsapp">WhatsApp</option>
+                                            <option value="instagram">Instagram</option>
+                                            <option value="tiktok">TikTok</option>
+                                            <option value="facebook">Facebook</option>
+                                            <option value="checkout">Checkout do Site</option>
+                                            <option value="link_externo">Link Externo</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-[11px] text-gray-400 font-bold mb-1">Observação (opcional)</label>
+                                    <input
+                                        value={manualObs}
+                                        onChange={e => setManualObs(e.target.value)}
+                                        placeholder="Venda fechada via WhatsApp - cliente indicou pelo story"
+                                        style={input}
+                                    />
+                                </div>
+
+                                <button
+                                    onClick={handleRegistrarVendaManual}
+                                    disabled={manualSaving}
+                                    style={{ ...btnSave, opacity: manualSaving ? 0.6 : 1 }}
+                                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                                >
+                                    {manualSaving ? (
+                                        <><RefreshCw size={16} className="animate-spin mr-2" /> Registrando e enviando ao Meta CAPI...</>
+                                    ) : (
+                                        <><DollarSign size={16} className="mr-2" /> REGISTRAR VENDA + ENVIAR PURCHASE AO META</>
+                                    )}
+                                </button>
+
+                                <div className="bg-slate-900/40 border border-white/5 p-3 rounded-xl">
+                                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2">O que acontece ao registrar:</p>
+                                    <ul className="text-[11px] text-gray-400 space-y-1">
+                                        <li>✅ Pedido salvo na tabela <code className="bg-slate-800 px-1 rounded">checkouts</code> do Supabase</li>
+                                        <li>✅ Evento <strong>Purchase</strong> enviado ao Meta CAPI com hashing SHA-256</li>
+                                        <li>✅ <code className="bg-slate-800 px-1 rounded">event_id</code> único gerado para deduplicação com o Pixel</li>
+                                        <li>✅ Registro salvo na tabela <code className="bg-slate-800 px-1 rounded">meta_events</code> para auditoria</li>
+                                        <li>✅ Dashboard atualizado automaticamente</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            {/* Últimas vendas manuais registradas */}
+                            <div style={tabCard}>
+                                <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', fontWeight: 900, fontSize: '11px', color: '#94a3b8', letterSpacing: '0.08em' }}>
+                                    ÚLTIMAS VENDAS MANUAIS (do Supabase)
+                                </div>
+                                <div style={{ overflowX: 'auto' }}>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '500px' }}>
+                                        <thead><tr>
+                                            <th style={th}>HORÁRIO</th><th style={th}>CLIENTE</th><th style={th}>PRODUTO / VALOR</th><th style={th}>STATUS</th>
+                                        </tr></thead>
+                                        <tbody>
+                                            {pedidos.slice(0, 20).map(p => (
+                                                <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                                                    <td style={td}><span style={{ fontSize: '11px' }}>{new Date(p.created_at).toLocaleString('pt-BR')}</span></td>
+                                                    <td style={td}><strong style={{ fontSize: '12px' }}>{p.nome_completo}</strong><br /><span style={{ fontSize: '11px', color: '#94a3b8' }}>{p.telefone}</span></td>
+                                                    <td style={td}><div style={{ fontWeight: 'bold', fontSize: '12px' }}>{p.produto_nome}</div><div style={{ color: '#38bdf8', fontWeight: 900, fontSize: '12px' }}>R$ {parseFloat(p.valor_total || 0).toFixed(2).replace('.', ',')}</div></td>
+                                                    <td style={td}><span style={{ padding: '3px 8px', borderRadius: '5px', fontSize: '10px', fontWeight: 900, background: (p.status === 'paid' || p.status === 'approved') ? '#10b981' : '#64748b', color: '#fff' }}>{p.status?.toUpperCase() || 'PENDENTE'}</span></td>
+                                                </tr>
+                                            ))}
+                                            {pedidos.length === 0 && <tr><td colSpan={4} style={{ ...td, textAlign: 'center', color: '#64748b', padding: '20px' }}>Nenhuma venda registrada.</td></tr>}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ═══════════════════════════════════════════════ */}
+                    {/* 14. CATEGORIAS */}
                     {/* ═══════════════════════════════════════════════ */}
                     {aba === 'categorias' && (
                         <div className="space-y-5 max-w-3xl">

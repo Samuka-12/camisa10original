@@ -63,7 +63,6 @@ export default async function handler(req, res) {
         const installments = body.installments || 1;
 
         // Construir o payload base
-        // Se houver cart items (múltiplos produtos), construir array de cart items
         const cartItems = body.cart_items && Array.isArray(body.cart_items) ? body.cart_items : [];
         
         const cart = cartItems.length > 0 
@@ -84,11 +83,16 @@ export default async function handler(req, res) {
               tangible: true
             }];
 
+        // ── META EVENT ID PARA DEDUPLICAÇÃO ────────────────────────────────
+        // O frontend envia meta_event_id no body para deduplicação Pixel + CAPI
+        const metaEventId = body.meta_event_id || `Purchase_${Date.now()}_${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0')}`;
+
         const payload = {
             amount: amountInCents,
             offer_hash: resolvedOfferHash,
             payment_method: paymentMethod,
             installments: installments,
+            meta_event_id: metaEventId, // <-- Enviado para a IronPay para deduplicação
             customer: {
                 name: body.client?.name || 'Cliente',
                 email: body.client?.email || 'cliente@email.com',
@@ -114,7 +118,7 @@ export default async function handler(req, res) {
             };
         }
 
-        console.log('[create-payment] Enviando para IronPay:', JSON.stringify({
+        console.log('[create-payment] Enviando para IronPay (meta_event_id:', metaEventId, '):', JSON.stringify({
             ...payload,
             card: payload.card ? { ...payload.card, number: '****', cvv: '***' } : undefined
         }));
@@ -140,7 +144,8 @@ export default async function handler(req, res) {
         let responseData = {
             status: 'success',
             transaction_id: data?.id || data?.transaction_id || null,
-            payment_method: paymentMethod
+            payment_method: paymentMethod,
+            meta_event_id: metaEventId // <-- Retornado para o frontend confirmar o event_id
         };
 
         // Se for PIX, incluir dados do QR Code

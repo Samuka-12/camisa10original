@@ -3,6 +3,9 @@
  * ─────────────────────────────────────────────────────────────────────────────
  * Recebe eventos do frontend e os envia para a API de Conversões do Meta (CAPI).
  * Também persiste cada evento na tabela `meta_events` do Supabase.
+ *
+ * Producao: Eventos enviados DIRETAMENTE ao Meta (sem test_event_code).
+ * Para testar, use /api/meta-capi/test — essa rota é que envia test_event_code.
  */
 
 const PIXEL_ID     = process.env.META_PIXEL_ID     || '2081548536080257';
@@ -25,6 +28,7 @@ async function saveEventToSupabase(eventName, payload, capiResponse) {
       },
       body: JSON.stringify({
         event_name:    eventName,
+        event_id:      payload.event_id      || null,
         event_time:    payload.event_time,
         source_url:    payload.event_source_url || null,
         fbc:           payload.user_data?.fbc   || null,
@@ -64,7 +68,7 @@ export default async function handler(req, res) {
   const capiEvent = {
     event_name:        eventName,
     event_time:        payload.event_time        || Math.floor(Date.now() / 1000),
-    event_source_url:  payload.event_source_url  || '',
+    event_source_url:  payload.event_source_url  || 'https://camisa10original.com.br',
     action_source:     payload.action_source     || 'website',
     user_data: {
       client_user_agent: payload.user_data?.client_user_agent || req.headers['user-agent'] || '',
@@ -79,6 +83,11 @@ export default async function handler(req, res) {
     custom_data: payload.custom_data || {},
   };
 
+  // Usa event_id do frontend se disponível (deduplicação)
+  if (payload.event_id) {
+    capiEvent.event_id = payload.event_id;
+  }
+
   // Limpa campos vazios
   Object.keys(capiEvent.user_data).forEach(k => {
     if (!capiEvent.user_data[k]) delete capiEvent.user_data[k];
@@ -88,16 +97,23 @@ export default async function handler(req, res) {
 
   if (ACCESS_TOKEN) {
     try {
+      // Timeout de 10s para evitar serverless timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
       const fbRes = await fetch(`${CAPI_URL}?access_token=${ACCESS_TOKEN}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           data: [capiEvent],
-          test_event_code: 'TEST93083', // Código de teste solicitado pelo usuário
+          // test_event_code NÃO incluído aqui — eventos vão para produção
         }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
+
       capiResult = await fbRes.json();
-      console.log(`[api/meta-capi] ${eventName} ->`, JSON.stringify(capiResult));
+      console.log(`[api/meta-capi] ${eventName} (event_id: ${capiEvent.event_id || 'none'}) ->`, JSON.stringify(capiResult));
     } catch (err) {
       console.error('[api/meta-capi] CAPI error:', err.message);
     }
