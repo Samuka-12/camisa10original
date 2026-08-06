@@ -1,5 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import type { CashbackConfig, PromocaoProgressiva } from '../lib/promotions';
+import { DEFAULT_CASHBACK } from '../lib/promotions';
+
+export type { CashbackConfig, PromocaoProgressiva };
 
 export const STORE_CONFIG_ID = '00000000-0000-0000-0000-000000000000';
 
@@ -199,6 +203,8 @@ export interface StoreConfig {
     regras: PriceRule[];
     cupons: Coupon[];
     descontosEspecificos?: DescontoProdutoSpec[];
+    cashback?: CashbackConfig;
+    promocoes?: PromocaoProgressiva[];
   };
   stories: {
     lista: FloatingStory[];
@@ -300,7 +306,9 @@ const DEFAULT_CONFIG: StoreConfig = {
   precoGestao: {
     regras: [],
     cupons: [],
-    descontosEspecificos: []
+    descontosEspecificos: [],
+    cashback: DEFAULT_CASHBACK,
+    promocoes: []
   },
   stories: {
     lista: []

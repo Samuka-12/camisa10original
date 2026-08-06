@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useCart } from '../contexts/CartContext';
 import { registerUsedDiscountsFromOrder } from '../lib/customerDiscounts';
+import { computeCashback, readStoreConfigCache } from '../lib/promotions';
 import { allProducts } from '../data/products';
 import { trackPurchase, trackInitiateCheckout, consumeInitiateCheckoutId, getFbc, getFbp, sha256, META_PIXEL_ID } from '../lib/metaPixel';
 import { User, Mail, CreditCard, MapPin, Phone, Calendar, Hash, Lock, ShieldCheck, QrCode, Copy, CheckCheck, Clock, CheckCircle2 } from 'lucide-react';
@@ -30,13 +31,27 @@ export default function Checkout() {
   const [recusadoMsg, setRecusadoMsg] = useState('');
   const [parcelas, setParcelas] = useState('1');
 
-  const { items: cartItems, totalPrice: cartTotal, totalItems, discount } = useCart();
+  const { items: cartItems, totalPrice: cartTotal, totalItems, discount, promotions } = useCart();
   const [timeLeft, setTimeLeft] = useState(300);
   const [produto, setProduto] = useState({
     nome: 'Buscando camisa...',
     preco: 0,
     imagens: [] as string[]
   });
+
+  // Cashback do pedido: calculado sobre o valor final exibido no checkout,
+  // funcionando tanto para o fluxo de carrinho quanto para link direto.
+  const [storeCfg, setStoreCfg] = useState<any>(() => readStoreConfigCache());
+  useEffect(() => {
+    const sync = (e: any) => setStoreCfg(e?.detail || readStoreConfigCache());
+    window.addEventListener('storeConfigUpdated', sync as EventListener);
+    return () => window.removeEventListener('storeConfigUpdated', sync as EventListener);
+  }, []);
+  const cashback = computeCashback(
+    storeCfg?.precoGestao?.cashback,
+    Number(produto.preco) || 0,
+    totalItems || 1
+  );
 
   const [formData, setFormData] = useState({
     nome: '', email: '', cpf: '', dataNascimento: '', telefone: '',
@@ -592,6 +607,19 @@ export default function Checkout() {
                 {discount > 0 && (
                   <div style={{ fontSize: '12px', color: '#1da154', fontWeight: 'bold' }}>
                     Cupom CAMISA10 aplicado (10% OFF)
+                  </div>
+                )}
+                {promotions.applied.map(p => (
+                  <div key={p.id} style={{ fontSize: '12px', color: '#b45309', fontWeight: 'bold' }}>
+                    🎁 {p.nome} — R$ {p.desconto.toFixed(2).replace('.', ',')} de desconto
+                  </div>
+                ))}
+                {cashback.ativo && cashback.valor > 0 && (
+                  <div style={{ marginTop: '6px', background: 'rgba(16,185,129,0.10)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '8px', padding: '6px 8px', fontSize: '12px', color: '#0f766e', fontWeight: 800 }}>
+                    💸 {cashback.texto || `Você ganha R$ ${cashback.valor.toFixed(2).replace('.', ',')} de cashback`}
+                    {cashback.validadeDias > 0 && (
+                      <span style={{ fontWeight: 600 }}> (válido por {cashback.validadeDias} dias)</span>
+                    )}
                   </div>
                 )}
               </div>

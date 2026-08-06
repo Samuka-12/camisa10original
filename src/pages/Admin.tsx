@@ -7,6 +7,8 @@ import {
 
 const STORE_CONFIG_ID = '00000000-0000-0000-0000-000000000000';
 
+import type { CashbackConfig, PromocaoProgressiva, PromoFaixa, PromoTipo } from '../lib/promotions';
+import { DEFAULT_CASHBACK, promotionLabel } from '../lib/promotions';
 import { allProducts } from '../data/products';
 import { getTeamPlayers, getTeamsWithPlayers } from '../data/teamPlayers';
 import {
@@ -124,6 +126,30 @@ export default function Admin() {
     const [cupomProdId, setCupomProdId] = useState('');
     const [cupomValidade, setCupomValidade] = useState('');
     const [cupomDesc, setCupomDesc] = useState('');
+
+    // ── CASHBACK ──────────────────────────────────────────────────────────
+    const [novaRegraQtd, setNovaRegraQtd] = useState('2');
+    const [novaRegraTipo, setNovaRegraTipo] = useState<'percentual' | 'fixo'>('percentual');
+    const [novaRegraValor, setNovaRegraValor] = useState('10');
+
+    // ── PROMOÇÕES PROGRESSIVAS ────────────────────────────────────────────
+    const [promoNome, setPromoNome] = useState('');
+    const [promoDesc, setPromoDesc] = useState('');
+    const [promoTipo, setPromoTipo] = useState<PromoTipo>('preco_fechado');
+    const [promoEscopo, setPromoEscopo] = useState<'tudo' | 'categoria' | 'produto'>('tudo');
+    const [promoCat, setPromoCat] = useState('europeus');
+    const [promoProdId, setPromoProdId] = useState('');
+    const [promoQtd, setPromoQtd] = useState('2');
+    const [promoValorPacote, setPromoValorPacote] = useState('199.90');
+    const [promoPercent, setPromoPercent] = useState('10');
+    const [promoValorFixo, setPromoValorFixo] = useState('20');
+    const [promoFaixas, setPromoFaixas] = useState<PromoFaixa[]>([]);
+    const [faixaQtd, setFaixaQtd] = useState('2');
+    const [faixaTipo, setFaixaTipo] = useState<'percentual' | 'fixo'>('percentual');
+    const [faixaValor, setFaixaValor] = useState('5');
+    const [promoInicio, setPromoInicio] = useState('');
+    const [promoFim, setPromoFim] = useState('');
+    const [editingPromoId, setEditingPromoId] = useState<string | null>(null);
     const [editingCupomId, setEditingCupomId] = useState<string | null>(null);
 
     // STORIES
@@ -687,6 +713,127 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
         if (!confirm('Remover este cupom?')) return;
         const updated = (localConfig.precoGestao?.cupons || []).filter(c => c.id !== id);
         const updatedConfig = { ...localConfig, precoGestao: { ...localConfig.precoGestao, cupons: updated } };
+        setLocalConfig(updatedConfig);
+        await handleSaveAll(updatedConfig);
+    };
+
+    // ═══════════════════════════════════════════════════════════════════
+    // CASHBACK
+    // ═══════════════════════════════════════════════════════════════════
+    const cashbackCfg: CashbackConfig = {
+        ...DEFAULT_CASHBACK,
+        ...(localConfig.precoGestao?.cashback || {}),
+        regrasQuantidade: localConfig.precoGestao?.cashback?.regrasQuantidade || [],
+    };
+
+    const updateCashback = (patch: Partial<CashbackConfig>) => {
+        setLocalConfig({
+            ...localConfig,
+            precoGestao: { ...localConfig.precoGestao, cashback: { ...cashbackCfg, ...patch } }
+        });
+    };
+
+    const saveCashback = async (patch: Partial<CashbackConfig> = {}) => {
+        const updatedConfig = {
+            ...localConfig,
+            precoGestao: { ...localConfig.precoGestao, cashback: { ...cashbackCfg, ...patch } }
+        };
+        setLocalConfig(updatedConfig);
+        await handleSaveAll(updatedConfig);
+        toast.success('💸 Cashback salvo!');
+    };
+
+    const handleAddCashbackRule = async () => {
+        const qtd = parseInt(novaRegraQtd, 10);
+        const valor = parseFloat(novaRegraValor);
+        if (!qtd || qtd < 1 || isNaN(valor) || valor <= 0) { alert('Informe quantidade e valor válidos.'); return; }
+        const regras = [...(cashbackCfg.regrasQuantidade || []), {
+            id: crypto.randomUUID(), quantidadeMinima: qtd, tipo: novaRegraTipo, valor
+        }];
+        await saveCashback({ regrasQuantidade: regras });
+    };
+
+    const handleRemoveCashbackRule = async (id: string) => {
+        const regras = (cashbackCfg.regrasQuantidade || []).filter(r => r.id !== id);
+        await saveCashback({ regrasQuantidade: regras });
+    };
+
+    // ═══════════════════════════════════════════════════════════════════
+    // PROMOÇÕES PROGRESSIVAS
+    // ═══════════════════════════════════════════════════════════════════
+    const resetPromoForm = () => {
+        setEditingPromoId(null);
+        setPromoNome(''); setPromoDesc(''); setPromoProdId('');
+        setPromoFaixas([]); setPromoInicio(''); setPromoFim('');
+    };
+
+    const handleAddPromoFaixa = () => {
+        const q = parseInt(faixaQtd, 10);
+        const v = parseFloat(faixaValor);
+        if (!q || q < 1 || isNaN(v) || v <= 0) { alert('Informe quantidade e valor válidos para a faixa.'); return; }
+        setPromoFaixas(prev => [...prev.filter(f => f.quantidade !== q), { id: crypto.randomUUID(), quantidade: q, tipo: faixaTipo, valor: v }].sort((a, b) => a.quantidade - b.quantidade));
+    };
+
+    const handleSavePromocao = async () => {
+        if (!promoNome.trim()) { alert('Dê um nome para a promoção!'); return; }
+        if (promoTipo === 'progressivo' && promoFaixas.length === 0) { alert('Adicione ao menos uma faixa de quantidade.'); return; }
+
+        const base = {
+            nome: promoNome.trim(),
+            descricao: promoDesc,
+            tipo: promoTipo,
+            escopo: promoEscopo,
+            categoria: promoEscopo === 'categoria' ? promoCat : undefined,
+            produtoId: promoEscopo === 'produto' ? promoProdId : undefined,
+            quantidade: parseInt(promoQtd, 10) || 0,
+            valorPacote: parseFloat(promoValorPacote) || 0,
+            percentual: parseFloat(promoPercent) || 0,
+            valorFixo: parseFloat(promoValorFixo) || 0,
+            faixas: promoFaixas,
+            dataInicio: promoInicio || undefined,
+            dataFim: promoFim || undefined,
+        };
+
+        const atuais = localConfig.precoGestao?.promocoes || [];
+        const promocoes = editingPromoId
+            ? atuais.map(p => (p.id === editingPromoId ? { ...p, ...base } : p))
+            : [...atuais, { id: crypto.randomUUID(), ativa: true, criadaEm: new Date().toISOString(), ...base } as PromocaoProgressiva];
+
+        const updatedConfig = { ...localConfig, precoGestao: { ...localConfig.precoGestao, promocoes } };
+        setLocalConfig(updatedConfig);
+        await handleSaveAll(updatedConfig);
+        toast.success(editingPromoId ? '✅ Promoção atualizada!' : '✅ Promoção criada!');
+        resetPromoForm();
+    };
+
+    const handleStartEditPromo = (p: PromocaoProgressiva) => {
+        setEditingPromoId(p.id);
+        setPromoNome(p.nome);
+        setPromoDesc(p.descricao || '');
+        setPromoTipo(p.tipo);
+        setPromoEscopo(p.escopo);
+        setPromoCat(p.categoria || 'europeus');
+        setPromoProdId(p.produtoId || '');
+        setPromoQtd(String(p.quantidade || 2));
+        setPromoValorPacote(String(p.valorPacote || 0));
+        setPromoPercent(String(p.percentual || 0));
+        setPromoValorFixo(String(p.valorFixo || 0));
+        setPromoFaixas(p.faixas || []);
+        setPromoInicio(p.dataInicio || '');
+        setPromoFim(p.dataFim || '');
+    };
+
+    const handleTogglePromo = async (id: string) => {
+        const promocoes = (localConfig.precoGestao?.promocoes || []).map(p => p.id === id ? { ...p, ativa: !p.ativa } : p);
+        const updatedConfig = { ...localConfig, precoGestao: { ...localConfig.precoGestao, promocoes } };
+        setLocalConfig(updatedConfig);
+        await handleSaveAll(updatedConfig);
+    };
+
+    const handleRemovePromo = async (id: string) => {
+        if (!confirm('Remover esta promoção?')) return;
+        const promocoes = (localConfig.precoGestao?.promocoes || []).filter(p => p.id !== id);
+        const updatedConfig = { ...localConfig, precoGestao: { ...localConfig.precoGestao, promocoes } };
         setLocalConfig(updatedConfig);
         await handleSaveAll(updatedConfig);
     };
@@ -2383,6 +2530,253 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
                                     })}
                                     {(localConfig.precoGestao?.cupons || []).length === 0 && (
                                         <p className="text-xs text-gray-500 text-center py-4">Nenhum cupom criado.</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* ═══ CASHBACK ═══ */}
+                            <div className="bg-slate-900/40 border border-emerald-500/20 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-4">
+                                <div className="flex items-center justify-between gap-3 flex-wrap">
+                                    <h3 className="text-sm sm:text-md font-bold text-white flex items-center gap-2">
+                                        <DollarSign size={16} className="text-emerald-400" /> Cashback
+                                    </h3>
+                                    <button
+                                        onClick={() => saveCashback({ ativo: !cashbackCfg.ativo })}
+                                        className={`px-3 py-1.5 rounded-lg text-[11px] font-bold ${cashbackCfg.ativo ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/40' : 'bg-slate-800 text-gray-500 border border-white/10'}`}
+                                    >
+                                        {cashbackCfg.ativo ? 'ATIVADO' : 'DESATIVADO'}
+                                    </button>
+                                </div>
+                                <p className="text-[11px] text-gray-400">O cashback é calculado sobre o valor final do pedido (após descontos e cupons) e aparece na vitrine, no carrinho e no checkout.</p>
+
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                    <div>
+                                        <label className="block text-xs text-gray-400 font-bold mb-1">Tipo</label>
+                                        <select value={cashbackCfg.tipo} onChange={e => updateCashback({ tipo: e.target.value as 'percentual' | 'fixo' })} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs">
+                                            <option value="percentual">Percentual (%)</option>
+                                            <option value="fixo">Valor fixo (R$)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-gray-400 font-bold mb-1">Porcentagem (%)</label>
+                                        <input type="number" min="0" step="0.5" value={cashbackCfg.percentual} onChange={e => updateCashback({ percentual: parseFloat(e.target.value) || 0 })} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-gray-400 font-bold mb-1">Valor fixo (R$)</label>
+                                        <input type="number" min="0" step="0.01" value={cashbackCfg.valorFixo} onChange={e => updateCashback({ valorFixo: parseFloat(e.target.value) || 0 })} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-gray-400 font-bold mb-1">Valor mínimo do pedido (R$)</label>
+                                        <input type="number" min="0" step="0.01" value={cashbackCfg.valorMinimo} onChange={e => updateCashback({ valorMinimo: parseFloat(e.target.value) || 0 })} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-gray-400 font-bold mb-1">Validade do saldo (dias)</label>
+                                        <input type="number" min="0" step="1" value={cashbackCfg.validadeDias} onChange={e => updateCashback({ validadeDias: parseInt(e.target.value, 10) || 0 })} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-gray-400 font-bold mb-1">Campanha válida até</label>
+                                        <input type="date" value={cashbackCfg.dataValidade || ''} onChange={e => updateCashback({ dataValidade: e.target.value })} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs" />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-xs text-gray-400 font-bold mb-1">Texto exibido ao cliente (opcional)</label>
+                                        <input type="text" value={cashbackCfg.texto || ''} onChange={e => updateCashback({ texto: e.target.value })} placeholder="Ex: Ganhe cashback para usar na próxima compra" className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs" />
+                                    </div>
+                                </div>
+
+                                <button onClick={() => saveCashback()} className="w-full sm:w-auto px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2">
+                                    <Save size={14} /> Salvar Cashback
+                                </button>
+
+                                {/* Regras por quantidade */}
+                                <div className="border-t border-white/5 pt-4 space-y-3">
+                                    <h4 className="text-xs font-bold text-white">Regras por quantidade (sobrepõem o valor padrão)</h4>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                        <div>
+                                            <label className="block text-xs text-gray-400 font-bold mb-1">A partir de (peças)</label>
+                                            <input type="number" min="1" value={novaRegraQtd} onChange={e => setNovaRegraQtd(e.target.value)} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-400 font-bold mb-1">Tipo</label>
+                                            <select value={novaRegraTipo} onChange={e => setNovaRegraTipo(e.target.value as 'percentual' | 'fixo')} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs">
+                                                <option value="percentual">Percentual (%)</option>
+                                                <option value="fixo">Valor fixo (R$)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-400 font-bold mb-1">Valor</label>
+                                            <input type="number" min="0" step="0.01" value={novaRegraValor} onChange={e => setNovaRegraValor(e.target.value)} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs" />
+                                        </div>
+                                        <div className="flex items-end">
+                                            <button onClick={handleAddCashbackRule} className="w-full px-3 py-2.5 bg-emerald-600/20 border border-emerald-500/30 text-emerald-300 rounded-lg text-xs font-bold flex items-center justify-center gap-1">
+                                                <Plus size={14} /> Adicionar
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {(cashbackCfg.regrasQuantidade || []).map(r => (
+                                            <div key={r.id} className="flex items-center justify-between bg-slate-800/50 border border-white/5 rounded-lg px-3 py-2">
+                                                <span className="text-xs text-gray-300">
+                                                    A partir de <strong className="text-white">{r.quantidadeMinima}</strong> peças →{' '}
+                                                    <strong className="text-emerald-400">{r.tipo === 'percentual' ? `${r.valor}%` : `R$ ${r.valor.toFixed(2)}`}</strong> de cashback
+                                                </span>
+                                                <button onClick={() => handleRemoveCashbackRule(r.id)} className="text-red-400 p-1"><Trash2 size={14} /></button>
+                                            </div>
+                                        ))}
+                                        {(cashbackCfg.regrasQuantidade || []).length === 0 && (
+                                            <p className="text-xs text-gray-500 text-center py-3">Nenhuma regra por quantidade.</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* ═══ PROMOÇÕES PROGRESSIVAS ═══ */}
+                            <div className="bg-slate-900/40 border border-amber-500/20 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-4">
+                                <h3 className="text-sm sm:text-md font-bold text-white flex items-center gap-2">
+                                    <Tag size={16} className="text-amber-400" /> Promoções Progressivas
+                                </h3>
+                                <p className="text-[11px] text-gray-400">Compre 2 por R$ X, compre 3 por R$ X, desconto progressivo, por quantidade, percentual ou fixo. Aplicadas automaticamente na vitrine, carrinho, checkout e total do pedido.</p>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div className="sm:col-span-2">
+                                        <label className="block text-xs text-gray-400 font-bold mb-1">Nome da promoção</label>
+                                        <input type="text" value={promoNome} onChange={e => setPromoNome(e.target.value)} placeholder="Ex: Leve 3 por R$ 299" className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-gray-400 font-bold mb-1">Tipo</label>
+                                        <select value={promoTipo} onChange={e => setPromoTipo(e.target.value as PromoTipo)} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs">
+                                            <option value="preco_fechado">Compre N por R$ X</option>
+                                            <option value="progressivo">Desconto progressivo (faixas)</option>
+                                            <option value="quantidade">Desconto por quantidade</option>
+                                            <option value="percentual">Desconto percentual</option>
+                                            <option value="fixo">Desconto fixo</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-gray-400 font-bold mb-1">Aplicar em</label>
+                                        <select value={promoEscopo} onChange={e => setPromoEscopo(e.target.value as any)} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs">
+                                            <option value="tudo">Todos os produtos</option>
+                                            <option value="categoria">Uma categoria</option>
+                                            <option value="produto">Um produto</option>
+                                        </select>
+                                    </div>
+                                    {promoEscopo === 'categoria' && (
+                                        <div>
+                                            <label className="block text-xs text-gray-400 font-bold mb-1">Categoria</label>
+                                            <select value={promoCat} onChange={e => setPromoCat(e.target.value)} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs">
+                                                {availableCategories.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                                            </select>
+                                        </div>
+                                    )}
+                                    {promoEscopo === 'produto' && (
+                                        <div>
+                                            <label className="block text-xs text-gray-400 font-bold mb-1">ID do produto</label>
+                                            <input type="text" value={promoProdId} onChange={e => setPromoProdId(e.target.value)} placeholder="ID exato do produto" className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs" />
+                                        </div>
+                                    )}
+                                    {(promoTipo === 'preco_fechado' || promoTipo === 'quantidade' || promoTipo === 'percentual' || promoTipo === 'fixo') && (
+                                        <div>
+                                            <label className="block text-xs text-gray-400 font-bold mb-1">Quantidade mínima</label>
+                                            <input type="number" min="1" value={promoQtd} onChange={e => setPromoQtd(e.target.value)} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs" />
+                                        </div>
+                                    )}
+                                    {promoTipo === 'preco_fechado' && (
+                                        <div>
+                                            <label className="block text-xs text-gray-400 font-bold mb-1">Preço do pacote (R$)</label>
+                                            <input type="number" min="0" step="0.01" value={promoValorPacote} onChange={e => setPromoValorPacote(e.target.value)} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs" />
+                                        </div>
+                                    )}
+                                    {(promoTipo === 'percentual' || promoTipo === 'quantidade') && (
+                                        <div>
+                                            <label className="block text-xs text-gray-400 font-bold mb-1">Desconto (%)</label>
+                                            <input type="number" min="0" step="0.5" value={promoPercent} onChange={e => setPromoPercent(e.target.value)} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs" />
+                                        </div>
+                                    )}
+                                    {promoTipo === 'fixo' && (
+                                        <div>
+                                            <label className="block text-xs text-gray-400 font-bold mb-1">Desconto fixo (R$)</label>
+                                            <input type="number" min="0" step="0.01" value={promoValorFixo} onChange={e => setPromoValorFixo(e.target.value)} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs" />
+                                        </div>
+                                    )}
+                                    <div>
+                                        <label className="block text-xs text-gray-400 font-bold mb-1">Início (opcional)</label>
+                                        <input type="date" value={promoInicio} onChange={e => setPromoInicio(e.target.value)} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-gray-400 font-bold mb-1">Fim (opcional)</label>
+                                        <input type="date" value={promoFim} onChange={e => setPromoFim(e.target.value)} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs" />
+                                    </div>
+                                    <div className="sm:col-span-3">
+                                        <label className="block text-xs text-gray-400 font-bold mb-1">Descrição exibida ao cliente (opcional)</label>
+                                        <input type="text" value={promoDesc} onChange={e => setPromoDesc(e.target.value)} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs" />
+                                    </div>
+                                </div>
+
+                                {promoTipo === 'progressivo' && (
+                                    <div className="border-t border-white/5 pt-4 space-y-3">
+                                        <h4 className="text-xs font-bold text-white">Faixas de desconto por quantidade</h4>
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                            <div>
+                                                <label className="block text-xs text-gray-400 font-bold mb-1">A partir de (peças)</label>
+                                                <input type="number" min="1" value={faixaQtd} onChange={e => setFaixaQtd(e.target.value)} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-gray-400 font-bold mb-1">Tipo</label>
+                                                <select value={faixaTipo} onChange={e => setFaixaTipo(e.target.value as 'percentual' | 'fixo')} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs">
+                                                    <option value="percentual">Percentual (%)</option>
+                                                    <option value="fixo">Valor fixo (R$)</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-gray-400 font-bold mb-1">Valor</label>
+                                                <input type="number" min="0" step="0.01" value={faixaValor} onChange={e => setFaixaValor(e.target.value)} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs" />
+                                            </div>
+                                            <div className="flex items-end">
+                                                <button onClick={handleAddPromoFaixa} className="w-full px-3 py-2.5 bg-amber-600/20 border border-amber-500/30 text-amber-300 rounded-lg text-xs font-bold flex items-center justify-center gap-1">
+                                                    <Plus size={14} /> Adicionar faixa
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {promoFaixas.map(f => (
+                                                <div key={f.id} className="flex items-center justify-between bg-slate-800/50 border border-white/5 rounded-lg px-3 py-2">
+                                                    <span className="text-xs text-gray-300">
+                                                        {f.quantidade}+ peças → <strong className="text-amber-300">{f.tipo === 'percentual' ? `${f.valor}%` : `R$ ${f.valor.toFixed(2)}`}</strong>
+                                                    </span>
+                                                    <button onClick={() => setPromoFaixas(prev => prev.filter(x => x.id !== f.id))} className="text-red-400 p-1"><Trash2 size={14} /></button>
+                                                </div>
+                                            ))}
+                                            {promoFaixas.length === 0 && <p className="text-xs text-gray-500 text-center py-3">Nenhuma faixa adicionada.</p>}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="flex gap-2 flex-wrap">
+                                    <button onClick={handleSavePromocao} className="px-4 py-2.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-bold flex items-center gap-2">
+                                        <Save size={14} /> {editingPromoId ? 'Atualizar promoção' : 'Criar promoção'}
+                                    </button>
+                                    {editingPromoId && (
+                                        <button onClick={resetPromoForm} className="px-4 py-2.5 bg-slate-800 text-gray-300 rounded-lg text-xs font-bold">Cancelar edição</button>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2 border-t border-white/5 pt-4">
+                                    {(localConfig.precoGestao?.promocoes || []).map(p => (
+                                        <div key={p.id} className="flex items-center justify-between gap-3 bg-slate-800/50 border border-white/5 rounded-lg px-3 py-2">
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-bold text-white truncate">{p.nome}</p>
+                                                <p className="text-[10px] text-gray-400">{promotionLabel(p)} · {p.escopo === 'tudo' ? 'todos os produtos' : p.escopo === 'categoria' ? `categoria: ${p.categoria}` : `produto: ${p.produtoId}`}</p>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                                                <button onClick={() => handleStartEditPromo(p)} className="p-1.5 bg-purple-600/20 text-purple-300 hover:text-white rounded-lg"><Edit2 size={12} /></button>
+                                                <button onClick={() => handleTogglePromo(p.id)} className={`px-2.5 py-1 rounded text-[10px] font-bold ${p.ativa ? 'bg-green-950 text-green-400 border border-green-500/30' : 'bg-slate-800 text-gray-500'}`}>
+                                                    {p.ativa ? 'ATIVA' : 'INATIVA'}
+                                                </button>
+                                                <button onClick={() => handleRemovePromo(p.id)} className="text-red-400 p-1"><Trash2 size={14} /></button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {(localConfig.precoGestao?.promocoes || []).length === 0 && (
+                                        <p className="text-xs text-gray-500 text-center py-4">Nenhuma promoção criada.</p>
                                     )}
                                 </div>
                             </div>

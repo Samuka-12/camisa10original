@@ -132,6 +132,8 @@ const SideCart = () => {
     discount,
     totalItems,
     tripleCrown,
+    promotions,
+    cashback,
   } = useCart();
 
   const [cep, setCep] = useState("");
@@ -486,6 +488,18 @@ const SideCart = () => {
                 </div>
               )}
 
+              {/* Promoções progressivas configuradas no painel */}
+              {promotions.applied.map((p) => (
+                <div key={p.id} className="flex justify-between items-center">
+                  <span style={{ fontSize: "12px", color: "#f59e0b", fontWeight: 600 }}>
+                    🎁 {p.nome}
+                  </span>
+                  <span style={{ fontSize: "13px", fontWeight: 700, color: "#86efac" }}>
+                    −{BRL.format(p.desconto)}
+                  </span>
+                </div>
+              ))}
+
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Frete</span>
                 {tripleCrown.freeShipping || (shippingOptions && shippingOptions[selectedShipping].price === 0) ? (
@@ -527,6 +541,31 @@ const SideCart = () => {
                   </span>
                 </div>
               </div>
+
+              {cashback.ativo && cashback.valor > 0 && (
+                <div
+                  id="cart-cashback"
+                  className="flex justify-between items-center rounded-lg px-3 py-2"
+                  style={{ background: "rgba(16,185,129,0.10)", border: "1px solid rgba(16,185,129,0.25)" }}
+                >
+                  <span style={{ fontSize: "12px", color: "#10b981", fontWeight: 700 }}>
+                    💸 Cashback
+                  </span>
+                  <span style={{ fontSize: "13px", fontWeight: 800, color: "#10b981" }}>
+                    {BRL.format(cashback.valor)}
+                    {cashback.validadeDias > 0 && (
+                      <span style={{ fontSize: "10px", fontWeight: 600, opacity: 0.8 }}>
+                        {" "}· {cashback.validadeDias} dias
+                      </span>
+                    )}
+                  </span>
+                </div>
+              )}
+              {cashback.ativo && cashback.valor === 0 && cashback.faltaParaMinimo > 0 && (
+                <p style={{ fontSize: "11px", color: "#10b981", fontWeight: 600 }}>
+                  Faltam {BRL.format(cashback.faltaParaMinimo)} para você ganhar cashback.
+                </p>
+              )}
 
               <button
                 id="checkout-btn"

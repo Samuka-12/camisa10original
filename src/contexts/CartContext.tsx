@@ -2,6 +2,13 @@ import { createContext, useContext, useState, useCallback, useEffect, type React
 import { toast } from "sonner";
 import type { Product } from "@/data/products";
 import { applyTripleCrownDiscount, type TripleCrownResult } from "@/lib/tripleCrown";
+import {
+  computePromotions,
+  computeCashback,
+  readStoreConfigCache,
+  type PromotionsResult,
+  type CashbackResult,
+} from "@/lib/promotions";
 
 export interface CartItem {
   id: string;
@@ -33,6 +40,8 @@ interface CartContextType {
   clearCart: () => void;
   discount: number;
   tripleCrown: TripleCrownResult;
+  promotions: PromotionsResult;
+  cashback: CashbackResult;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -89,6 +98,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   });
   const [isOpen, setIsOpen] = useState(false);
+
+  // Config da loja (promoções progressivas + cashback), mantida em sincronia
+  // com o painel administrativo via evento 'storeConfigUpdated'.
+  const [storeCfg, setStoreCfg] = useState<any>(() => readStoreConfigCache());
+
+  useEffect(() => {
+    const sync = (e: any) => setStoreCfg(e?.detail || readStoreConfigCache());
+    window.addEventListener('storeConfigUpdated', sync as EventListener);
+    return () => window.removeEventListener('storeConfigUpdated', sync as EventListener);
+  }, []);
 
   const [coupon, setCoupon] = useState(() => {
     return localStorage.getItem("camisa10_coupon") || "";
@@ -213,7 +232,23 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const totalItems = items.reduce((s, i) => s + i.quantity, 0);
   const subtotal = items.reduce((s, i) => s + (i.itemPrice || 0) * i.quantity, 0);
   const tripleCrown = applyTripleCrownDiscount(items);
-  const totalPrice = Number((subtotal - tripleCrown.totalDiscount) * (1 - discount)) || 0;
+
+  // Promoções progressivas: aplicadas após a Tríplice Coroa e antes do cupom.
+  const afterTripleCrown = Math.max(0, subtotal - tripleCrown.totalDiscount);
+  const promotions = computePromotions(
+    items,
+    storeCfg?.precoGestao?.promocoes,
+    afterTripleCrown
+  );
+  const afterPromotions = Math.max(0, afterTripleCrown - promotions.totalDiscount);
+
+  const totalPrice = Number(afterPromotions * (1 - discount)) || 0;
+
+  const cashback = computeCashback(
+    storeCfg?.precoGestao?.cashback,
+    totalPrice,
+    totalItems
+  );
 
   return (
     <CartContext.Provider
@@ -234,6 +269,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         clearCart,
         discount,
         tripleCrown,
+        promotions,
+        cashback,
       }}
     >
       {children}

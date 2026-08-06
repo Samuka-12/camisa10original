@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useStoreConfig } from "@/contexts/StoreConfigContext";
+import { getProductPromotions, promotionLabel } from "@/lib/promotions";
 
 interface ProductCardProps {
   id?: string;
@@ -18,6 +19,16 @@ const ProductCard = ({ id, image, name, team, price, priceNum, category, oldPric
 
   const finalPriceNum = priceNum && category ? getAdjustedPrice(priceNum, category, id) : null;
   const displayPrice = finalPriceNum !== null ? `R$ ${finalPriceNum.toFixed(2).replace('.', ',')}` : price;
+
+  // Promoções progressivas ativas para este produto (configuradas no painel)
+  const activePromos = getProductPromotions(config.precoGestao?.promocoes, { id, category });
+  const cashbackCfg = config.precoGestao?.cashback;
+  const cashbackBadge =
+    cashbackCfg?.ativo && cashbackCfg.tipo === 'percentual' && cashbackCfg.percentual > 0
+      ? `${cashbackCfg.percentual}% de cashback`
+      : cashbackCfg?.ativo && cashbackCfg.tipo === 'fixo' && cashbackCfg.valorFixo > 0
+        ? `R$ ${cashbackCfg.valorFixo.toFixed(2).replace('.', ',')} de cashback`
+        : null;
 
   const pulse = config.pulseComprar;
   const pulseClass = pulse?.ativo ? 'animate-btn-pulse' : '';
@@ -53,6 +64,28 @@ const ProductCard = ({ id, image, name, team, price, priceNum, category, oldPric
             )}
             <span className="text-base font-bold text-primary">{displayPrice}</span>
           </div>
+
+          {(activePromos.length > 0 || cashbackBadge) && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {activePromos.map((p) => (
+                <span
+                  key={p.id}
+                  className="text-[10px] font-bold px-2 py-1 rounded-md"
+                  style={{ background: 'rgba(245,158,11,0.12)', color: '#b45309' }}
+                >
+                  🎁 {promotionLabel(p)}
+                </span>
+              ))}
+              {cashbackBadge && (
+                <span
+                  className="text-[10px] font-bold px-2 py-1 rounded-md"
+                  style={{ background: 'rgba(16,185,129,0.12)', color: '#047857' }}
+                >
+                  💸 {cashbackBadge}
+                </span>
+              )}
+            </div>
+          )}
           <div 
             style={pulse?.ativo ? { 
               '--pulse-color': pulseColor, 
