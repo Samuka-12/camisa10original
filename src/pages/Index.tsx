@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import { selecoes, retro, europeus, brasileirao, getProductsByCategory } from "@/data/products";
 import heroBannerAsset from "@/assets/hero-banner.jpg";
 import { supabase } from "@/lib/supabase";
+import { isVitrineRow, normalizeDbProduct, mergePreferDb } from "@/lib/productImages";
 import { useStoreConfig } from "@/contexts/StoreConfigContext";
 
 const STORE_CONFIG_ID = '00000000-0000-0000-0000-000000000000';
@@ -44,14 +45,10 @@ const Index = () => {
       try {
         const { data } = await supabase.from('produtos').select('*');
         if (data) {
-          // Only vitrine products (or products without explicit tipo)
-          const realVitrineProducts = data.filter(p => {
-            if (p.id === 'store_config' || p.id === STORE_CONFIG_ID) return false;
-            if (p.tipo === 'dinamico' || p.category === 'dinamico' || p.team === 'Link Dinâmico') return false;
-            const pNum = parseFloat(String(p.preco || 0));
-            if (pNum > 0 && Math.abs(pNum - 109.93) > 0.01) return false;
-            return true;
-          });
+          // Apenas produtos de vitrine (exclui config da loja e links dinâmicos).
+          // Obs: o preço NÃO é mais usado como filtro — produtos com preço
+          // diferente do padrão também precisam aparecer na vitrine.
+          const realVitrineProducts = data.filter(isVitrineRow);
           setDbProducts(realVitrineProducts);
         }
       } catch (err) {
@@ -79,16 +76,7 @@ const Index = () => {
         if (Array.isArray(cat)) return cat.some(matchCat);
         return typeof cat === 'string' && matchCat(cat);
       })
-      .map(p => ({
-        id: p.id,
-        image: p.imagem_url || p.image,
-        name: p.nome,
-        team: p.team || 'Time',
-        price: `R$ ${parseFloat(p.preco || 0).toFixed(2).replace('.', ',')}`,
-        priceNum: parseFloat(p.preco || 0),
-        category: [categorySlug],
-        description: p.description
-      }));
+      .map(p => normalizeDbProduct(p, categorySlug));
   };
 
   // Get static products for a category
@@ -120,7 +108,7 @@ const Index = () => {
           const dataSlug = URL_TO_DATA_SLUG[urlSlug] || cat.slug || cat.label.toLowerCase();
           const dbProds = getDbProductsForCategory(cat.slug || cat.label);
           const staticProds = getStaticProductsForCategory(dataSlug);
-          const merged = [...dbProds, ...staticProds];
+          const merged = mergePreferDb(dbProds, staticProds);
           return { id: urlSlug, label: cat.label, products: merged };
         })
         .filter(s => s.products.length > 0)
@@ -128,22 +116,22 @@ const Index = () => {
         {
           id: 'seleções',
           label: 'Seleções',
-          products: [...getDbProductsForCategory('seleções'), ...getStaticProductsForCategory('seleções')]
+          products: mergePreferDb(getDbProductsForCategory('seleções'), getStaticProductsForCategory('seleções'))
         },
         {
           id: 'brasileirão',
           label: 'Brasileirão',
-          products: [...getDbProductsForCategory('brasileirão'), ...getStaticProductsForCategory('brasileirão')]
+          products: mergePreferDb(getDbProductsForCategory('brasileirão'), getStaticProductsForCategory('brasileirão'))
         },
         {
           id: 'retrô',
           label: 'Históricas, edição: Série A Italiana',
-          products: [...getDbProductsForCategory('retrô'), ...getStaticProductsForCategory('retrô')]
+          products: mergePreferDb(getDbProductsForCategory('retrô'), getStaticProductsForCategory('retrô'))
         },
         {
           id: 'europeus',
           label: 'Europeus',
-          products: [...getDbProductsForCategory('europeus'), ...getStaticProductsForCategory('europeus')]
+          products: mergePreferDb(getDbProductsForCategory('europeus'), getStaticProductsForCategory('europeus'))
         },
       ].filter(s => s.products.length > 0);
 

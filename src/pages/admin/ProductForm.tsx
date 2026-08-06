@@ -50,14 +50,29 @@ const ProductForm = () => {
     console.log("Dados do form:", data);
     setIsSaving(true);
     try {
-      const { error } = await supabase.from("produtos").insert({
+      // Grava a imagem em TODOS os campos lidos pelo site (imagem_url, image e images),
+      // garantindo que vitrine, categoria e página de compra enxerguem a mesma foto.
+      const basePayload: Record<string, any> = {
         nome: data.name,
         team: data.team,
         preco: data.price,
         category: data.category,
         description: data.description,
-        image: imageUrl,
-      });
+        imagem_url: imageUrl || null,
+        image: imageUrl || null,
+        images: JSON.stringify(imageUrl ? [imageUrl] : []),
+        tipo: "vitrine",
+      };
+
+      let { error } = await supabase.from("produtos").insert(basePayload);
+
+      // Fallback não destrutivo: bancos antigos podem não ter todas as colunas
+      if (error && (error.code === "PGRST204" || /column|schema cache/i.test(error.message || ""))) {
+        console.warn("[ProductForm] Fallback de esquema básico:", error.message);
+        const { tipo: _tipo, images: _images, ...legacyPayload } = basePayload;
+        const retry = await supabase.from("produtos").insert(legacyPayload);
+        error = retry.error;
+      }
 
       if (error) throw error;
 

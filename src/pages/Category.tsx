@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getProductsByCategory, type Product } from "@/data/products";
 import { supabase } from "@/lib/supabase";
+import { isVitrineRow, normalizeDbProduct, mergePreferDb } from "@/lib/productImages";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { useStoreConfig } from "@/contexts/StoreConfigContext";
 
@@ -56,10 +57,7 @@ const Category = () => {
         const { data } = await supabase.from('produtos').select('*');
         if (data) {
           const filtered = data.filter(p => {
-            if (p.id === 'store_config' || p.id === STORE_CONFIG_ID) return false;
-            if (p.tipo === 'dinamico' || p.category === 'dinamico' || p.team === 'Link Dinâmico') return false;
-            const pNum = parseFloat(String(p.preco || 0));
-            if (pNum > 0 && Math.abs(pNum - 109.93) > 0.01) return false;
+            if (!isVitrineRow(p)) return false;
             // Match by original slug or URL slug
             const cat = p.category;
             const matchCat = (c: string) => {
@@ -78,8 +76,20 @@ const Category = () => {
     fetchCategoryProducts();
   }, [slug, categoryKey]);
 
-  const allProducts = [
-    ...staticProducts.map(p => ({
+  // Banco é a fonte de verdade; estáticos entram apenas se o ID não existir no banco
+  const allProducts = mergePreferDb(
+    dbProducts.map(p => {
+      const n = normalizeDbProduct(p);
+      return {
+        id: n.id,
+        image: n.image,
+        name: n.name,
+        team: n.team,
+        price: n.price,
+        oldPrice: undefined as string | undefined,
+      };
+    }),
+    staticProducts.map(p => ({
       id: p.id,
       image: p.image,
       name: p.name,
@@ -87,15 +97,7 @@ const Category = () => {
       price: p.price,
       oldPrice: p.oldPrice,
     })),
-    ...dbProducts.map(p => ({
-      id: p.id,
-      image: p.imagem_url || p.image,
-      name: p.nome,
-      team: p.team || 'Time',
-      price: `R$ ${parseFloat(p.preco).toFixed(2).replace('.', ',')}`,
-      oldPrice: undefined,
-    })),
-  ];
+  );
 
   return (
     <div className="min-h-screen bg-background">

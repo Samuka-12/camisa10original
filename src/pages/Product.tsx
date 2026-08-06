@@ -10,6 +10,7 @@ import { useStoreConfig } from "@/contexts/StoreConfigContext";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { StickyPurchaseBar } from "@/components/StickyPurchaseBar";
 import { supabase } from "@/lib/supabase";
+import { normalizeDbProduct } from "@/lib/productImages";
 
 export type VersionType = 'Torcedor' | 'Jogador';
 
@@ -31,95 +32,50 @@ const Product = () => {
   const [customNumber, setCustomNumber] = useState("");
   const [customPhrase, setCustomPhrase] = useState("");
 
-  // Load product from database or local catalog
+  // Load product: o BANCO é sempre a fonte de verdade (mesma fonte da vitrine).
+  // O catálogo estático é apenas fallback quando não existe registro no banco.
   useEffect(() => {
+    let cancelled = false;
+
     const loadProduct = async () => {
       setDbLoading(true);
       const local = getProductById(id || "");
-      if (local) {
-        setDbProduct(local);
-        setDbLoading(false);
-      } else {
-        try {
-          const { data } = await supabase
-            .from('produtos')
-            .select('*')
-            .eq('id', id)
-            .single();
-          if (data) {
-            // Parse robusto: suporta string JSON, array já parseado, meta tag na descrição e fallback
-            let parsedImgs: string[] = [];
-            let parsedVids: string[] = [];
 
-            if (data.images) {
-              try {
-                const parsed = typeof data.images === 'string' ? JSON.parse(data.images) : data.images;
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                  parsedImgs = parsed.filter(Boolean);
-                }
-              } catch (_) {}
-            }
+      try {
+        const { data } = await supabase
+          .from("produtos")
+          .select("*")
+          .eq("id", id)
+          .maybeSingle();
 
-            if (data.videos) {
-              try {
-                const parsed = typeof data.videos === 'string' ? JSON.parse(data.videos) : data.videos;
-                if (Array.isArray(parsed)) parsedVids = parsed.filter(Boolean);
-              } catch (_) {
-                if (typeof data.videos === 'string') parsedVids = [data.videos];
-              }
-            }
+        if (cancelled) return;
 
-            // Fallback: Tentar extrair GALLERY meta da descrição se disponível
-            let rawDesc = data.description || '';
-            const galleryMatch = rawDesc.match(/<!-- GALLERY:(.*?) -->/);
-            if (galleryMatch && galleryMatch[1]) {
-              try {
-                const meta = JSON.parse(galleryMatch[1]);
-                if (parsedImgs.length <= 1 && Array.isArray(meta.images) && meta.images.length > 0) {
-                  parsedImgs = meta.images.filter(Boolean);
-                }
-                if (parsedVids.length === 0 && Array.isArray(meta.videos) && meta.videos.length > 0) {
-                  parsedVids = meta.videos.filter(Boolean);
-                }
-              } catch (_) {}
-            }
-            // Limpar tag META da descrição exibida para o cliente
-            const cleanDesc = rawDesc.replace(/<!-- GALLERY:.*? -->/g, '').trim();
-
-            // Se não encontrou imagens no campo images ou meta, usar imagem_url/image como fallback
-            if (parsedImgs.length === 0) {
-              const fallback = data.imagem_url || data.image;
-              if (fallback) parsedImgs = [fallback];
-            }
-            // Garantir que a imagem principal (imagem_url) sempre seja a primeira se não estiver na lista
-            const mainImg = data.imagem_url || data.image;
-            if (mainImg && !parsedImgs.includes(mainImg)) {
-              parsedImgs = [mainImg, ...parsedImgs];
-            }
-
-            const basePriceNum = data.preco || 109.93;
-            setDbProduct({
-              id: data.id,
-              name: data.nome,
-              team: data.team || 'Time',
-              price: `R$ ${basePriceNum.toFixed(2).replace('.', ',')}`,
-              priceNum: basePriceNum,
-              image: data.imagem_url || data.image,
-              images: parsedImgs.filter(Boolean),
-              videos: parsedVids.filter(Boolean),
-              sizes: data.sizes || ['P', 'M', 'G', 'GG', 'XGG'],
-              category: [data.category || 'europeus'],
-              description: cleanDesc || 'Sem descrição cadastrada.'
-            });
-          }
-        } catch (err) {
-          console.error("Erro ao carregar produto:", err);
-        } finally {
-          setDbLoading(false);
+        if (data) {
+          const normalized = normalizeDbProduct(data);
+          // Merge não destrutivo: mantém dados do catálogo estático que o banco não possui
+          setDbProduct({
+            ...(local || {}),
+            ...normalized,
+            images: normalized.images.length > 0 ? normalized.images : (local?.images ?? []),
+            image: normalized.image || (local as any)?.image || "",
+          });
+        } else if (local) {
+          setDbProduct(local);
+        } else {
+          setDbProduct(null);
         }
+      } catch (err) {
+        console.error("Erro ao carregar produto:", err);
+        if (!cancelled && local) setDbProduct(local);
+      } finally {
+        if (!cancelled) setDbLoading(false);
       }
     };
+
     loadProduct();
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   const product = dbProduct;
