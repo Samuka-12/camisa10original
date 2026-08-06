@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useCart } from '../contexts/CartContext';
 import { registerUsedDiscountsFromOrder } from '../lib/customerDiscounts';
 import { allProducts } from '../data/products';
-import { trackPurchase, trackInitiateCheckout, getFbc, getFbp, sha256, META_PIXEL_ID } from '../lib/metaPixel';
+import { trackPurchase, trackInitiateCheckout, consumeInitiateCheckoutId, getFbc, getFbp, sha256, META_PIXEL_ID } from '../lib/metaPixel';
 import { User, Mail, CreditCard, MapPin, Phone, Calendar, Hash, Lock, ShieldCheck, QrCode, Copy, CheckCheck, Clock, CheckCircle2 } from 'lucide-react';
 
 const IRONPAY_API_URL = 'https://api.ironpayapp.com.br/api/public/v1/transactions';
@@ -43,6 +43,44 @@ export default function Checkout() {
     cep: '', endereco: '', bairro: '', cidade: '', estado: '', numero: '',
     numCartao: '', nomeCartao: '', validade: '', cvv: ''
   });
+
+  // ── InitiateCheckout: garantido ao abrir /checkout ────────────────────────
+  // Antes o evento só saía do botão do carrinho lateral; quem chegava direto
+  // na URL do checkout (ou recarregava a página) nunca gerava InitiateCheckout.
+  // Aqui ele é disparado no mount, uma única vez, reaproveitando o event_id
+  // vindo do carrinho quando existir (deduplicação no Meta).
+  const initiateCheckoutSent = useRef(false);
+
+  useEffect(() => {
+    if (initiateCheckoutSent.current) return;
+    if (!produto || !produto.preco || produto.preco <= 0) return;
+
+    initiateCheckoutSent.current = true;
+
+    const contentIds: string[] = [];
+    const prodId = searchParams.get('id');
+    if (prodId) {
+      contentIds.push(prodId);
+    } else if (cartItems.length > 0) {
+      contentIds.push(...cartItems.map(i => i.product.id));
+    }
+    if (contentIds.length === 0) contentIds.push('checkout');
+
+    const numItems = cartItems.length > 0
+      ? totalItems
+      : (parseInt(searchParams.get('qty') || '1') || 1);
+
+    const priorEventId = consumeInitiateCheckoutId();
+
+    trackInitiateCheckout({
+      value: Number(produto.preco) || 0,
+      numItems,
+      contentIds,
+      currency: 'BRL',
+      userData: { fbc: getFbc(), fbp: getFbp() },
+      eventId: priorEventId || undefined,
+    }).catch(err => console.warn('[Checkout] InitiateCheckout falhou:', err));
+  }, [produto.preco, cartItems.length, totalItems, searchParams]);
 
   useEffect(() => {
     const id = searchParams.get('id');

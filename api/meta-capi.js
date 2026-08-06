@@ -8,12 +8,13 @@
  * Para testar, use /api/meta-capi/test — essa rota é que envia test_event_code.
  */
 
-const PIXEL_ID     = process.env.META_PIXEL_ID     || '2081548536080257';
-const ACCESS_TOKEN = process.env.META_ACCESS_TOKEN || '';
+import { META_PIXEL_ID, META_ACCESS_TOKEN, META_CAPI_URL } from './_meta-config.js';
+const PIXEL_ID     = META_PIXEL_ID;
+const ACCESS_TOKEN = META_ACCESS_TOKEN;
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://xnadtzeyynoblrbncltt.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuYWR0emV5eW5vYmxyYm5jbHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2NjUxNjksImV4cCI6MjEwMTI0MTE2OX0.rRFwNQn_AjcY48QmaDczfww0ND3R5MC0_6UzumAJhzM';
 
-const CAPI_URL = `https://graph.facebook.com/v21.0/${PIXEL_ID}/events`;
+const CAPI_URL     = META_CAPI_URL;
 
 async function saveEventToSupabase(eventName, payload, capiResponse) {
   if (!SUPABASE_KEY) return;

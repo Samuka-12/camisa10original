@@ -157,13 +157,20 @@ const SideCart = () => {
     console.log("Iniciando checkout com itens:", items);
     
     // Dispara InitiateCheckout antes de redirecionar
-    const { trackInitiateCheckout, getFbc, getFbp } = await import("@/lib/metaPixel");
-    
+    const { trackInitiateCheckout, markInitiateCheckout, generateEventId, getFbc, getFbp } =
+      await import("@/lib/metaPixel");
+
+    // Mesmo event_id no carrinho e no /checkout -> Meta deduplica e o evento
+    // nunca se perde no reload provocado pelo window.location.href abaixo.
+    const icEventId = generateEventId("InitiateCheckout");
+    markInitiateCheckout(icEventId);
+
     await trackInitiateCheckout({
       value: finalCartPrice,
       numItems: totalItems,
       contentIds: items.map(i => i.product.id),
-      userData: { fbc: getFbc(), fbp: getFbp() }
+      userData: { fbc: getFbc(), fbp: getFbp() },
+      eventId: icEventId,
     });
 
     const origin = window.location.origin;

@@ -239,6 +239,36 @@ export async function trackAddToCart(opts: {
   });
 }
 
+// ─── InitiateCheckout: ponte entre carrinho e página /checkout ────────────────
+// O botão do carrinho navega com `window.location.href`, o que recarrega a
+// página inteira e pode fazer o evento do fbq se perder antes do envio.
+// Por isso guardamos o event_id em sessionStorage: a página /checkout reenvia
+// o MESMO event_id no mount, e o Meta deduplica automaticamente.
+
+const IC_STORAGE_KEY = '_c10_initiate_checkout';
+
+/** Guarda o event_id de InitiateCheckout antes de uma navegação com reload */
+export function markInitiateCheckout(eventId: string): void {
+  try {
+    sessionStorage.setItem(IC_STORAGE_KEY, JSON.stringify({ id: eventId, t: Date.now() }));
+  } catch (_) { /* noop */ }
+}
+
+/** Recupera (e limpa) um event_id de InitiateCheckout recente */
+export function consumeInitiateCheckoutId(maxAgeMs = 5 * 60 * 1000): string | null {
+  try {
+    const raw = sessionStorage.getItem(IC_STORAGE_KEY);
+    if (!raw) return null;
+    sessionStorage.removeItem(IC_STORAGE_KEY);
+    const parsed = JSON.parse(raw) as { id?: string; t?: number };
+    if (!parsed?.id || !parsed?.t) return null;
+    if (Date.now() - parsed.t > maxAgeMs) return null;
+    return parsed.id;
+  } catch (_) {
+    return null;
+  }
+}
+
 /** InitiateCheckout — entrada no checkout */
 export async function trackInitiateCheckout(opts: {
   value: number;
@@ -263,6 +293,7 @@ export async function trackInitiateCheckout(opts: {
     custom_data: params,
   });
 }
+
 
 /** Purchase — compra confirmada */
 export async function trackPurchase(opts: {

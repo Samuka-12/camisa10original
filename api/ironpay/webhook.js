@@ -17,14 +17,15 @@
  *   que o Meta deduplique corretamente com o evento disparado via Pixel (fbq).
  */
 
-const { createHash } = require('crypto');
+import { META_PIXEL_ID, META_ACCESS_TOKEN, META_CAPI_URL } from '../_meta-config.js';
+import { createHash } from 'crypto';
 
 const IRONPAY_TOKEN   = process.env.IRONPAY_TOKEN   || 'qoVerJe5Jw33aHINratQw4XFdc4gtQrEPFJ9QE7CRz22JyHupjVT0h8IdmIf';
-const PIXEL_ID        = process.env.META_PIXEL_ID   || '2081548536080257';
-const ACCESS_TOKEN    = process.env.META_ACCESS_TOKEN || '';
+const PIXEL_ID     = META_PIXEL_ID;
+const ACCESS_TOKEN = META_ACCESS_TOKEN;
 const SUPABASE_URL    = process.env.SUPABASE_URL    || 'https://xnadtzeyynoblrbncltt.supabase.co';
 const SUPABASE_KEY    = process.env.SUPABASE_SERVICE_KEY || '';
-const CAPI_URL        = `https://graph.facebook.com/v21.0/${PIXEL_ID}/events`;
+const CAPI_URL     = META_CAPI_URL;
 const xtrackyToken    = 'f4d9f616-1acf-4191-bb7c-d03f8a756ce0';
 const xtrackyUrl      = 'https://api.xtracky.com/api/integrations/api';
 
@@ -128,14 +129,19 @@ async function saveEventToSupabase(eventName, capiEvent, capiResponse) {
  * @param {object} options      - Opções adicionais (client_ip, user_agent, etc.)
  */
 async function sendCapiPurchase(payload, isPaid, metaEventId, options = {}) {
-  if (!ACCESS_TOKEN || !isPaid) return null;
+  if (!isPaid) return null;
+  if (!ACCESS_TOKEN) {
+    console.error('[ironpay/webhook] META_ACCESS_TOKEN ausente — Purchase NAO enviado ao Meta.');
+    return null;
+  }
 
   const amount  = payload.amount ? payload.amount / 100 : 0;
   const orderId = payload.id || payload.transaction_id || 'IRONPAY-' + Date.now();
 
   // ── Advanced Matching com SHA-256 ────────────────────────────────────────
-  const email = payload.customer?.email || '';
-  const phone = payload.customer?.phone_number || payload.customer?.phone || '';
+  const email = payload.customer?.email || payload.client?.email || '';
+  const phone = payload.customer?.phone_number || payload.customer?.phone
+    || payload.client?.phone_number || payload.client?.phone || '';
   const name  = payload.customer?.name || payload.client?.name || '';
   const nameParts = name.trim().split(' ');
   const fn = nameParts[0] || '';
@@ -221,9 +227,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    const payload = req.body;
+    // A IronPay ora envia o objeto da transação na raiz, ora dentro de `data`.
+    // Normaliza para que status/customer/amount sejam sempre encontrados.
+    const raw = req.body || {};
+    const payload =
+      raw.data && typeof raw.data === 'object' && (raw.data.status || raw.data.customer || raw.data.amount)
+        ? { ...raw.data, ...(raw.status ? { status: raw.status } : {}) }
+        : raw;
 
-    console.log('[ironpay/webhook] Payload recebido:', JSON.stringify(payload));
+    console.log('[ironpay/webhook] Payload recebido:', JSON.stringify(raw));
 
     // Validação do token da IronPay (enviado no header ou no body)
     const tokenHeader = req.headers['x-ironpay-token'] || req.headers['authorization']?.replace('Bearer ', '');
@@ -242,7 +254,8 @@ export default async function handler(req, res) {
       || payload.data?.status
       || 'pending';
 
-    const isPaid = ['paid', 'approved', 'PAID', 'authorized', 'paid_out', 'captured'].includes(statusOriginal);
+    const isPaid = ['paid', 'approved', 'authorized', 'paid_out', 'captured', 'completed', 'success']
+      .includes(String(statusOriginal).toLowerCase());
 
     // Determinar método de pagamento
     const paymentMethod = payload.payment_method
