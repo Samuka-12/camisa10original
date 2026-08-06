@@ -17,10 +17,15 @@
 
 const FALLBACK_PIXEL_ID = '2081548536080257';
 const FALLBACK_ACCESS_TOKEN =
-  'EAAPBlif7QZBgBSOOSZAssYWoPE1Xq0JKvJapdb30r87ZCZB7vwjac4qaIRGoMj9DZCxLx43jD4aOmpDBygS2BUiuR2mrcqCQh2jjuFB2yexhdVDxGB2dCkOMe0FGKJD4k3xPnlwZCI47DFpF0QOT0ZCzqbvTTCZBBQZB7iE2ZBtwM3z7aZBPfcTsZBYvOMOeENGlvQZDZD';
+  'EAAPBlif7QZBgBSHLMQ5eDDtQYcgCKjWt3mrIvsyW0F6zkRZCYTzow1HtTBYgpQfH5OcZAHTvoLVii4d4ybpVe3S6svjEgBwChWLRDR2ZCD91J1yLag06xnMEC0gdiODylinxMZB58MpGaIJVZALU9b6YBktHidYzvsPm8ytIsvCnChibXFl1AWFq1ggTZCk2gZDZD';
 
-export const META_PIXEL_ID = process.env.META_PIXEL_ID || FALLBACK_PIXEL_ID;
-export const META_ACCESS_TOKEN = process.env.META_ACCESS_TOKEN || FALLBACK_ACCESS_TOKEN;
+// Remove aspas, espaços e quebras de linha (\n / \r) que costumam vir coladas
+// no valor definido no painel de Environment Variables.
+const clean = (value) =>
+  typeof value === 'string' ? value.trim().replace(/^["']|["']$/g, '').replace(/[\r\n\s]/g, '') : '';
+
+export const META_PIXEL_ID = clean(process.env.META_PIXEL_ID) || FALLBACK_PIXEL_ID;
+export const META_ACCESS_TOKEN = clean(process.env.META_ACCESS_TOKEN) || FALLBACK_ACCESS_TOKEN;
 export const META_GRAPH_VERSION = 'v21.0';
 export const META_CAPI_URL = `https://graph.facebook.com/${META_GRAPH_VERSION}/${META_PIXEL_ID}/events`;
 
