@@ -137,22 +137,27 @@ export function buildPurchaseEvent(payload, { metaEventId, eventSourceUrl, ...op
     if (!userData[key]) delete userData[key];
   });
 
+  const overrides = options.customData || {};
+  const customData = {
+    order_id: orderId,
+    currency: overrides.currency || 'BRL',
+    value,
+    content_type: 'product',
+    content_ids: overrides.content_ids && overrides.content_ids.length ? overrides.content_ids : [orderId],
+    num_items: Number(overrides.num_items) > 0 ? Number(overrides.num_items) : 1,
+    payment_method: payload.payment_method || payload.type || 'unknown',
+  };
+  if (overrides.content_name) customData.content_name = overrides.content_name;
+  if (overrides.contents) customData.contents = overrides.contents;
+
   return {
     event_name: 'Purchase',
     event_time: Math.floor(Date.now() / 1000),
     event_id: eventId,
     event_source_url: eventSourceUrl || 'https://camisa10original.com.br/checkout',
-    action_source: 'website',
+    action_source: options.action_source || 'website',
     user_data: userData,
-    custom_data: {
-      order_id: orderId,
-      currency: 'BRL',
-      value,
-      content_type: 'product',
-      content_ids: [orderId],
-      num_items: 1,
-      payment_method: payload.payment_method || payload.type || 'unknown',
-    },
+    custom_data: customData,
   };
 }
 
