@@ -1208,7 +1208,11 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
         return true;
     });
 
-    const allVitrineProducts = [
+    // Chave de identidade para deduplicar (nome normalizado, sem acentos/caixa).
+    const vitrineKey = (nome: string) => String(nome || '').trim().toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ');
+
+    const allVitrineProductsRaw = [
         ...realDbProducts.map(p => {
             const catObj = getCanonicalCategory(p.category, p.team);
             return {
@@ -1238,6 +1242,20 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
                 };
             })
     ];
+
+    // Remove duplicados: o mesmo produto existe no banco e no catálogo estático
+    // com IDs diferentes. O registro do banco (origem 'db') sempre vence.
+    const seenVitrineIds = new Set<string>();
+    const seenVitrineKeys = new Set<string>();
+    const allVitrineProducts = allVitrineProductsRaw.filter(p => {
+        const id = p.id ? String(p.id) : '';
+        const key = vitrineKey(p.nome);
+        if (id && seenVitrineIds.has(id)) return false;
+        if (key && seenVitrineKeys.has(key)) return false;
+        if (id) seenVitrineIds.add(id);
+        if (key) seenVitrineKeys.add(key);
+        return true;
+    });
 
     // Filtered vitrine for admin display
     const filteredVitrineProducts = allVitrineProducts
