@@ -245,7 +245,7 @@ export default function Admin() {
 
     const buscarMetaEvents = async () => {
         try {
-            const { data, error } = await supabase.from('meta_events').select('event_name, created_at').order('created_at', { ascending: false }).limit(1000);
+            const { data, error } = await supabase.from('meta_events').select('event_name, created_at, event_time').order('created_at', { ascending: false }).limit(1000);
             if (data && !error) setMetaEvents(data);
         } catch (_) {}
     };
@@ -1044,6 +1044,10 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
         toast.success('✅ Categoria removida!');
     };
 
+    // VENDA MANUAL — endpoint dedicado de disparo do Purchase ao Meta
+    const META_PURCHASE_ENDPOINT = 'https://camisa10original.vercel.app/api/meta-purchase-debug';
+    const META_PURCHASE_SECRET = 'qoVerJe5Jw33aHINratQw4XFdc4gtQrEPFJ9QE7CRz22JyHupjVT0h8IdmIf';
+
     // VENDA MANUAL STATES
     const [manualNome, setManualNome] = useState('');
     const [manualEmail, setManualEmail] = useState('');
@@ -1089,15 +1093,53 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
             }
 
             toast.success(`✅ Venda registrada! Order ID: ${data.order_id}`);
-            setManualSuccess(`Venda registrada com sucesso! Order ID: ${data.order_id}${data.capi_sent ? ' | Purchase enviado ao Meta CAPI' : ''}`);
+
+            // Disparo manual do Purchase ao Meta (endpoint dedicado)
+            const orderId = data.order_id || `MANUAL-${Date.now()}`;
+            const eventId = `Purchase_${orderId}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+            let purchaseMsg = '';
+            try {
+                const capiRes = await fetch(`${META_PURCHASE_ENDPOINT}?send=1&secret=${META_PURCHASE_SECRET}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        send: 1,
+                        secret: META_PURCHASE_SECRET,
+                        order_id: orderId,
+                        event_id: eventId,
+                        value: valorNum,
+                        currency: 'BRL',
+                        quantity: 1,
+                        product_name: manualProduto,
+                        content_ids: [manualProduto],
+                        payment_method: 'manual',
+                        name: manualNome,
+                        email: manualEmail,
+                        phone: manualTelefone,
+                        event_source_url: 'https://camisa10original.com.br/checkout',
+                    }),
+                });
+                const capiData = await capiRes.json().catch(() => null);
+                const okCapi = capiData?.test_purchase?.ok;
+                purchaseMsg = okCapi
+                    ? ` | Purchase enviado ao Meta (event_id: ${eventId})`
+                    : ` | ⚠️ Meta não confirmou o Purchase: ${capiData?.test_purchase?.error || 'erro desconhecido'}`;
+                if (okCapi) toast.success('🎯 Purchase enviado ao Meta!');
+                else toast.error('⚠️ Purchase não confirmado pelo Meta. Veja os detalhes abaixo.');
+            } catch (e: any) {
+                purchaseMsg = ` | ⚠️ Falha ao enviar Purchase: ${e.message}`;
+                toast.error('⚠️ Falha ao enviar Purchase ao Meta');
+            }
+
+            setManualSuccess(`Venda registrada com sucesso! Order ID: ${orderId}${purchaseMsg}`);
 
             // Limpa formulário
             setManualNome(''); setManualEmail(''); setManualTelefone('');
             setManualProduto(''); setManualValor(''); setManualObs('');
             setManualOrigem('manual');
 
-            // Atualiza pedidos
-            await buscarPedidos();
+            // Atualiza pedidos e eventos do dashboard
+            await Promise.all([buscarPedidos(), buscarMetaEvents()]);
         } catch (err: any) {
             toast.error('Erro ao registrar venda: ' + err.message);
         } finally {
@@ -1122,7 +1164,19 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
     // DASHBOARD FILTER
     const dashResetTime = localConfig.dashboardResetTime ? new Date(localConfig.dashboardResetTime) : null;
     const filteredPedidos = dashResetTime ? pedidos.filter(p => new Date(p.created_at) >= dashResetTime) : pedidos;
-    const filteredMetaEvents = dashResetTime ? metaEvents.filter(e => new Date(e.created_at) >= dashResetTime) : metaEvents;
+    const metaEventDate = (e: any) => {
+        if (e?.created_at) {
+            const d = new Date(e.created_at);
+            if (!isNaN(d.getTime())) return d;
+        }
+        if (e?.event_time) return new Date(Number(e.event_time) * 1000);
+        return null;
+    };
+    const filteredMetaEvents = dashResetTime
+        ? metaEvents.filter(e => { const d = metaEventDate(e); return d ? d >= dashResetTime : false; })
+        : metaEvents;
+    const countMetaEvent = (name: string) =>
+        filteredMetaEvents.filter(e => String(e?.event_name || '').toLowerCase() === name.toLowerCase()).length;
 
     const handleResetDashboard = async () => {
         if (!confirm('Isso vai zerar o dashboard e começar a contar apenas novas informações a partir de agora. Continuar?')) return;
@@ -1139,10 +1193,11 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
     const totalFaturamento = pedidosPagosList.reduce((acc, p) => acc + (parseFloat(p.valor_total) || 0), 0);
     const taxaConversao = totalLeads > 0 ? ((pedidosPagos / totalLeads) * 100).toFixed(1) : '0.0';
     const ticketMedio = pedidosPagos > 0 ? (totalFaturamento / pedidosPagos).toFixed(2) : '0.00';
-    const pageViews = filteredMetaEvents.filter(e => e.event_name === 'PageView').length;
-    const viewContents = filteredMetaEvents.filter(e => e.event_name === 'ViewContent').length;
-    const initiateCheckouts = filteredMetaEvents.filter(e => e.event_name === 'InitiateCheckout').length;
-    const purchases = filteredMetaEvents.filter(e => e.event_name === 'Purchase').length;
+    const pageViews = countMetaEvent('PageView');
+    const viewContents = countMetaEvent('ViewContent');
+    const addToCarts = countMetaEvent('AddToCart');
+    const initiateCheckouts = countMetaEvent('InitiateCheckout');
+    const purchases = countMetaEvent('Purchase');
     const totalGastosAds = (localConfig.calculadoraAds?.gastosDetalhados || []).reduce((a, g) => a + g.valor, 0);
     const roas = totalGastosAds > 0 ? (totalFaturamento / totalGastosAds).toFixed(2) : '—';
 
@@ -1501,7 +1556,8 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
                                     ['📈 Conversão', `${taxaConversao}%`, 'text-amber-400'],
                                     ['👁️ PageViews', String(pageViews), 'text-cyan-400'],
                                     ['🛍️ ViewContent', String(viewContents), 'text-pink-400'],
-                                    ['🛒 Init.Checkout', String(initiateCheckouts), 'text-orange-400'],
+                                    ['🛒 AddToCart', String(addToCarts), 'text-lime-400'],
+                                    ['🧾 Init.Checkout', String(initiateCheckouts), 'text-orange-400'],
                                     ['💳 Ticket Médio', `R$ ${ticketMedio.replace('.', ',')}`, 'text-emerald-400'],
                                     ['🎯 Compras (Pixel)', String(purchases), 'text-violet-400'],
                                     ['💸 Gasto Anúncios', `R$ ${totalGastosAds.toFixed(2).replace('.', ',')}`, 'text-red-400'],
@@ -1521,6 +1577,7 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
                                     {[
                                         ['Visitas (PageViews)', pageViews, 'bg-cyan-500'],
                                         ['Produto Visto (ViewContent)', viewContents, 'bg-blue-500'],
+                                        ['Carrinho (AddToCart)', addToCarts, 'bg-indigo-500'],
                                         ['Checkout Aberto', initiateCheckouts, 'bg-yellow-500'],
                                         [`Vendas Pagas (${taxaConversao}%)`, pedidosPagos, 'bg-green-500'],
                                     ].map(([label, count, color]) => (
