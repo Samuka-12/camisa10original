@@ -73,8 +73,12 @@ export function normalizeAmount(payload) {
 
 /** Lê e valida as credenciais do Meta no momento da chamada. */
 export function readMetaCredentials(logPrefix = '[meta-purchase]') {
-  const pixelId = process.env.META_PIXEL_ID || META_PIXEL_ID || '';
-  const accessToken = process.env.META_ACCESS_TOKEN || META_ACCESS_TOKEN || '';
+  // Sanitiza: painéis de env costumam colar \n, espaços ou aspas no valor.
+  const clean = (value) =>
+    typeof value === 'string' ? value.trim().replace(/^["']|["']$/g, '').replace(/[\r\n\s]/g, '') : '';
+
+  const pixelId = clean(process.env.META_PIXEL_ID) || clean(META_PIXEL_ID) || '';
+  const accessToken = clean(process.env.META_ACCESS_TOKEN) || clean(META_ACCESS_TOKEN) || '';
 
   const pixelSource = process.env.META_PIXEL_ID ? 'env' : 'fallback';
   const tokenSource = process.env.META_ACCESS_TOKEN ? 'env' : 'fallback';
