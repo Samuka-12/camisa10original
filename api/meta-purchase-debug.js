@@ -19,8 +19,46 @@ import { META_GRAPH_VERSION } from './_meta-config.js';
 const LOG = '[meta-purchase-debug]';
 const SECRET = process.env.IRONPAY_TOKEN || 'qoVerJe5Jw33aHINratQw4XFdc4gtQrEPFJ9QE7CRz22JyHupjVT0h8IdmIf';
 
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://xnadtzeyynoblrbncltt.supabase.co';
+const SUPABASE_KEY =
+  process.env.SUPABASE_SERVICE_KEY ||
+  process.env.VITE_SUPABASE_SERVICE_KEY ||
+  process.env.VITE_SUPABASE_ANON_KEY ||
+  '';
+
+/** Persiste o Purchase na tabela meta_events para o dashboard do Admin. */
+async function saveEventToSupabase(capiEvent, capiResponse) {
+  if (!SUPABASE_KEY || !capiEvent) return;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/meta_events`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify({
+        event_name: capiEvent.event_name,
+        event_id: capiEvent.event_id || null,
+        event_time: capiEvent.event_time,
+        source_url: capiEvent.event_source_url || null,
+        email_hash: capiEvent.user_data?.em || null,
+        phone_hash: capiEvent.user_data?.ph || null,
+        custom_data: capiEvent.custom_data || null,
+        capi_response: capiResponse || null,
+        action_source: capiEvent.action_source || 'website',
+        created_at: new Date().toISOString(),
+      }),
+    });
+  } catch (err) {
+    console.error(`${LOG} Supabase save error:`, err.message);
+  }
+}
+
 export default async function handler(req, res) {
-  if (req.method !== 'GET') {
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
@@ -69,20 +107,59 @@ export default async function handler(req, res) {
     }
   }
 
-  if (req.query?.send === '1') {
-    if (req.query?.secret !== SECRET) {
+  const body = (req.method === 'POST' && req.body && typeof req.body === 'object') ? req.body : {};
+  const sendFlag = req.query?.send === '1' || body.send === 1 || body.send === '1' || body.send === true;
+
+  if (sendFlag) {
+    const secret = req.query?.secret || body.secret;
+    if (secret !== SECRET) {
       return res.status(401).json({ ...result, error: 'secret inválido para envio de teste' });
     }
+
+    // Venda real (manual) quando os dados chegam no corpo; caso contrário, purchase de teste.
+    const hasRealSale = Number(body.value) > 0;
+    const orderId = body.order_id || `DEBUG-${Date.now()}`;
+    const valueReais = hasRealSale ? Number(body.value) : 0.01;
+    const quantity = Number(body.quantity) > 0 ? Number(body.quantity) : 1;
+
+    result.mode = hasRealSale ? 'manual_sale' : 'test';
     result.test_purchase = await sendPurchaseToMeta(
       {
-        id: `DEBUG-${Date.now()}`,
+        id: orderId,
         status: 'paid',
-        payment_method: 'pix',
-        amount: 1,
-        customer: { email: 'debug@camisa10original.com.br', phone_number: '11999999999', name: 'Debug Teste' },
+        payment_method: body.payment_method || 'manual',
+        // normalizeAmount interpreta inteiros como centavos
+        amount: Math.round(valueReais * 100),
+        customer: {
+          email: body.email || 'debug@camisa10original.com.br',
+          phone_number: body.phone || '11999999999',
+          name: body.name || 'Debug Teste',
+        },
       },
-      { logPrefix: LOG, client_user_agent: req.headers['user-agent'] },
+      {
+        logPrefix: LOG,
+        client_user_agent: req.headers['user-agent'],
+        metaEventId: body.event_id || undefined,
+        eventSourceUrl: body.event_source_url || undefined,
+        customData: {
+          currency: body.currency || 'BRL',
+          num_items: quantity,
+          content_ids: body.content_ids || [body.product_name || orderId],
+          content_name: body.product_name || undefined,
+          contents: [
+            {
+              id: (body.content_ids && body.content_ids[0]) || body.product_name || orderId,
+              quantity,
+              item_price: Math.round((valueReais / quantity) * 100) / 100,
+            },
+          ],
+        },
+      },
     );
+
+    if (result.test_purchase?.capiEvent) {
+      await saveEventToSupabase(result.test_purchase.capiEvent, result.test_purchase.response || null);
+    }
   }
 
   return res.status(200).json(result);
