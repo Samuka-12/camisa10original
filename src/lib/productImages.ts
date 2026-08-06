@@ -124,11 +124,43 @@ export function normalizeDbProduct(row: any, categoryOverride?: string) {
   };
 }
 
-/** Junta produtos do banco com o catálogo estático, sem duplicar IDs (banco vence). */
+/** Chave de identidade de um produto para deduplicação (nome normalizado). */
+function productKey(p: any): string {
+  const name = String(p?.name ?? p?.nome ?? "").trim();
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ");
+}
+
+/**
+ * Junta produtos do banco com o catálogo estático, sem duplicar.
+ *
+ * A deduplicação usa o ID **e** o nome normalizado: vários produtos existem nas
+ * duas fontes com IDs diferentes (o registro do banco foi recriado), o que fazia
+ * a mesma camisa aparecer duas vezes na vitrine. O registro do banco sempre vence.
+ * Nada é removido do banco nem do catálogo estático — apenas a exibição é única.
+ */
 export function mergePreferDb<A extends { id?: string }, B extends { id?: string }>(
   dbList: A[],
   staticList: B[],
 ): Array<A | B> {
-  const dbIds = new Set(dbList.map((p) => p.id).filter(Boolean));
-  return [...dbList, ...staticList.filter((p) => !p.id || !dbIds.has(p.id))] as Array<A | B>;
+  const seenIds = new Set<string>();
+  const seenKeys = new Set<string>();
+  const result: Array<A | B> = [];
+
+  const push = (p: A | B) => {
+    const id = p?.id ? String(p.id) : "";
+    const key = productKey(p);
+    if (id && seenIds.has(id)) return;
+    if (key && seenKeys.has(key)) return;
+    if (id) seenIds.add(id);
+    if (key) seenKeys.add(key);
+    result.push(p);
+  };
+
+  dbList.forEach(push);
+  staticList.forEach(push);
+  return result;
 }
