@@ -116,9 +116,9 @@ const Category = () => {
         {allProducts.length === 0 ? (
           <p className="text-muted-foreground">Nenhum produto encontrado nesta categoria.</p>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {allProducts.map((p) => (
-              <CategoryProductCard key={p.id} product={p} />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-7">
+            {allProducts.map((p, i) => (
+              <CategoryProductCard key={p.id} product={p} priority={i < 4} />
             ))}
           </div>
         )}
@@ -128,18 +128,22 @@ const Category = () => {
   );
 };
 
-const CategoryProductCard = ({ product }: { product: any }) => {
+const CategoryProductCard = ({ product, priority = false }: { product: any; priority?: boolean }) => {
   return (
     <Link
       to={`/produto/${product.id}`}
       className="group bg-card rounded-xl border border-border overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
     >
-      <div className="aspect-square overflow-hidden bg-secondary flex items-center justify-center p-4">
+      <div className="aspect-square overflow-hidden bg-secondary flex items-center justify-center p-2">
         <img
-          src={product.image}
+          src={product.image || "/placeholder.svg"}
           alt={product.name}
-          loading="lazy"
-          className="max-w-[78%] max-h-[78%] object-contain group-hover:scale-105 transition-transform duration-500"
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : "auto"}
+          decoding="async"
+          width={512}
+          height={512}
+          className="max-w-[92%] max-h-[92%] object-contain group-hover:scale-105 transition-transform duration-500"
           onError={(e) => {
             const t = e.target as HTMLImageElement;
             if (t.src !== '/placeholder.svg') t.src = '/placeholder.svg';
