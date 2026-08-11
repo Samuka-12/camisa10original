@@ -88,10 +88,27 @@ export function getGalleryVideos(row: any): string[] {
 
 const STORE_CONFIG_ID = "00000000-0000-0000-0000-000000000000";
 
+/**
+ * Produtos ocultos APENAS da vitrine (home e páginas de categoria).
+ * Eles continuam existindo no banco e no painel administrativo — aqui apenas
+ * deixam de ser exibidos por estarem duplicados e sem imagem válida.
+ */
+export const HIDDEN_VITRINE_IDS = new Set<string>([
+  "e7f8a9b0-0000-0000-0000-gremio000000", // Grêmio Tricolor (duplicado, sem imagem)
+  "ce318ad5-6e24-455b-9a98-4b84fc26c476", // Liverpool (duplicado, sem imagem)
+  "a6b7c8d9-6666-9999-ffff-666677778888", // Atlético de Madrid (duplicado, sem imagem)
+]);
+
+/** True quando o produto não deve aparecer na vitrine/categorias. */
+export function isHiddenFromVitrine(id?: string | null): boolean {
+  return !!id && HIDDEN_VITRINE_IDS.has(String(id));
+}
+
 /** Registros que NÃO são produtos de vitrine (config da loja e links dinâmicos). */
 export function isVitrineRow(row: any): boolean {
   if (!row) return false;
   if (row.id === "store_config" || row.id === STORE_CONFIG_ID) return false;
+  if (isHiddenFromVitrine(row.id)) return false;
   if (row.nome === "store_config" || row.tipo === "config") return false;
   if (row.tipo === "dinamico" || row.category === "dinamico" || row.team === "Link Dinâmico") return false;
   return true;
