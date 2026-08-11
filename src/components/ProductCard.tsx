@@ -12,9 +12,10 @@ interface ProductCardProps {
   category?: string | string[];
   oldPrice?: string;
   externalCheckoutUrl?: string;
+  priority?: boolean;
 }
 
-const ProductCard = ({ id, image, name, team, price, priceNum, category, oldPrice }: ProductCardProps) => {
+const ProductCard = ({ id, image, name, team, price, priceNum, category, oldPrice, priority = false }: ProductCardProps) => {
   const { getAdjustedPrice, config } = useStoreConfig();
 
   const finalPriceNum = priceNum && category ? getAdjustedPrice(priceNum, category, id) : null;
@@ -43,7 +44,9 @@ const ProductCard = ({ id, image, name, team, price, priceNum, category, oldPric
           <img
             src={image || "/placeholder.svg"}
             alt={name}
-            loading="lazy"
+            loading={priority ? "eager" : "lazy"}
+            fetchPriority={priority ? "high" : "auto"}
+            decoding="async"
             width={512}
             height={512}
             className="max-w-[92%] max-h-[92%] object-contain group-hover:scale-105 transition-transform duration-500"
