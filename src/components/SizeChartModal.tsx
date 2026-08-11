@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { X, Ruler } from "lucide-react";
 
-const SizeChartModal = () => {
+interface SizeChartModalProps {
+  defaultTab?: number;
+}
+
+const SizeChartModal = ({ defaultTab = 1 }: SizeChartModalProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<number>(1);
+  const [activeTab, setActiveTab] = useState<number>(defaultTab);
 
   const tabs = [
     { id: 1, name: "Infantil", img: "/tabela-medidas-1.jpg" },
@@ -15,10 +19,10 @@ const SizeChartModal = () => {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="px-6 py-3 text-sm font-semibold transition-colors text-primary-foreground/80 hover:bg-primary-foreground/10 hover:text-primary-foreground flex items-center gap-2"
+        className="px-6 py-3 text-sm font-semibold transition-colors text-primary hover:bg-primary/10 hover:text-primary flex items-center gap-2 rounded-lg"
       >
         <Ruler className="h-4 w-4" />
-        Tabela de Medidas
+        Consultar Tabela de Medidas
       </button>
 
       {isOpen && (
