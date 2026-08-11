@@ -12,8 +12,22 @@ import { StickyPurchaseBar } from "@/components/StickyPurchaseBar";
 import { supabase } from "@/lib/supabase";
 import { normalizeDbProduct } from "@/lib/productImages";
 import ProductImage from "@/components/ProductImage";
+import SizeChartModal from "@/components/SizeChartModal";
 
 export type VersionType = 'Torcedor' | 'Jogador';
+
+const getSizeChartTab = (name: string = ""): number => {
+  const lower = name.toLowerCase();
+  if (lower.includes("infantil") || lower.includes("juvenil") || lower.includes("kids") || lower.includes("criança")) return 1;
+  if (lower.includes("feminina") || lower.includes("feminino") || lower.includes("women") || lower.includes("woman") || lower.includes("mulher")) return 2;
+  return 3; // Masculina (padrão para camisas de time adulto)
+};
+
+const sizeChartTabName = (tab: number): string => {
+  if (tab === 1) return "Infantil";
+  if (tab === 2) return "Feminina";
+  return "Masculina";
+};
 
 const Product = () => {
   const { id } = useParams<{ id: string }>();
@@ -450,6 +464,14 @@ const Product = () => {
               {!selectedSize && (
                 <p className="text-xs text-red-400 mt-2 font-medium">⚠️ Por favor, selecione um tamanho para continuar</p>
               )}
+            </div>
+
+            {/* Size Chart */}
+            <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 p-3">
+              <div className="text-xs text-muted-foreground">
+                Tabela de medidas: <span className="font-medium text-foreground">{sizeChartTabName(getSizeChartTab(product.name))}</span>
+              </div>
+              <SizeChartModal defaultTab={getSizeChartTab(product.name)} />
             </div>
 
             {/* Countdown timer above buy button */}
