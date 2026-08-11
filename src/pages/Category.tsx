@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { isVitrineRow, normalizeDbProduct, mergePreferDb } from "@/lib/productImages";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { useStoreConfig } from "@/contexts/StoreConfigContext";
+import ProductImage from "@/components/ProductImage";
 
 const STORE_CONFIG_ID = '00000000-0000-0000-0000-000000000000';
 
@@ -50,6 +51,7 @@ const Category = () => {
   const staticProducts = getProductsByCategory(categoryKey);
 
   const [dbProducts, setDbProducts] = useState<any[]>([]);
+  const [dbReady, setDbReady] = useState(false);
 
   useEffect(() => {
     const fetchCategoryProducts = async () => {
@@ -71,6 +73,8 @@ const Category = () => {
         }
       } catch (err) {
         console.error("Erro ao carregar produtos da categoria:", err);
+      } finally {
+        setDbReady(true);
       }
     };
     fetchCategoryProducts();
@@ -113,7 +117,20 @@ const Category = () => {
             <ShieldCheck className="w-6 h-6 text-green-500 fill-green-500/20 animate-pulse" title="Loja Verificada e Segura" />
           )}
         </div>
-        {allProducts.length === 0 ? (
+        {!dbReady ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-7">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="overflow-hidden rounded-xl border border-border bg-card">
+                <div className="aspect-square animate-pulse bg-muted" />
+                <div className="space-y-3 p-4">
+                  <div className="h-3 w-2/5 animate-pulse rounded bg-muted" />
+                  <div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
+                  <div className="h-5 w-1/2 animate-pulse rounded bg-muted" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : allProducts.length === 0 ? (
           <p className="text-muted-foreground">Nenhum produto encontrado nesta categoria.</p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-7">
@@ -134,20 +151,15 @@ const CategoryProductCard = ({ product, priority = false }: { product: any; prio
       to={`/produto/${product.id}`}
       className="group bg-card rounded-xl border border-border overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
     >
-      <div className="aspect-square overflow-hidden bg-secondary flex items-center justify-center p-2">
-        <img
-          src={product.image || "/placeholder.svg"}
+      <div className="relative aspect-square overflow-hidden bg-secondary flex items-center justify-center p-2">
+        <ProductImage
+          src={product.image}
           alt={product.name}
-          loading={priority ? "eager" : "lazy"}
-          fetchPriority={priority ? "high" : "auto"}
-          decoding="async"
           width={512}
           height={512}
+          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          priority={priority}
           className="max-w-[92%] max-h-[92%] object-contain group-hover:scale-105 transition-transform duration-500"
-          onError={(e) => {
-            const t = e.target as HTMLImageElement;
-            if (t.src !== '/placeholder.svg') t.src = '/placeholder.svg';
-          }}
         />
       </div>
       <div className="p-4">

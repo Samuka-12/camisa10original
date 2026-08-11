@@ -11,6 +11,7 @@ import { CountdownTimer } from "@/components/CountdownTimer";
 import { StickyPurchaseBar } from "@/components/StickyPurchaseBar";
 import { supabase } from "@/lib/supabase";
 import { normalizeDbProduct } from "@/lib/productImages";
+import ProductImage from "@/components/ProductImage";
 
 export type VersionType = 'Torcedor' | 'Jogador';
 
@@ -228,16 +229,14 @@ const Product = () => {
                   className="w-full h-full object-contain bg-black"
                 />
               ) : (
-                <img
-                  src={currentMedia?.url || "/placeholder.svg"}
+                <ProductImage
+                  src={currentMedia?.url}
                   alt={product.name}
-                  fetchPriority="high"
-                  decoding="async"
+                  priority
+                  width={900}
+                  height={900}
+                  sizes="(max-width: 1024px) 100vw, 50vw"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    if (target.src !== "/placeholder.svg") target.src = "/placeholder.svg";
-                  }}
                 />
               )}
 
@@ -287,16 +286,13 @@ const Product = () => {
                         <span className="text-[8px] font-bold mt-0.5">VÍDEO</span>
                       </div>
                     ) : (
-                      <img 
-                        src={media.url || "/placeholder.svg"} 
+                      <ProductImage
+                        src={media.url}
                         alt="" 
-                        loading="lazy"
-                        decoding="async"
+                        width={128}
+                        height={128}
+                        sizes="64px"
                         className="w-full h-full object-cover" 
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          if (target.src !== "/placeholder.svg") target.src = "/placeholder.svg";
-                        }}
                       />
                     )}
                   </button>

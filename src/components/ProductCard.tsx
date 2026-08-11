@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useStoreConfig } from "@/contexts/StoreConfigContext";
 import { getProductPromotions, promotionLabel } from "@/lib/promotions";
+import ProductImage from "./ProductImage";
 
 interface ProductCardProps {
   id?: string;
@@ -40,22 +41,15 @@ const ProductCard = ({ id, image, name, team, price, priceNum, category, oldPric
   return (
     <Link to={id ? `/produto/${id}` : "#"} className="block">
       <div className="group bg-card rounded-xl border border-border overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-        <div className="aspect-square overflow-hidden bg-secondary flex items-center justify-center p-2">
-          <img
-            src={image || "/placeholder.svg"}
+        <div className="relative aspect-square overflow-hidden bg-secondary flex items-center justify-center p-2">
+          <ProductImage
+            src={image}
             alt={name}
-            loading={priority ? "eager" : "lazy"}
-            fetchPriority={priority ? "high" : "auto"}
-            decoding="async"
             width={512}
             height={512}
+            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            priority={priority}
             className="max-w-[92%] max-h-[92%] object-contain group-hover:scale-105 transition-transform duration-500"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              if (target.src !== "/placeholder.svg") {
-                target.src = "/placeholder.svg";
-              }
-            }}
           />
         </div>
         <div className="p-4">
