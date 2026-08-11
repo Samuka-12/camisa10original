@@ -39,6 +39,7 @@ const ProductSection = ({ title, products, id }: ProductSectionProps) => {
               category={product.category}
               oldPrice={product.oldPrice}
               externalCheckoutUrl={product.externalCheckoutUrl}
+              priority={i < 4}
             />
           ))}
         </div>
