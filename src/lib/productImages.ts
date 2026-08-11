@@ -169,6 +169,8 @@ export function mergePreferDb<A extends { id?: string }, B extends { id?: string
 
   const push = (p: A | B) => {
     const id = p?.id ? String(p.id) : "";
+    if (isHiddenFromVitrine(id)) return; // duplicados sem imagem: ocultos da vitrine
+
     const key = productKey(p);
     if (id && seenIds.has(id)) return;
     if (key && seenKeys.has(key)) return;
