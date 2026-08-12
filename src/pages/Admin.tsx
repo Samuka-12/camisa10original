@@ -3165,7 +3165,7 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div className="bg-slate-950 p-3 rounded-xl border border-white/5">
                                         <span className="text-[10px] text-gray-500 font-bold uppercase block">Meta Pixel ID</span>
-                                        <span className="text-xs font-mono text-white font-bold">2081548536080257</span>
+                                        <span className="text-xs font-mono text-white font-bold">1075822341637086</span>
                                     </div>
                                     <div className="bg-slate-950 p-3 rounded-xl border border-white/5">
                                         <span className="text-[10px] text-gray-500 font-bold uppercase block">Eventos Rastreados</span>

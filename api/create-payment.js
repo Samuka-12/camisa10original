@@ -83,16 +83,22 @@ export default async function handler(req, res) {
               tangible: true
             }];
 
-        // ── META EVENT ID PARA DEDUPLICAÇÃO ────────────────────────────────
-        // O frontend envia meta_event_id no body para deduplicação Pixel + CAPI
+        // Contexto de atribuição. O Purchase só será enviado pelo webhook após
+        // confirmação do pagamento, usando este mesmo event_id.
         const metaEventId = body.meta_event_id || `Purchase_${Date.now()}_${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0')}`;
+        const tracking = {
+            fbp: typeof body.tracking?.fbp === 'string' ? body.tracking.fbp : '',
+            fbc: typeof body.tracking?.fbc === 'string' ? body.tracking.fbc : '',
+        };
 
         const payload = {
             amount: amountInCents,
             offer_hash: resolvedOfferHash,
             payment_method: paymentMethod,
             installments: installments,
-            meta_event_id: metaEventId, // <-- Enviado para a IronPay para deduplicação
+            meta_event_id: metaEventId,
+            metadata: { meta_event_id: metaEventId, ...tracking },
+            tracking,
             customer: {
                 name: body.client?.name || 'Cliente',
                 email: body.client?.email || 'cliente@email.com',

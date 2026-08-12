@@ -66,6 +66,15 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'event_name required' });
   }
 
+  // Purchase deve vir exclusivamente da confirmação de pagamento recebida da
+  // IronPay em /api/ironpay/webhook. Assim, Pix gerado ou checkout iniciado
+  // jamais é contabilizado como venda pela CAPI.
+  if (eventName === 'Purchase') {
+    return res.status(403).json({
+      error: 'Purchase must be sent by the IronPay payment-confirmation webhook.',
+    });
+  }
+
   const capiEvent = {
     event_name:        eventName,
     event_time:        payload.event_time        || Math.floor(Date.now() / 1000),

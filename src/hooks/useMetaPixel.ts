@@ -1,26 +1,24 @@
 /**
- * useMetaPixel — Hook React para rastreamento automático de rotas
+ * useMetaPixel — rastreamento de PageView em rotas internas.
  *
- * Dispara PageView no Meta Pixel + CAPI a cada mudança de rota.
- * Deve ser usado dentro do BrowserRouter (App.tsx).
+ * O primeiro PageView já é enviado pelo snippet padrão no <head>. Em uma SPA,
+ * apenas as navegações posteriores precisam disparar outro PageView no browser.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { trackPageView, getFbc, getFbp } from '@/lib/metaPixel';
+import { fbqTrack } from '@/lib/metaPixel';
 
 export function useMetaPixelPageView(): void {
   const location = useLocation();
+  const initialRender = useRef(true);
 
   useEffect(() => {
-    // Pequeno delay para garantir que o fbq já foi carregado
-    const timer = setTimeout(() => {
-      trackPageView({
-        fbc: getFbc(),
-        fbp: getFbp(),
-      });
-    }, 100);
+    if (initialRender.current) {
+      initialRender.current = false;
+      return;
+    }
 
-    return () => clearTimeout(timer);
+    fbqTrack('PageView');
   }, [location.pathname, location.search]);
 }

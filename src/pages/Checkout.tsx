@@ -5,7 +5,7 @@ import { useCart } from '../contexts/CartContext';
 import { registerUsedDiscountsFromOrder } from '../lib/customerDiscounts';
 import { computeCashback, readStoreConfigCache } from '../lib/promotions';
 import { allProducts } from '../data/products';
-import { trackPurchase, trackInitiateCheckout, consumeInitiateCheckoutId, getFbc, getFbp, sha256, META_PIXEL_ID } from '../lib/metaPixel';
+import { trackInitiateCheckout, consumeInitiateCheckoutId, generateEventId, getFbc, getFbp } from '../lib/metaPixel';
 import { User, Mail, CreditCard, MapPin, Phone, Calendar, Hash, Lock, ShieldCheck, QrCode, Copy, CheckCheck, Clock, CheckCircle2 } from 'lucide-react';
 
 const IRONPAY_API_URL = 'https://api.ironpayapp.com.br/api/public/v1/transactions';
@@ -58,6 +58,30 @@ export default function Checkout() {
     cep: '', endereco: '', bairro: '', cidade: '', estado: '', numero: '',
     numCartao: '', nomeCartao: '', validade: '', cvv: ''
   });
+
+  const persistPurchaseContext = async (
+    transactionId: string | null | undefined,
+    metaEventId: string,
+    fbp: string,
+    fbc: string,
+  ) => {
+    if (!transactionId) return;
+
+    try {
+      await fetch('/api/meta-capi-purchase-id', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transaction_id: transactionId,
+          meta_event_id: metaEventId,
+          fbp,
+          fbc,
+        }),
+      });
+    } catch (error) {
+      console.warn('[Checkout] Falha ao salvar contexto de atribuição Meta:', error);
+    }
+  };
 
   // ── InitiateCheckout: garantido ao abrir /checkout ────────────────────────
   // Antes o evento só saía do botão do carrinho lateral; quem chegava direto
@@ -258,9 +282,14 @@ export default function Checkout() {
     setPixData(null);
 
     try {
+      const metaEventId = generateEventId('Purchase');
+      const fbp = getFbp();
+      const fbc = getFbc();
       const payload = {
         amount: produto.preco,
         payment_method: 'pix',
+        meta_event_id: metaEventId,
+        tracking: { fbp, fbc },
         client: {
           name: formData.nome,
           email: formData.email,
@@ -298,6 +327,7 @@ export default function Checkout() {
       });
       
       await salvarDadosNoPainel('pix_generated');
+      await persistPurchaseContext(json.transaction_id, json.meta_event_id || metaEventId, fbp, fbc);
     } catch (err: any) {
       setPixErro(err?.message || 'Erro ao conectar com IronPay.');
     } finally {
@@ -321,10 +351,15 @@ export default function Checkout() {
       let expYear = parseInt(ano);
       if (expYear < 100) expYear += 2000;
       
+      const metaEventId = generateEventId('Purchase');
+      const fbp = getFbp();
+      const fbc = getFbc();
       const payload = {
         amount: produto.preco,
         payment_method: 'credit_card',
         installments: parseInt(parcelas),
+        meta_event_id: metaEventId,
+        tracking: { fbp, fbc },
         card: {
           number: formData.numCartao.replace(/\s/g, ''),
           holder_name: formData.nomeCartao,
@@ -362,61 +397,10 @@ export default function Checkout() {
 
       if (json.status === 'success' && (json.payment_method === 'pix' || (json.card && json.card.status === 'aprovado'))) {
         await salvarDadosNoPainel('paid');
+        await persistPurchaseContext(json.transaction_id, json.meta_event_id || metaEventId, fbp, fbc);
 
-        // ── Disparar evento Purchase para o Meta Pixel + CAPI ──────────────
-        // Gera um event_id único para deduplicação com o webhook
-        const purchaseEventId = `Purchase_${Date.now()}_${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0')}`;
-
-        // Prepara user_data com hashes SHA-256 para Advanced Matching
-        const emailHash = await sha256(formData.email || '');
-        const phoneHash = await sha256((formData.telefone || '').replace(/\D/g, ''));
-        const nameParts = (formData.nome || '').trim().split(' ');
-        const fnHash = await sha256(nameParts[0] || '');
-        const lnHash = await sha256(nameParts.slice(1).join(' ') || '');
-
-        // Extrai product IDs do produto exibido
-        const contentIds: string[] = [];
-        const prodId = searchParams.get('id');
-        if (prodId) {
-          contentIds.push(prodId);
-        } else if (cartItems.length > 0) {
-          contentIds.push(...cartItems.map(i => i.product.id));
-        }
-        if (contentIds.length === 0) contentIds.push('checkout');
-
-        const numItems = cartItems.length > 0 ? totalItems : (parseInt(searchParams.get('qty') || '1') || 1);
-
-        await trackPurchase({
-          orderId: json.transaction_id || `ORD-${Date.now()}`,
-          value: Number(produto.preco) || 0,
-          contentIds,
-          numItems,
-          currency: 'BRL',
-          userData: {
-            em: emailHash,
-            ph: phoneHash,
-            fn: fnHash,
-            ln: lnHash,
-            fbc: getFbc(),
-            fbp: getFbp(),
-          },
-          eventId: purchaseEventId,
-        });
-
-        // Enviar o meta_event_id para o servidor (usado pelo webhook para deduplicação)
-        try {
-          await fetch('/api/meta-capi-purchase-id', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              transaction_id: json.transaction_id,
-              meta_event_id: purchaseEventId,
-            }),
-          });
-        } catch (e) {
-          console.warn('[Checkout] Falha ao salvar meta_event_id:', e);
-        }
-
+        // Purchase não é emitido aqui. O webhook da IronPay é a única fonte de
+        // confirmação e envia o evento server-side após o pagamento efetivo.
         setAprovado(true);
       } else {
         throw new Error(json?.message || json?.error || 'Cartão recusado pela operadora.');

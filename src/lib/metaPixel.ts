@@ -1,6 +1,6 @@
 /**
  * Meta Pixel + Conversions API (CAPI) — Camisa10
- * Pixel ID: 2081548536080257
+ * Pixel ID: 1075822341637086
  *
  * Este módulo centraliza todos os eventos do Meta Pixel (browser) e
  * prepara os payloads para a API de Conversões (server-side via Netlify Function).
@@ -20,7 +20,7 @@
  *  por ambos os canais, evitando dupla contagem nas campanhas.
  */
 
-export const META_PIXEL_ID = '2081548536080257';
+export const META_PIXEL_ID = '1075822341637086';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -146,6 +146,13 @@ export function fbqTrackCustom(
  * valor passado ao fbq no lado cliente.
  */
 export async function sendCapiEvent(payload: MetaEventData): Promise<void> {
+  // Purchase é exclusivo do webhook da IronPay após a confirmação real do pagamento.
+  // Bloquear a rota do navegador evita uma venda antecipada ou duplicada.
+  if (payload.event_name === 'Purchase') {
+    console.warn('[MetaPixel] Purchase bloqueado no navegador; aguardando confirmação da IronPay.');
+    return;
+  }
+
   try {
     const body = {
       ...payload,
@@ -295,8 +302,12 @@ export async function trackInitiateCheckout(opts: {
 }
 
 
-/** Purchase — compra confirmada */
-export async function trackPurchase(opts: {
+/**
+ * Purchase é emitido exclusivamente pelo webhook server-side da IronPay após
+ * confirmação efetiva do pagamento. Esta proteção mantém chamadas legadas
+ * inofensivas até que sejam removidas pelos consumidores do módulo.
+ */
+export async function trackPurchase(_opts: {
   orderId: string;
   value: number;
   contentIds: string[];
@@ -305,21 +316,7 @@ export async function trackPurchase(opts: {
   userData?: MetaEventData['user_data'];
   eventId?: string;
 }): Promise<void> {
-  const eventId = opts.eventId || generateEventId('Purchase');
-  const params = {
-    order_id: opts.orderId,
-    value: opts.value,
-    num_items: opts.numItems,
-    content_ids: opts.contentIds,
-    currency: opts.currency || 'BRL',
-  };
-  fbqTrack('Purchase', params, eventId);
-  await sendCapiEvent({
-    event_name: 'Purchase',
-    event_id: eventId,
-    user_data: opts.userData,
-    custom_data: params,
-  });
+  console.warn('[MetaPixel] Purchase bloqueado no navegador; aguardando confirmação da IronPay.');
 }
 
 /** Contact — clique no botão WhatsApp (X1) */
