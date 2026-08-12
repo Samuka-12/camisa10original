@@ -1,27 +1,30 @@
 /**
- * Cliente mínimo server-side do Supabase.
+ * Cliente mínimo server-side do Supabase para rotas privadas.
  *
- * A chave pública abaixo é a mesma usada pelo cliente do painel e não é um
- * segredo. A chave de serviço configurada na Vercel tem prioridade; o fallback
- * só é usado quando uma variável configurada responde 401.
+ * A tabela meta_events possui RLS e aceita auditoria apenas com service_role.
+ * Nunca usa a chave pública do navegador para inserir, consultar deduplicação ou
+ * gravar respostas da CAPI.
  */
 
-// Mantém o mesmo projeto Supabase usado pelo cliente público e pelo painel.
 export const SUPABASE_URL = 'https://xnadtzeyynoblrbncltt.supabase.co';
-const PUBLIC_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuYWR0emV5eW5vYmxyYm5jbHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2NjUxNjksImV4cCI6MjEwMTI0MTE2OX0.rRFwNQn_AjcY48QmaDczfww0ND3R5MC0_6UzumAJhzM';
 
 const candidateKeys = [
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
   process.env.SUPABASE_SERVICE_KEY,
-  process.env.VITE_SUPABASE_SERVICE_KEY,
-  process.env.VITE_SUPABASE_ANON_KEY,
-  PUBLIC_ANON_KEY,
 ].filter((value) => typeof value === 'string' && value.trim());
 
 const keys = [...new Set(candidateKeys.map((value) => value.trim()))];
 
-export async function supabaseRequest(path, options = {}) {
-  let lastResponse = null;
+export function supabaseConfigured() {
+  return keys.length > 0;
+}
 
+export async function supabaseRequest(path, options = {}) {
+  if (!supabaseConfigured()) {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SERVICE_KEY is required for server-side audit access.');
+  }
+
+  let lastResponse = null;
   for (const key of keys) {
     const headers = new Headers(options.headers || {});
     headers.set('apikey', key);
@@ -32,8 +35,4 @@ export async function supabaseRequest(path, options = {}) {
   }
 
   return lastResponse;
-}
-
-export function supabaseConfigured() {
-  return keys.length > 0;
 }
