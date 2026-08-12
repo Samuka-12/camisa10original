@@ -78,6 +78,16 @@ export default function Admin() {
     }, [config]);
 
     // ── TIMES OFICIAIS (lista unificada: estáticos + cadastrados + já usados nos produtos) ──
+    const LOCAL_TEAMS_KEY = 'times_oficiais_custom';
+    const readLocalTeams = (): string[] => {
+        try {
+            const raw = localStorage.getItem(LOCAL_TEAMS_KEY);
+            const arr = raw ? JSON.parse(raw) : [];
+            return Array.isArray(arr) ? arr.filter((t: any) => typeof t === 'string') : [];
+        } catch (_) { return []; }
+    };
+    const [localTeams, setLocalTeams] = useState<string[]>(() => readLocalTeams());
+
     const allTeamsOficiais = React.useMemo(() => {
         const seen = new Map<string, string>();
         const push = (raw?: string) => {
@@ -89,9 +99,10 @@ export default function Admin() {
         };
         getTeamsWithPlayers().forEach(push);
         (localConfig?.timesOficiais || []).forEach(push);
+        localTeams.forEach(push);
         produtos.forEach(p => push(p?.team));
         return Array.from(seen.values());
-    }, [localConfig?.timesOficiais, produtos]);
+    }, [localConfig?.timesOficiais, localTeams, produtos]);
 
     const handleCreateTeam = async (nome: string): Promise<boolean> => {
         const clean = nome.trim();
@@ -101,6 +112,13 @@ export default function Admin() {
             toast.info(`"${clean}" já está cadastrado nos times oficiais.`);
             return true;
         }
+
+        // 1) Persistência local imediata (nunca perde o time, mesmo offline)
+        const nextLocal = [...localTeams, clean];
+        setLocalTeams(nextLocal);
+        try { localStorage.setItem(LOCAL_TEAMS_KEY, JSON.stringify(nextLocal)); } catch (_) {}
+
+        // 2) Persistência no banco (config da loja, compartilhada entre dispositivos)
         const baseConfig = localConfig || config;
         const updatedConfig = {
             ...baseConfig,
@@ -109,9 +127,10 @@ export default function Admin() {
         setLocalConfig(updatedConfig);
         const ok = await saveConfig(updatedConfig);
         if (ok) toast.success(`Time "${clean}" cadastrado e selecionado!`);
-        else toast.error('Não foi possível salvar o novo time.');
-        return ok;
+        else toast.warning(`Time "${clean}" salvo neste navegador, mas não sincronizou com o servidor.`);
+        return true;
     };
+
 
 
     // NEW / EDIT PRODUCT FORM STATE
