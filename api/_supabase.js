@@ -6,7 +6,8 @@
  * só é usado quando uma variável configurada responde 401.
  */
 
-export const SUPABASE_URL = process.env.SUPABASE_URL || 'https://xnadtzeyynoblrbncltt.supabase.co';
+// Mantém o mesmo projeto Supabase usado pelo cliente público e pelo painel.
+export const SUPABASE_URL = 'https://xnadtzeyynoblrbncltt.supabase.co';
 const PUBLIC_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuYWR0emV5eW5vYmxyYm5jbHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2NjUxNjksImV4cCI6MjEwMTI0MTE2OX0.rRFwNQn_AjcY48QmaDczfww0ND3R5MC0_6UzumAJhzM';
 
 const candidateKeys = [
