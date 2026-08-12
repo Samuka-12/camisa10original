@@ -27,7 +27,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "Vista o manto da maior seleção do mundo. Edição 2026/27 com design moderno e detalhes em verde.",
+    description: "Modelo Home 2026/27 da Seleção Brasileira, com a identidade amarela e verde do pentacampeão mundial e acabamento pensado para vestir o manto canarinho.",
     externalCheckoutUrl: "/checkout?id=421a5c9d-63d2-44be-831d-1c01dec4a146"
   },
   {
@@ -40,7 +40,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "A Fúria espanhola em forma de camisa. Vermelho vibrante com detalhes em dourado e azul marinho.",
+    description: "Camisa 2026/27 da Seleção Espanhola, em vermelho tradicional com detalhes que remetem à Fúria Roja e ao futebol de posse espanhol.",
     externalCheckoutUrl: "/checkout?id=0d2e2638-9c47-4637-b278-5bef856687fa"
   },
   {
@@ -53,7 +53,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "As listras albicelestes que carregam a herança de Maradona e Messi. Tricampeã mundial.",
+    description: "Modelo 2026/27 da Seleção Argentina, com as listras albicelestes e a identidade celeste e branca da tricampeã mundial.",
     externalCheckoutUrl: "/checkout?id=da698fa3-abd8-44ee-afba-b4da0ca4f6a5"
   },
   {
@@ -66,7 +66,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O berço do futebol em uma camisa impecável. Elegância britânica com detalhes em vermelho e azul.",
+    description: "Camisa 2026/27 da Seleção Inglesa, combinando a base branca clássica com detalhes inspirados nos Três Leões e na tradição do futebol inglês.",
     externalCheckoutUrl: "/checkout?id=28774c5c-6fe1-439d-b4d2-2d1c274e9df4"
   },
   {
@@ -79,7 +79,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "O manto azul da seleção pentacampeã. Design arrojado com padrão camuflado.",
+    description: "Versão azul 2026/27 da Seleção Brasileira, uma alternativa ao uniforme principal com visual moderno e a mesma identidade da equipe pentacampeã.",
     externalCheckoutUrl: "/checkout?id=cde19a73-e642-4ef8-b518-cbdcc3362403"
   },
   {
@@ -92,7 +92,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "Les Bleus em sua forma mais elegante. Bicampeã mundial, unindo tradição e modernidade.",
+    description: "Modelo 2026/27 da Seleção Francesa, com a elegância azul-marinho dos Les Bleus e detalhes que destacam a tradição bicampeã mundial.",
     externalCheckoutUrl: "/checkout?id=c3f43773-c264-4830-9c97-df85ae1f4d4e"
   },
   {
@@ -105,7 +105,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "A máquina alemã em forma de camisa. Tetracampeã mundial com design retrô-moderno.",
+    description: "Camisa 2026/27 da Seleção Alemã, unindo a identidade germânica a um acabamento contemporâneo para representar a tetracampeã mundial.",
     externalCheckoutUrl: "/checkout?id=9300e288-b4f6-40c4-91a9-414b5475c1ef"
   },
   {
@@ -118,7 +118,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O vermelho de Portugal que conquistou a Europa. Padrão ondulado elegante.",
+    description: "Modelo 2026/27 da Seleção Portuguesa, em vermelho marcante com detalhes que celebram a identidade lusitana e a conquista europeia do país.",
     externalCheckoutUrl: "/checkout?id=d66eef0e-5566-4591-882c-6adb14c77f10"
   },
   {
@@ -131,7 +131,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "A Laranja Mecânica em version away. Design clean e moderno que honra a tradição.",
+    description: "Versão 2026/27 da Seleção Holandesa, com a cor laranja característica da Laranja Mecânica e um desenho atual para os torcedores dos Países Baixos.",
     externalCheckoutUrl: "/checkout?id=4d071167-b4b9-46ee-b982-7b97eacd3f9c"
   },
   {
@@ -144,7 +144,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "A Azzurra que encanta o world. Tetracampeã mundial em branco gelo.",
+    description: "Camisa 2026/27 da Seleção Italiana, com a identidade azul da Azzurra e uma proposta clara que valoriza a tradição tetracampeã da Itália.",
     externalCheckoutUrl: "/checkout?id=2b6ab8d9-1707-4158-93b3-a8c9d2600bb2"
   },
   {
@@ -157,7 +157,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "Vista o orgulho e a resistência da Palestina. Camiseta oficial 2026 com design exclusivo que honra a história e a cultura do país.",
+    description: "Modelo 2026/27 da Seleção Palestina, criado para representar o orgulho nacional com uma identidade visual própria e detalhes que remetem à história do país.",
     externalCheckoutUrl: "/checkout?id=7609f213-55d2-4115-aadd-dc2f92301a4d"
   },
   {
@@ -173,7 +173,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "A garra guarani em forma de camisa. Listras vermelhas e brancas clássicas com detalhes em azul royal. Edição oficial 2026.",
+    description: "Uniforme Home 2026/27 da Seleção Paraguaia, com a combinação tradicional de vermelho e branco e detalhes em azul que reforçam a identidade guarani.",
     externalCheckoutUrl: "/checkout?id=paraguai-2026-home"
   },
 
@@ -188,7 +188,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["retrô"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "O Diavolo em sua era dourada. Camisa manga longa vestida por lendas como Kaká.",
+    description: "Peça retrô inspirada no AC Milan da temporada 2009/10, com a tradição rossonera e a memória de uma geração marcada por grandes nomes do clube.",
     externalCheckoutUrl: "/checkout?id=8efd9895-60a9-4268-9512-a5ff7927be2e"
   },
   {
@@ -201,7 +201,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["retrô"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "A Nerazzurri na era Ronaldo Fenômeno. Pura nostalgia e poder.",
+    description: "Modelo retrô da Inter de Milão 1998/99, com a identidade nerazzurra e o visual de uma época lembrada pela presença de Ronaldo no clube italiano.",
     externalCheckoutUrl: "/checkout?id=3e812368-f2e2-4f45-9fb8-38377d74d038"
   },
 
@@ -215,7 +215,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["retrô"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "A Vecchia Signora campeã da Champions. Relíquia do futebol mundial.",
+    description: "Réplica retrô da Juventus entre 1995 e 1997, resgatando as faixas alvinegras e a estética de uma das fases mais fortes da Vecchia Signora.",
     externalCheckoutUrl: "/checkout?id=82e720a7-a5d3-4c62-ad8c-d03b4e0a2f43"
   },
   {
@@ -228,7 +228,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["retrô"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "A Lazio campeã do Scudetto. Peça rara e exclusiva.",
+    description: "Peça retrô da Lazio 1999/2000, temporada associada ao Scudetto biancoceleste e a um dos elencos mais marcantes da história do clube romano.",
     externalCheckoutUrl: "/checkout?id=16ee2b91-cef3-492c-801c-1680bc64b1d3"
   },
   {
@@ -241,7 +241,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["retrô"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "A Viola de Batistuta em sua fase mais gloriosa. Obra de arte do futebol italiano.",
+    description: "Modelo retrô da Fiorentina 1995/96, com a identidade violeta e a inspiração na equipe que tinha Gabriel Batistuta como um de seus grandes símbolos.",
     externalCheckoutUrl: "/checkout?id=514cd6fb-3b0f-4de4-a1be-5b9283459c5f"
   },
   {
@@ -254,7 +254,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["retrô"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "O Parma da era de ouro do calcio italiano. Representa o auge dos anos 2000.",
+    description: "Camisa retrô do Parma 2002/03, recuperando a estética do clube em sua era de destaque no futebol italiano e europeu.",
     externalCheckoutUrl: "/checkout?id=1e2ced50-987a-48f7-96d6-1ff800ca30bd"
   },
 
@@ -269,7 +269,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Diavolo rossonero em sua versão moderna. DNA do Milan vivo.",
+    description: "Uniforme Home 2026/27 do AC Milan, com a combinação rossonera que identifica o clube e um desenho atual para o torcedor do San Siro.",
     externalCheckoutUrl: "/checkout?id=7424482f-317c-42d4-8fed-086b128eb1d5"
   },
   {
@@ -282,7 +282,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "A Nerazzurri com listras onduladas. Design arrojado e tradição.",
+    description: "Camisa 2026/27 da Inter de Milão, com a identidade azul e preta do clube e um visual contemporâneo para representar a tradição nerazzurra.",
     externalCheckoutUrl: "/checkout?id=f0f3386b-df33-49b8-9af0-57cb918db34a"
   },
   {
@@ -295,7 +295,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "A Vecchia Signora reinventada. Modernidade unida à tradição da Juve.",
+    description: "Modelo 2026/27 da Juventus, mantendo as cores alvinegras da Vecchia Signora em uma proposta atual para os torcedores de Turim.",
     externalCheckoutUrl: "/checkout?id=b143af80-1395-41ea-b960-5dffb7bf95b3"
   },
   {
@@ -308,7 +308,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "A Lupa Capitolina em forma de camisa. Grená profundo e paixão eterna.",
+    description: "Camisa 2026/27 da AS Roma, em sintonia com a identidade grená e amarela do clube e com referências à Lupa Capitolina.",
     externalCheckoutUrl: "/checkout?id=7f27a433-69a0-4a9c-9ff3-5a158d797ca0"
   },
   {
@@ -321,7 +321,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "O azzurro de Nápoles que fez Maradona rei. Magia de Kvaratskhelia.",
+    description: "Modelo 2026/27 do SSC Napoli, com o azul azzurro característico de Nápoles e uma identidade que homenageia a paixão do estádio Diego Armando Maradona.",
     externalCheckoutUrl: "/checkout?id=71af1982-f1ca-4e35-b91e-8e1ad9bfbbb2"
   },
   {
@@ -334,7 +334,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Theatre of Dreams em vermelho vibrante. Old Trafford pulsa nesta camisa.",
+    description: "Camisa 2026/27 do Manchester United, em vermelho tradicional com detalhes que remetem aos Red Devils e à história de Old Trafford.",
     externalCheckoutUrl: "/checkout?id=8a43c8a2-152e-4a96-a9f1-b91db4ab4c07"
   },
   {
@@ -347,7 +347,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "You'll Never Walk Alone em forma de camisa. Tradição e garra de Anfield.",
+    description: "Modelo 2026/27 do Liverpool FC, com o vermelho dos Reds e uma identidade ligada à atmosfera de Anfield e ao lema You'll Never Walk Alone.",
     externalCheckoutUrl: "/checkout?id=ce318ad5-6e24-455b-9a98-4b84fc26c476"
   },
   {
@@ -360,7 +360,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Pride of London em azul royal deslumbrante. Padrão geométrico urbano.",
+    description: "Camisa 2026/27 do Chelsea FC, em azul royal com acabamento moderno e a identidade dos Blues londrinos.",
     externalCheckoutUrl: "/checkout?id=37bf2a9c-fd7f-40ab-a36f-af4873fb508b"
   },
   {
@@ -373,7 +373,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "O sky blue que dominou a Inglaterra. Sinônimo de conquistas.",
+    description: "Modelo 2026/27 do Manchester City, com o sky blue característico dos Citizens e uma proposta atual para os torcedores do Etihad.",
     externalCheckoutUrl: "/checkout?id=8707c163-1b30-4623-bdf2-1145f432e250"
   },
   {
@@ -386,7 +386,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O branco imaculado dos Spurs com detalhes em azul marinho. Tradição londrina.",
+    description: "Camisa 2026/27 do Tottenham Hotspur, em branco com detalhes contrastantes e a identidade dos Spurs do norte de Londres.",
     externalCheckoutUrl: "/checkout?id=ee655070-ed53-40c0-afe3-bb15ac8ea04b"
   },
   {
@@ -399,7 +399,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "A Muralha Amarela em forma de camisa. Paixão e tradição do Dortmund.",
+    description: "Modelo 2026/27 do Borussia Dortmund, com o amarelo e preto da Muralha Amarela e a energia característica do Signal Iduna Park.",
     externalCheckoutUrl: "/checkout?id=e121f324-d1b5-4f8a-b4d4-99822e921f42"
   },
   {
@@ -412,7 +412,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Werkself em vermelho e preto. A equipe que surpreendeu a Europa.",
+    description: "Camisa 2026/27 do Bayer Leverkusen, combinando vermelho e preto para representar o Werkself em sua identidade moderna.",
     externalCheckoutUrl: "/checkout?id=a1b2c3d4-1111-4444-aaaa-111122223333"
   },
   {
@@ -425,7 +425,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "O gigante da Baviera em vermelho clássico. Domínio absoluto do futebol alemão.",
+    description: "Modelo 2026/27 do Bayern de Munique, com o vermelho bávaro e detalhes que expressam a tradição vencedora do clube de Munique.",
     externalCheckoutUrl: "/checkout?id=a315024b-326d-4952-b91c-959882202021"
   },
   {
@@ -438,7 +438,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O design moderno do Leipzig que desafia a tradição. Energia e velocidade.",
+    description: "Camisa 2026/27 do RB Leipzig, com visual contemporâneo e a identidade em vermelho e branco de um dos projetos mais novos do futebol alemão.",
     externalCheckoutUrl: "/checkout?id=a2b3c4d5-2222-5555-bbbb-222233334444"
   },
   {
@@ -451,7 +451,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "A Águia de Frankfurt em preto e branco. Força e determinação alemã.",
+    description: "Modelo 2026/27 do Eintracht Frankfurt, em preto e branco com referências à Águia de Frankfurt e à força da torcida no Deutsche Bank Park.",
     externalCheckoutUrl: "/checkout?id=a3b4c5d6-3333-6666-cccc-333344445555"
   },
   {
@@ -464,7 +464,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "O branco imaculado do clube mais vitorioso da Champions League. Lendas em campo.",
+    description: "Camisa 2026/27 do Real Madrid, com o branco clássico dos Merengues e uma proposta que representa a história do clube mais vencedor da Europa.",
     externalCheckoutUrl: "/checkout?id=a4b5c6d7-4444-7777-dddd-444455556666"
   },
   {
@@ -477,7 +477,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "Més que un club. As listras blaugrana que representam a identidade catalã.",
+    description: "Modelo 2026/27 do FC Barcelona, com a identidade blaugrana e referências à tradição catalã do lema Més que un club.",
     externalCheckoutUrl: "/checkout?id=a5b6c7d8-5555-8888-eeee-555566667777"
   },
   {
@@ -490,7 +490,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Colchonero em listras vermelhas e brancas. Garra e determinação do Wanda.",
+    description: "Camisa 2026/27 do Atlético de Madrid, com as cores do Colchonero e a personalidade competitiva que marca o clube da capital espanhola.",
     externalCheckoutUrl: "/checkout?id=a6b7c8d9-6666-9999-ffff-666677778888"
   },
   {
@@ -503,7 +503,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "A elegância de Paris em azul e vermelho. O brilho da Cidade Luz.",
+    description: "Modelo 2026/27 do Paris Saint-Germain, combinando azul e vermelho em uma proposta inspirada na identidade parisiense do clube.",
     externalCheckoutUrl: "/checkout?id=f37a513c-743a-4933-875b-017646554552"
   },
   {
@@ -516,7 +516,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O branco e azul celeste que representam a paixão do sul da França.",
+    description: "Camisa 2026/27 do Olympique de Marseille, com azul e branco e a identidade do clube que representa a paixão futebolística do sul da França.",
     externalCheckoutUrl: "/checkout?id=46820241-1123-4155-987a-b5ff7927be2e"
   },
   {
@@ -529,7 +529,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "A tradição do Lyon em branco com detalhes em azul e vermelho.",
+    description: "Modelo 2026/27 do Olympique Lyonnais, com a combinação de branco, azul e vermelho que identifica o clube do Rhône.",
     externalCheckoutUrl: "/checkout?id=b7c8d9e0-7777-0000-aaaa-777788889999"
   },
   {
@@ -542,7 +542,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O vermelho e azul do Lille. Tradição do norte da França.",
+    description: "Camisa 2026/27 do LOSC Lille, com a identidade vermelha e azul dos Dogues e um desenho contemporâneo para os torcedores do norte da França.",
     externalCheckoutUrl: "/checkout?id=b8c9d0e1-8888-1111-bbbb-888899990000"
   },
   {
@@ -555,7 +555,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["europeus"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O vermelho e branco do principado. Elegância e estilo mediterrâneo.",
+    description: "Modelo 2026/27 do AS Monaco, destacando a combinação monegasca de vermelho e branco e a elegância do clube do principado.",
     externalCheckoutUrl: "/checkout?id=b9c0d1e2-9999-2222-cccc-999900001111"
   },
 
@@ -570,7 +570,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "O Alviverde Imponente em sua versão mais moderna. Paixão e tradição.",
+    description: "Camisa 2026/27 do Palmeiras, com o verde tradicional do Alviverde e detalhes que representam a história e a força do clube do Allianz Parque.",
     externalCheckoutUrl: "/checkout?id=9781385c-152e-4a96-a9f1-b91db4ab4c07"
   },
   {
@@ -583,7 +583,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Timão em preto e branco. Garra e história em cada fibra.",
+    description: "Modelo 2026/27 do Corinthians, em preto e branco com a identidade do Timão e a tradição da torcida alvinegra do Parque São Jorge.",
     externalCheckoutUrl: "/checkout?id=ce318ad5-6e24-455b-9a98-4b84fc26c476"
   },
   {
@@ -591,12 +591,12 @@ export const allProducts: Product[] = [
     image: `${BASE_URL}/43-saopaulo-frente.png`,
     images: [`${BASE_URL}/43-saopaulo-frente.png`, `${BASE_URL}/43-saopaulo-verso.png`],
     name: "Camiseta São Paulo 2026/27",
-    team: "São Paulo FC",
+    team: "São Paulo",
     price: "R$ 109,93",
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Tricolor Paulista com suas listras horizontais clássicas. Soberano.",
+    description: "Camisa 2026/27 do São Paulo, com as faixas horizontais vermelha, branca e preta que identificam o Tricolor Paulista e a história do Morumbi.",
     externalCheckoutUrl: "/checkout?id=c1d2e3f4-aaaa-bbbb-cccc-111122223333"
   },
 
@@ -610,7 +610,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "O Manto Sagrado rubro-negro. A maior torcida do mundo em campo.",
+    description: "Modelo 2026/27 do Flamengo, com o vermelho e preto do Manto Sagrado e a identidade rubro-negra que acompanha a maior torcida do Brasil.",
     externalCheckoutUrl: "/checkout?id=f37a513c-743a-4933-875b-017646554553"
   },
   {
@@ -623,7 +623,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Tricolor Baiano em design elegante e moderno. Orgulho do Nordeste.",
+    description: "Camisa 2026/27 do Bahia, com a identidade tricolor em azul, vermelho e branco e a tradição do Esquadrão de Aço de Salvador.",
     externalCheckoutUrl: "/checkout?id=c3d4e5f6-cccc-dddd-eeee-333344445555"
   },
   {
@@ -636,7 +636,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "A Estrela Solitária que guia o Glorioso. Tradição alvinegra.",
+    description: "Modelo 2026/27 do Botafogo, com o preto e branco da Estrela Solitária e a tradição do Glorioso no futebol brasileiro.",
     externalCheckoutUrl: "/checkout?id=c4d5e6f7-dddd-eeee-ffff-444455556666"
   },
   {
@@ -649,7 +649,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Tricolor das Laranjeiras em design moderno com listras vermelhas, verde e branca. Paixão do Fluminense.",
+    description: "Camisa 2026/27 do Fluminense, com as listras grená, verde e branca que representam o Tricolor das Laranjeiras.",
     externalCheckoutUrl: "/checkout?id=d4e5f6a7-eeee-ffff-0000-555566667777"
   },
   {
@@ -662,7 +662,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "O Imortal Tricolor em suas listras celestes, pretas e brancas.",
+    description: "Modelo 2026/27 do Grêmio, com as faixas tricolores em azul, preto e branco e a identidade do Imortal do Rio Grande do Sul.",
     externalCheckoutUrl: "/checkout?id=1e2ced50-987a-48f7-96d6-1ff800ca30bc"
   },
   {
@@ -675,7 +675,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "O Galo Forte e Vingador em suas listras alvinegras clássicas.",
+    description: "Camisa 2026/27 do Atlético Mineiro, com as listras alvinegras do Galo e a força do clube de Belo Horizonte.",
     externalCheckoutUrl: "/checkout?id=d6e7f8a9-ffff-0000-1111-666677778888"
   },
   {
@@ -688,7 +688,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "A Raposa em azul vibrante com o escudo do Cruzeiro e as seis estrelas. Edicao especial com design moderno.",
+    description: "Edição especial 2026/27 do Cruzeiro, em azul intenso com as seis estrelas que representam a Raposa e a história celeste de Belo Horizonte.",
     externalCheckoutUrl: "/checkout?id=e8f9a0b1-1111-2222-3333-999900001111"
   },
   {
@@ -701,7 +701,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Furacão em design arrojado e moderno. Força do Paraná.",
+    description: "Modelo 2026/27 do Athletico Paranaense, com a identidade rubro-negra do Furacão e a energia do futebol do Paraná.",
     externalCheckoutUrl: "/checkout?id=d8e9f0a1-1111-2222-3333-888899990000"
   },
   {
@@ -714,7 +714,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Coxa-Branca em suas listras horizontais verdes e brancas.",
+    description: "Camisa 2026/27 do Coritiba, em verde e branco com a identidade do Coxa-Branca e a tradição do Alto da Glória.",
     externalCheckoutUrl: "/checkout?id=d9e0f1a2-2222-3333-4444-999900001111"
   },
   {
@@ -727,7 +727,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Massa Bruta em branco e vermelho. Força do interior paulista.",
+    description: "Modelo 2026/27 do Red Bull Bragantino, com a combinação alvinegra e vermelha do Massa Bruta e o perfil competitivo do clube de Bragança Paulista.",
     externalCheckoutUrl: "/checkout?id=e0f1a2b3-3333-4444-5555-000011112222"
   },
   {
@@ -740,7 +740,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "O Leão do Pici em suas listras tricolores. Orgulho cearense.",
+    description: "Camisa 2026/27 do Fortaleza, com as cores azul, vermelho e branco do Leão do Pici e a identidade tricolor do futebol cearense.",
     externalCheckoutUrl: "/checkout?id=e1f2a3b4-4444-5555-6666-111122223333"
   },
   {
@@ -753,7 +753,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Vozão em preto e branco. Paixão que move o estado do Ceará.",
+    description: "Modelo 2026/27 do Ceará, em preto e branco com a identidade do Vozão e a tradição do clube alvinegro de Porangabuçu.",
     externalCheckoutUrl: "/checkout?id=e2f3a4b5-5555-6666-7777-222233334444"
   },
   {
@@ -766,7 +766,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "A Chape em verde e branco. Renascimento e força do futebol catarinense.",
+    description: "Camisa 2026/27 da Chapecoense, em verde e branco com a identidade da Chape e a força do futebol de Chapecó.",
     externalCheckoutUrl: "/checkout?id=e3f4a5b6-6666-7777-8888-333344445555"
   },
   {
@@ -779,7 +779,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Leão Azul do Pará. Orgulho do futebol paraense.",
+    description: "Modelo 2026/27 do Clube do Remo, em azul com a identidade do Leão Azul e a tradição paraense do Baenão.",
     externalCheckoutUrl: "/checkout?id=e4f5a6b7-7777-8888-9999-444455556666"
   },
   {
@@ -792,7 +792,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Leão do Interior em amarelo e azul. A surpresa do futebol paulista.",
+    description: "Camisa 2026/27 do Mirassol FC, em amarelo e verde com a identidade do Leão do Interior e a ascensão do clube paulista.",
     externalCheckoutUrl: "/checkout?id=e5f6a7b8-8888-9999-0000-555566667777"
   },
   {
@@ -805,7 +805,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "Vista o manto da seleção norueguesa. Edição com design moderno que honra a história e a cultura do país.",
+    description: "Modelo 2026/27 da Seleção Norueguesa, com a identidade vermelha e azul dos Leões e um desenho atual para representar o futebol norueguês.",
     externalCheckoutUrl: "/checkout?id=a1b2c3d4-0000-0000-0000-noruega00000"
   },
   {
@@ -818,7 +818,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "A Albiceleste em sua versão reserva exclusiva. Design preto com estampa ornamental azul e escudo AFA com as 3 estrelas do tricampeonato mundial. Edição especial comemorativa.",
+    description: "Versão reserva preta 2026/27 da Seleção Argentina, com estampa ornamental e detalhes celestes que destacam o tricampeonato mundial da Albiceleste.",
     externalCheckoutUrl: "/checkout?id=b2c3d4e5-0000-0000-0000-argres000000"
   },
   {
@@ -831,7 +831,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "A seleção paraguaia em sua versão reserva com design exclusivo. Azul marinho com estampa marmoreada em azul elétrico e escudo APF. Feita pela Puma para os grandes confrontos.",
+    description: "Versão reserva 2026/27 da Seleção Paraguaia, em azul marmoreado com acabamento exclusivo e a identidade guarani do escudo APF.",
     externalCheckoutUrl: "/checkout?id=c3d4e5f6-0000-0000-0000-parares00000"
   },
   {
@@ -844,7 +844,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "Vista o manto dos Tubarões Azuis de Cabo Verde. Design azul royal com estampa geométrica exclusiva e escudo FCF. Feita pela Capelli Sport, representa a força e a garra da seleção africana.",
+    description: "Camisa 2026/27 da Seleção de Cabo Verde, em azul royal com grafismos marcantes para representar os Tubarões Azuis e a identidade africana do país.",
     externalCheckoutUrl: "/checkout?id=d4e5f6a7-0000-0000-0000-caboverde0000"
   },
   {
@@ -857,7 +857,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "Os Tubarões Azuis em sua versão de goleiro. Amarelo vibrante com detalhes em preto e estampa camuflada sutil. Escudo FCF bordado e tecnologia CS-DRY para máximo conforto.",
+    description: "Modelo de goleiro 2026/27 da Seleção de Cabo Verde, em amarelo vibrante com detalhes contrastantes e a identidade dos Tubarões Azuis.",
     externalCheckoutUrl: "/checkout?id=e5f6a7b8-0000-0000-0000-cverderes0000"
   },
   {
@@ -870,7 +870,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O berço do futebol em sua versão reserva. Vermelho vibrante com estampa sublimada de leões e texto 'Happy and Glorious' na gola. Escudo das Três Leões com estrela dourada. Nike.",
+    description: "Versão reserva vermelha 2026/27 da Seleção Inglesa, com grafismos de leões e detalhes que reinterpretam a identidade dos Três Leões.",
     externalCheckoutUrl: "/checkout?id=f6a7b8c9-0000-0000-0000-inglares0000"
   },
   {
@@ -883,7 +883,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "Vista o manto da Nati suíça. Vermelho vibrante com estampa ondulada exclusiva, cruz suíça bordada e escudo ASF/SFV. Feita pela Puma com tecnologia de alto desempenho.",
+    description: "Camisa 2026/27 da Seleção Suíça, em vermelho com elementos inspirados na cruz nacional e na identidade da Nati helvética.",
     externalCheckoutUrl: "/checkout?id=a7b8c9d0-0000-0000-0000-suica000000"
   },
   {
@@ -896,7 +896,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "O Alviverde em sua versão reserva branca. Design imponente com detalhes em verde e vermelho, escudo bordado e listras que homenageiam as origens italianas do clube. Puma.",
+    description: "Versão reserva branca 2026/27 do Palmeiras, com detalhes verdes e a identidade do Alviverde em uma leitura mais clara do uniforme do clube.",
     externalCheckoutUrl: "/checkout?id=b8c9d0e1-0000-0000-0000-palmres00000"
   },
   {
@@ -909,7 +909,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O azul samurai em sua versão mais moderna. Estampa de linhas onduladas, escudo JFA com o lendário Yatagarasu e bandeira do Japão na gola. Adidas com tecnologia de alto desempenho.",
+    description: "Modelo 2026/27 da Seleção Japonesa, em azul com grafismos inspirados no Japão e a identidade do Samurai Blue representada pelo escudo JFA.",
     externalCheckoutUrl: "/checkout?id=c9d0e1f2-0000-0000-0000-japao0000000"
   },
   {
@@ -922,7 +922,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "Edição especial da Seleção do Japão pela Adidas Originals. Fundo branco com listras verticais coloridas multicoloridas e gola em V com detalhes pretos. Escudo JFA e logotipo do trevo Adidas. Design retrô e vibrante.",
+    description: "Edição especial branca 2026/27 da Seleção Japonesa, com listras verticais multicoloridas e uma leitura retrô da identidade do Samurai Blue.",
     externalCheckoutUrl: "/checkout?id=c9d0e1f2-0000-0000-0000-japao0000001"
   },
   {
@@ -935,7 +935,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XGG", "XXL"],
-    description: "O Manto Sagrado em sua versão reserva branca. Faixa rubro-negra clássica no peito, escudo CRF bordado com estrela dourada. Adidas. A paixão da maior torcida do Brasil.",
+    description: "Versão reserva branca 2026/27 do Flamengo, com faixa rubro-negra no peito e o escudo do Manto Sagrado em destaque.",
     externalCheckoutUrl: "/checkout?id=d0e1f2a3-0000-0000-0000-flamres00000"
   },
   {
@@ -948,7 +948,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Timão em sua versão reserva listrada. Preta com listras verticais brancas clássicas, escudo bordado com âncora e fundação 1910. Nike. Garra e tradição do Parque São Jorge.",
+    description: "Versão reserva preta 2026/27 do Corinthians, com listras brancas e a identidade do Timão em uma interpretação alternativa do uniforme alvinegro.",
     externalCheckoutUrl: "/checkout?id=e1f2a3b4-0000-0000-0000-corires00000"
   },
   {
@@ -961,7 +961,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Tricolor Paulista em sua clássica versão reserva. Listras verticais em vermelho, branco e preto, escudo SPFC bordado com as estrelas. New Balance. A tradição do Morumbi.",
+    description: "Versão reserva tricolor 2026/27 do São Paulo, com listras verticais em vermelho, branco e preto e o escudo do Tricolor Paulista.",
     externalCheckoutUrl: "/checkout?id=f2a3b4c5-0000-0000-0000-spfcres00000"
   },
   {
@@ -974,7 +974,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Glorioso em sua versão reserva. Branca com textura exclusiva, escudo BFC retrô em preto e patrocínio vbet. Fabricada pela Mizuno. Elegância e tradição do clube da Estrela Solitária.",
+    description: "Versão reserva branca 2026/27 do Botafogo, com detalhes pretos e a Estrela Solitária em uma leitura clara do uniforme do Glorioso.",
     externalCheckoutUrl: "/checkout?id=a3b4c5d6-0000-0000-0000-botarfres0000"
   },
   {
@@ -987,7 +987,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Gigante da Colina em sua versão reserva. Branca com a tradicional faixa transversal preta detalhada e a Cruz Vermelha em destaque no peito. Nike com tecnologia Dri-FIT ADV.",
+    description: "Versão reserva branca 2026/27 do Vasco da Gama, com a faixa transversal preta e a Cruz de Malta que identificam o Gigante da Colina.",
     externalCheckoutUrl: "/checkout?id=b4c5d6e7-0000-0000-0000-vascores00000"
   },
   {
@@ -1000,7 +1000,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Galo em sua versão reserva. Branca com detalhes em preto e dourado, escudo CAM com estrela e patrocínio H2bet. Nike com tecnologia Dri-FIT ADV. Elegância e tradição.",
+    description: "Versão reserva branca 2026/27 do Atlético Mineiro, com detalhes escuros e a identidade do Galo em uma proposta alternativa ao uniforme listrado.",
     externalCheckoutUrl: "/checkout?id=c5d6e7f8-0000-0000-0000-atlmgres00000"
   },
   {
@@ -1013,7 +1013,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Colorado em sua versão principal. Vermelha vibrante com detalhes em branco, escudo do Inter bordado e patrocínio Banrisul. Fabricada pela Adidas. A força do Beira-Rio.",
+    description: "Camisa 2026/27 do Internacional, em vermelho com detalhes claros e o escudo colorado que representa a tradição do Beira-Rio.",
     externalCheckoutUrl: "/checkout?id=d6e7f8a9-0000-0000-0000-inter00000000"
   },
   {
@@ -1026,7 +1026,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Imortal Tricolor em sua clássica camisa principal. Listras verticais em azul, preto e branco, escudo bordado e patrocínio Banrisul. Fabricada pela New Balance.",
+    description: "Versão tricolor 2026/27 do Grêmio, com faixas em azul, preto e branco e a identidade do Imortal em seu desenho clássico.",
     externalCheckoutUrl: "/checkout?id=e7f8a9b0-0000-0000-0000-gremio000000"
   },
   {
@@ -1039,7 +1039,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "A Fúria Roja em sua elegante versão reserva. Branca com sutis texturas, logo Adidas Originals retrô e escudo estilizado em vermelho e amarelo. Uma peça de coleção para os amantes do futebol arte.",
+    description: "Versão reserva branca 2026/27 da Seleção Espanhola, com detalhes vermelhos e dourados que preservam a identidade da Fúria Roja.",
     externalCheckoutUrl: "/checkout?id=f8a9b0c1-0000-0000-0000-espanhares0000"
   },
   {
@@ -1052,7 +1052,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "A potência germânica em uma versão retrô moderna. Azul escuro com grafismos texturizados, detalhes em turquesa e logo Adidas Originals. Quatro estrelas acima do escudo para os tetracampeões mundiais.",
+    description: "Versão reserva azul 2026/27 da Seleção Alemã, com grafismos modernos e detalhes claros que reinterpretam a identidade da tetracampeã mundial.",
     externalCheckoutUrl: "/checkout?id=a9b0c1d2-0000-0000-0000-alemanhares000"
   },
   {
@@ -1065,7 +1065,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["seleções"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "Os Leões em uma edição especial e imponente. Totalmente preta (blackout), com escudo da Federação Norueguesa e logo da Nike em relevo e tom sobre tom. Design minimalista e arrojado.",
+    description: "Versão reserva preta 2026/27 da Seleção Norueguesa, com acabamento blackout e a identidade dos Leões em uma proposta sóbria.",
     externalCheckoutUrl: "/checkout?id=b0c1d2e3-0000-0000-0000-noruegares000"
   },
   {
@@ -1078,7 +1078,7 @@ export const allProducts: Product[] = [
     priceNum: 109.93,
     category: ["brasileirão"],
     sizes: ["P", "M", "G", "GG", "XXL"],
-    description: "O Gigante da Colina em sua camisa principal. Preta com a tradicional faixa transversal branca detalhada e a Cruz Vermelha no peito. Edição Nike com tecnologia Dri-FIT ADV.",
+    description: "Camisa 2026/27 do Vasco da Gama, em preto com faixa transversal branca e a Cruz de Malta, símbolos do Gigante da Colina.",
     externalCheckoutUrl: "/checkout?id=c1d2e3f4-0000-0000-0000-vasco0000000"
   }
 ];
