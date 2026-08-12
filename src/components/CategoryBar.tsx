@@ -71,17 +71,12 @@ const CategoryBar = () => {
               );
             })}
 
-            {/* Desktop: tabela de medidas inline com as categorias */}
-            <div className="hidden md:flex items-center">
+            {/* Tabela de medidas inline com as categorias (desktop e mobile) */}
+            <div className="flex items-center">
               <div className="h-4 w-[1px] bg-primary-foreground/20 mx-2"></div>
               <SizeChartModal variant="bar" />
             </div>
           </div>
-        </div>
-
-        {/* Mobile: tabela de medidas sempre visivel em linha propria */}
-        <div className="flex md:hidden justify-center border-t border-primary-foreground/15">
-          <SizeChartModal variant="bar" />
         </div>
       </div>
     </div>
