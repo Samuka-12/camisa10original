@@ -10,6 +10,8 @@
  * estes helpers para ler imagens, evitando divergência entre telas.
  */
 
+import { resolveTeamName } from "./teamName";
+
 export const GALLERY_META_REGEX = /<!-- GALLERY:([\s\S]*?) -->/;
 
 /** Converte `images` / `videos` (string JSON, array ou null) em array de strings. */
@@ -129,7 +131,7 @@ export function normalizeDbProduct(row: any, categoryOverride?: string) {
   return {
     id: row.id,
     name: row.nome || row.name || "",
-    team: row.team || "Time",
+    team: resolveTeamName(row.team, row.nome || row.name),
     price: `R$ ${priceNum.toFixed(2).replace(".", ",")}`,
     priceNum,
     image: getMainImage(row),

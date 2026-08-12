@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useStoreConfig } from "@/contexts/StoreConfigContext";
 import { getProductPromotions, promotionLabel } from "@/lib/promotions";
 import ProductImage from "./ProductImage";
+import { resolveTeamName } from "@/lib/teamName";
 
 interface ProductCardProps {
   id?: string;
@@ -53,7 +54,7 @@ const ProductCard = ({ id, image, name, team, price, priceNum, category, oldPric
           />
         </div>
         <div className="p-4">
-          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{team}</p>
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{resolveTeamName(team, name)}</p>
           <h3 className="text-sm font-semibold text-foreground mt-1 line-clamp-2">{name}</h3>
           <div className="mt-2 flex items-center gap-2">
             {oldPrice && (
