@@ -28,7 +28,7 @@ const SizeChartModal = ({ defaultTab = 1, variant = "default" }: SizeChartModalP
         }`}
       >
         <Ruler className="h-4 w-4" />
-        Consultar Tabela de Medidas
+        Tabela de Medidas
       </button>
 
       {isOpen && (
