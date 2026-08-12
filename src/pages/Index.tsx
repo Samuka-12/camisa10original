@@ -11,6 +11,11 @@ import { useStoreConfig } from "@/contexts/StoreConfigContext";
 
 const STORE_CONFIG_ID = '00000000-0000-0000-0000-000000000000';
 
+// Limite de produtos por seção EXCLUSIVO da página inicial.
+// As páginas de categoria (/categoria/:slug) continuam mostrando TODOS os produtos.
+const HOME_SECTION_LIMIT = 10;
+
+
 // Static slug -> data mapping
 const STATIC_DATA: Record<string, any[]> = {
   'seleções': selecoes,
@@ -192,9 +197,12 @@ const Index = () => {
             title={section.label}
             products={section.products}
             id={section.id}
+            limit={HOME_SECTION_LIMIT}
+            viewAllHref={`/categoria/${toUrlSlug(section.id)}`}
           />
         </div>
       ))}
+
 
       <Footer />
     </div>
