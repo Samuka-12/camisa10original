@@ -1130,7 +1130,7 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
         toast.success('✅ Categoria removida!');
     };
 
-    // Purchase não é emitido por venda manual; somente o webhook confirmado da IronPay pode enviá-lo.
+    // A venda manual é enviada como Purchase somente após confirmação explícita pelo administrador.
 
     // VENDA MANUAL STATES
     const [manualNome, setManualNome] = useState('');
@@ -1167,6 +1167,7 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
                     valor: valorNum,
                     origem: manualOrigem,
                     observacao: manualObs,
+                    confirmed: true,
                 }),
             });
             const data = await res.json();
@@ -1179,7 +1180,9 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
             toast.success(`✅ Venda registrada! Order ID: ${data.order_id}`);
 
             const orderId = data.order_id || `MANUAL-${Date.now()}`;
-            const purchaseMsg = ' | Purchase será enviado somente pelo webhook confirmado da IronPay.';
+            const purchaseMsg = data.capi_sent
+                ? ` | Purchase enviado ao Meta (event_id: ${data.event_id}).`
+                : ' | Purchase não foi confirmado pela Meta.';
             setManualSuccess(`Venda registrada com sucesso! Order ID: ${orderId}${purchaseMsg}`);
 
             // Limpa formulário

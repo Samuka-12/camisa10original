@@ -119,9 +119,15 @@ export async function sendCapiEvent(payload: MetaEventData): Promise<void> {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
+    const result = await response.json().catch(() => null);
 
-    if (!response.ok) {
-      console.warn(`[MetaPixel] CAPI recusou ${payload.event_name}: HTTP ${response.status}`);
+    if (!response.ok || result?.ok === false) {
+      console.warn(`[MetaPixel] CAPI recusou ${payload.event_name}:`, {
+        status: response.status,
+        event_id: payload.event_id,
+        error: result?.error || 'Resposta sem detalhe',
+        upstream_status: result?.upstream_status,
+      });
     }
   } catch (error) {
     console.warn('[MetaPixel] Erro na CAPI:', error);

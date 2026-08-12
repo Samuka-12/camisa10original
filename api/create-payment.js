@@ -1,3 +1,14 @@
+function resolveIronpayWebhookUrl(req) {
+    const configured = String(process.env.IRONPAY_WEBHOOK_URL || '').trim();
+    if (configured) return configured;
+
+    const forwardedHost = String(req.headers['x-forwarded-host'] || req.headers.host || process.env.VERCEL_URL || 'camisa10original.vercel.app')
+        .split(',')[0]
+        .trim();
+    const forwardedProto = String(req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
+    return `${forwardedProto}://${forwardedHost}/api/ironpay/webhook`;
+}
+
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
@@ -106,7 +117,7 @@ export default async function handler(req, res) {
                 document: (body.client?.document || '00000000000').replace(/\D/g, '')
             },
             cart: cart,
-            postback_url: process.env.IRONPAY_WEBHOOK_URL || 'https://camisa10original.com.br/api/ironpay/webhook'
+            postback_url: resolveIronpayWebhookUrl(req)
         };
 
         // Se for pagamento com cartão, adicionar os dados do cartão

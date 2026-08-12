@@ -21,6 +21,14 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
 const xtrackyToken = 'f4d9f616-1acf-4191-bb7c-d03f8a756ce0';
 const xtrackyUrl = 'https://api.xtracky.com/api/integrations/api';
 
+function resolvePublicOrigin(req) {
+  const host = String(req.headers['x-forwarded-host'] || req.headers.host || process.env.VERCEL_URL || 'camisa10original.vercel.app')
+    .split(',')[0]
+    .trim();
+  const proto = String(req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
+  return `${proto}://${host}`;
+}
+
 const supabaseHeaders = () => ({
   'Content-Type': 'application/json',
   apikey: SUPABASE_KEY,
@@ -202,6 +210,7 @@ export default async function handler(req, res) {
       client_user_agent: req.headers['user-agent'] || 'Mozilla/5.0',
       fbp: direct.fbp || persisted.fbp,
       fbc: direct.fbc || persisted.fbc,
+      eventSourceUrl: `${resolvePublicOrigin(req)}/checkout`,
     });
 
     if (purchase.ok) {
