@@ -51,27 +51,36 @@ const CategoryBar = () => {
 
   return (
     <div className="bg-primary relative z-40">
-      <div className="container mx-auto px-4 overflow-x-auto no-scrollbar">
-        <div className="flex items-center justify-start md:justify-center gap-0 min-w-max">
-          {categories.map((cat) => {
-            const isActive = location.pathname === `/categoria/${cat.slug}`;
-            return (
-              <Link
-                key={cat.id}
-                to={`/categoria/${cat.slug}`}
-                className={`px-6 py-3 text-sm font-semibold transition-colors whitespace-nowrap ${
-                  isActive
-                    ? "bg-primary-foreground/20 text-primary-foreground"
-                    : "text-primary-foreground/80 hover:bg-primary-foreground/10 hover:text-primary-foreground"
-                }`}
-              >
-                {cat.label}
-              </Link>
-            );
-          })}
+      <div className="container mx-auto px-4">
+        <div className="overflow-x-auto no-scrollbar">
+          <div className="flex items-center justify-start md:justify-center gap-0 min-w-max">
+            {categories.map((cat) => {
+              const isActive = location.pathname === `/categoria/${cat.slug}`;
+              return (
+                <Link
+                  key={cat.id}
+                  to={`/categoria/${cat.slug}`}
+                  className={`px-6 py-3 text-sm font-semibold transition-colors whitespace-nowrap ${
+                    isActive
+                      ? "bg-primary-foreground/20 text-primary-foreground"
+                      : "text-primary-foreground/80 hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                  }`}
+                >
+                  {cat.label}
+                </Link>
+              );
+            })}
 
-          <div className="h-4 w-[1px] bg-primary-foreground/20 mx-2"></div>
+            {/* Desktop: tabela de medidas inline com as categorias */}
+            <div className="hidden md:flex items-center">
+              <div className="h-4 w-[1px] bg-primary-foreground/20 mx-2"></div>
+              <SizeChartModal variant="bar" />
+            </div>
+          </div>
+        </div>
 
+        {/* Mobile: tabela de medidas sempre visivel em linha propria */}
+        <div className="flex md:hidden justify-center border-t border-primary-foreground/15">
           <SizeChartModal variant="bar" />
         </div>
       </div>
