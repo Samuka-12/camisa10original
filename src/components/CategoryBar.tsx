@@ -72,7 +72,7 @@ const CategoryBar = () => {
 
           <div className="h-4 w-[1px] bg-primary-foreground/20 mx-2"></div>
 
-          <SizeChartModal />
+          <SizeChartModal variant="bar" />
         </div>
       </div>
     </div>
