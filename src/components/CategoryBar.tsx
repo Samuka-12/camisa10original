@@ -29,12 +29,25 @@ const CategoryBar = () => {
     ? dynamicCats
         .slice()
         .sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
-        .map(c => ({
-          id: c.id,
-          label: c.label,
-          slug: toUrlSlug(c.slug || c.label)
-        }))
-    : STATIC_CATEGORIES;
+        .map(c => {
+          // Fallback de rótulo: se o label vier vazio na config salva,
+          // usa o nome padrão da categoria estática (ex.: "Históricas").
+          const fallback = STATIC_CATEGORIES.find(
+            s => s.id === c.id || toUrlSlug(s.slug) === toUrlSlug(c.slug || '')
+          );
+          const label = (c.label || '').trim() || fallback?.label || (c.slug || '').trim();
+          const slug = toUrlSlug((c.slug || '').trim() || fallback?.slug || label);
+          return { id: c.id || slug, label, slug };
+        })
+        .filter(c => c.label && c.slug)
+    : STATIC_CATEGORIES.map(s => ({ ...s }));
+
+  // Garante que categorias padrão ausentes (ex.: "Históricas") continuem visíveis.
+  for (const s of STATIC_CATEGORIES) {
+    if (!categories.some(c => c.slug === toUrlSlug(s.slug) || c.id === s.id)) {
+      categories.push({ id: s.id, label: s.label, slug: toUrlSlug(s.slug) });
+    }
+  }
 
   return (
     <div className="bg-primary relative z-40">
