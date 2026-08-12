@@ -17,8 +17,8 @@
  *   SUPABASE_SERVICE_KEY  = (chave service_role do Supabase — maior privilégio)
  */
 
-const PIXEL_ID     = process.env.META_PIXEL_ID     || '2081548536080257';
-const ACCESS_TOKEN = process.env.META_ACCESS_TOKEN || '';
+const PIXEL_ID     = process.env.META_PIXEL_ID     || '1075822341637086';
+const ACCESS_TOKEN = process.env.META_ACCESS_TOKEN || 'EAAShZBr3MwJsBR1DcfngA17838taRRTl67baJJdapxJARjZBrdFMYxZCVBGo4v8KxZAfSG6GwZAPWb98fJyG7O9a4ZB7MZCw1lotpZBsn6U6e9zGypWy6bOa1TReh6fNaa5NBHz10ZBXGZCzmZBLZCb7AITZB7wZCiOfSbQNPZC1RHm17ZAHxGsFDckbVOhM1QvIFUAj6gZDZD';
 const SUPABASE_URL = process.env.SUPABASE_URL      || 'https://xnadtzeyynoblrbncltt.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuYWR0emV5eW5vYmxyYm5jbHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2NjUxNjksImV4cCI6MjEwMTI0MTE2OX0.rRFwNQn_AjcY48QmaDczfww0ND3R5MC0_6UzumAJhzM';
 
