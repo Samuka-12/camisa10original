@@ -128,6 +128,8 @@ export interface StoreConfig {
   dashboardResetTime?: string;
   produtosOcultos?: string[];
   categorias?: Categoria[]; // Dynamic categories
+  timesOficiais?: string[]; // Times oficiais cadastrados no admin
+
   whatsapp: {
     ativo: boolean;
     numero: string;
@@ -232,6 +234,8 @@ const DEFAULT_CATEGORIAS: Categoria[] = [
 
 const DEFAULT_CONFIG: StoreConfig = {
   categorias: DEFAULT_CATEGORIAS,
+  timesOficiais: [],
+
   whatsapp: {
     ativo: true,
     numero: '5547983174463',

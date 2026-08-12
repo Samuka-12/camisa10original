@@ -24,6 +24,8 @@ import {
     Zap, FolderPlus, List
 } from 'lucide-react';
 import { ImageUploader } from '@/components/admin/ImageUploader';
+import { TeamCombobox, normalizeTeamName } from '@/components/admin/TeamCombobox';
+
 import { toast } from 'sonner';
 
 function AnimatedBackground() {
@@ -74,6 +76,43 @@ export default function Admin() {
     useEffect(() => {
         if (config) setLocalConfig(config);
     }, [config]);
+
+    // ── TIMES OFICIAIS (lista unificada: estáticos + cadastrados + já usados nos produtos) ──
+    const allTeamsOficiais = React.useMemo(() => {
+        const seen = new Map<string, string>();
+        const push = (raw?: string) => {
+            const name = (raw || '').trim();
+            if (!name) return;
+            const key = normalizeTeamName(name);
+            if (!key || key === 'personalizado' || key === 'time' || key === 'link dinamico') return;
+            if (!seen.has(key)) seen.set(key, name);
+        };
+        getTeamsWithPlayers().forEach(push);
+        (localConfig?.timesOficiais || []).forEach(push);
+        produtos.forEach(p => push(p?.team));
+        return Array.from(seen.values());
+    }, [localConfig?.timesOficiais, produtos]);
+
+    const handleCreateTeam = async (nome: string): Promise<boolean> => {
+        const clean = nome.trim();
+        if (clean.length < 2) return false;
+        const key = normalizeTeamName(clean);
+        if (allTeamsOficiais.some(t => normalizeTeamName(t) === key)) {
+            toast.info(`"${clean}" já está cadastrado nos times oficiais.`);
+            return true;
+        }
+        const baseConfig = localConfig || config;
+        const updatedConfig = {
+            ...baseConfig,
+            timesOficiais: [...(baseConfig?.timesOficiais || []), clean],
+        };
+        setLocalConfig(updatedConfig);
+        const ok = await saveConfig(updatedConfig);
+        if (ok) toast.success(`Time "${clean}" cadastrado e selecionado!`);
+        else toast.error('Não foi possível salvar o novo time.');
+        return ok;
+    };
+
 
     // NEW / EDIT PRODUCT FORM STATE
     const [editingProdId, setEditingProdId] = useState<string | null>(null);
@@ -1772,10 +1811,13 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
                                     </div>
                                     <div>
                                         <label className="block text-xs text-gray-400 font-bold mb-1">Time Oficial</label>
-                                        <select value={teamProd} onChange={e => setTeamProd(e.target.value)} className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs">
-                                            <option value="Personalizado">Personalizado / Geral</option>
-                                            {getTeamsWithPlayers().map(t => <option key={t} value={t}>{t}</option>)}
-                                        </select>
+                                        <TeamCombobox
+                                            value={teamProd}
+                                            onChange={setTeamProd}
+                                            teams={allTeamsOficiais}
+                                            onCreateTeam={handleCreateTeam}
+                                        />
+
                                     </div>
                                 </div>
 
