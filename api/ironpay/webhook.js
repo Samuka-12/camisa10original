@@ -63,14 +63,14 @@ async function getPersistedAttribution(transactionId) {
     }
 
     const mappingResponse = await supabaseRequest(
-      `/rest/v1/meta_events?event_name=eq.Purchase_id_mapping&custom_data->>transaction_id=eq.${encodeURIComponent(transactionId)}&select=event_id,custom_data&order=created_at.desc&limit=1`,
+      `/rest/v1/meta_events?event_name=eq.Purchase_id_mapping&custom_data->>transaction_id=eq.${encodeURIComponent(transactionId)}&select=custom_data&order=created_at.desc&limit=1`,
       { headers: supabaseHeaders() },
     );
     if (mappingResponse.ok) {
       const records = await mappingResponse.json();
       const context = records[0]?.custom_data || {};
       return {
-        metaEventId: records[0]?.event_id || context.meta_event_id || '',
+        metaEventId: context.meta_event_id || context.event_id || '',
         fbp: context.fbp || '',
         fbc: context.fbc || '',
       };
@@ -86,7 +86,7 @@ async function purchaseWasAccepted(eventId) {
   if (!supabaseConfigured() || !eventId) return false;
   try {
     const response = await supabaseRequest(
-      `/rest/v1/meta_events?event_name=eq.Purchase&event_id=eq.${encodeURIComponent(eventId)}&select=event_id&limit=1`,
+      `/rest/v1/meta_events?event_name=eq.Purchase&custom_data->>event_id=eq.${encodeURIComponent(eventId)}&select=custom_data&limit=1`,
       { headers: supabaseHeaders() },
     );
     if (!response.ok) return false;
@@ -106,14 +106,16 @@ async function saveAcceptedPurchase(capiEvent, capiResponse) {
       headers: supabaseHeaders(),
       body: JSON.stringify({
         event_name: 'Purchase',
-        event_id: capiEvent.event_id,
         event_time: capiEvent.event_time,
         source_url: capiEvent.event_source_url || null,
         fbc: capiEvent.user_data?.fbc || null,
         fbp: capiEvent.user_data?.fbp || null,
         email_hash: capiEvent.user_data?.em || null,
         phone_hash: capiEvent.user_data?.ph || null,
-        custom_data: capiEvent.custom_data || null,
+        custom_data: {
+          ...(capiEvent.custom_data || {}),
+          event_id: capiEvent.event_id,
+        },
         capi_response: capiResponse || null,
         action_source: capiEvent.action_source || 'website',
         created_at: new Date().toISOString(),

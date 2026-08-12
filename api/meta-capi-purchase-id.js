@@ -6,13 +6,10 @@
  * não envia Purchase e não atualiza pedidos sem filtro.
  */
 
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://xnadtzeyynoblrbncltt.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_SERVICE_KEY || '';
+import { supabaseConfigured, supabaseRequest } from './_supabase.js';
 
 const headers = () => ({
   'Content-Type': 'application/json',
-  apikey: SUPABASE_KEY,
-  Authorization: `Bearer ${SUPABASE_KEY}`,
   Prefer: 'return=minimal',
 });
 
@@ -24,8 +21,8 @@ export default async function handler(req, res) {
   if (!transaction_id || !meta_event_id) {
     return res.status(400).json({ error: 'transaction_id and meta_event_id are required' });
   }
-  if (!SUPABASE_KEY) {
-    return res.status(500).json({ error: 'SUPABASE_SERVICE_KEY not configured' });
+  if (!supabaseConfigured()) {
+    return res.status(503).json({ error: 'SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SERVICE_KEY is not configured' });
   }
 
   const transactionId = String(transaction_id);
@@ -37,16 +34,16 @@ export default async function handler(req, res) {
   };
 
   try {
-    const lookup = await fetch(
-      `${SUPABASE_URL}/rest/v1/checkouts?order_id=eq.${encodeURIComponent(transactionId)}&select=id`,
+    const lookup = await supabaseRequest(
+      `/rest/v1/checkouts?order_id=eq.${encodeURIComponent(transactionId)}&select=id`,
       { headers: headers() },
     );
 
     if (lookup.ok) {
       const records = await lookup.json();
       if (Array.isArray(records) && records.length > 0) {
-        const update = await fetch(
-          `${SUPABASE_URL}/rest/v1/checkouts?id=eq.${encodeURIComponent(records[0].id)}`,
+        const update = await supabaseRequest(
+          `/rest/v1/checkouts?id=eq.${encodeURIComponent(records[0].id)}`,
           {
             method: 'PATCH',
             headers: headers(),
@@ -66,14 +63,14 @@ export default async function handler(req, res) {
     }
 
     // Fallback seguro: o webhook consulta este mapeamento caso não exista uma
-    // linha de checkout com order_id preenchido.
-    const fallback = await fetch(`${SUPABASE_URL}/rest/v1/meta_events`, {
+    // linha de checkout com order_id preenchido. event_id fica em custom_data
+    // porque não é uma coluna da tabela meta_events.
+    const fallback = await supabaseRequest('/rest/v1/meta_events', {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({
         event_name: 'Purchase_id_mapping',
-        event_id: context.meta_event_id,
-        custom_data: context,
+        custom_data: { ...context, event_id: context.meta_event_id },
         created_at: new Date().toISOString(),
       }),
     });

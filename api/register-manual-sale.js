@@ -60,14 +60,16 @@ async function saveMetaPurchase(purchase) {
       headers: { ...headers(), Prefer: 'return=minimal' },
       body: JSON.stringify({
         event_name: 'Purchase',
-        event_id: event.event_id,
         event_time: event.event_time,
         source_url: event.event_source_url || null,
         fbc: event.user_data?.fbc || null,
         fbp: event.user_data?.fbp || null,
         email_hash: event.user_data?.em || null,
         phone_hash: event.user_data?.ph || null,
-        custom_data: event.custom_data || null,
+        custom_data: {
+          ...(event.custom_data || {}),
+          event_id: event.event_id,
+        },
         capi_response: purchase.response || null,
         action_source: event.action_source || 'website',
         created_at: new Date().toISOString(),

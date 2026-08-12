@@ -26,14 +26,16 @@ async function saveEventToSupabase(eventName, payload, capiResponse) {
       },
       body: JSON.stringify({
         event_name: eventName,
-        event_id: payload.event_id || null,
         event_time: payload.event_time,
         source_url: payload.event_source_url || null,
         fbc: payload.user_data?.fbc || null,
         fbp: payload.user_data?.fbp || null,
         email_hash: payload.user_data?.em || null,
         phone_hash: payload.user_data?.ph || null,
-        custom_data: payload.custom_data || null,
+        custom_data: {
+          ...(payload.custom_data || {}),
+          event_id: payload.event_id || null,
+        },
         capi_response: capiResponse || null,
         action_source: payload.action_source || 'website',
         utm_source: payload.custom_data?.utm_source || null,
