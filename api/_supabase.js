@@ -7,7 +7,7 @@
  */
 
 export const SUPABASE_URL = process.env.SUPABASE_URL || 'https://xnadtzeyynoblrbncltt.supabase.co';
-const PUBLIC_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoieG5hZHR6ZXl5bm9ibHJibmNsdHQiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc4NTY2NTE2OSwiZXhwIjoyMTAxMjQxMTY5fQ.rRFwNQn_AjcY48QmaDczfww0ND3R5MC0_6UzumAJhzM';
+const PUBLIC_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuYWR0emV5eW5vYmxyYm5jbHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2NjUxNjksImV4cCI6MjEwMTI0MTE2OX0.rRFwNQn_AjcY48QmaDczfww0ND3R5MC0_6UzumAJhzM';
 
 const candidateKeys = [
   process.env.SUPABASE_SERVICE_KEY,
