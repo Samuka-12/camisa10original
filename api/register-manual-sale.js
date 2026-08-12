@@ -7,10 +7,9 @@
  */
 
 import { sendPurchaseToMeta } from './_meta-purchase.js';
+import { supabaseConfigured, supabaseRequest } from './_supabase.js';
 
 const LOG = '[register-manual-sale]';
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://xnadtzeyynoblrbncltt.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_SERVICE_KEY || '';
 
 function resolvePublicOrigin(req) {
   const host = String(req.headers['x-forwarded-host'] || req.headers.host || process.env.VERCEL_URL || 'camisa10original.vercel.app')
@@ -22,15 +21,13 @@ function resolvePublicOrigin(req) {
 
 const headers = () => ({
   'Content-Type': 'application/json',
-  apikey: SUPABASE_KEY,
-  Authorization: `Bearer ${SUPABASE_KEY}`,
   Prefer: 'return=representation',
 });
 
 async function saveCheckoutToSupabase(data) {
-  if (!SUPABASE_KEY) return { saved: false, reason: 'supabase_credentials_missing' };
+  if (!supabaseConfigured()) return { saved: false, reason: 'supabase_credentials_missing' };
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/checkouts`, {
+    const response = await supabaseRequest('/rest/v1/checkouts', {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({
@@ -55,10 +52,10 @@ async function saveCheckoutToSupabase(data) {
 }
 
 async function saveMetaPurchase(purchase) {
-  if (!SUPABASE_KEY || !purchase?.capiEvent) return { saved: false, reason: 'supabase_credentials_missing' };
+  if (!supabaseConfigured() || !purchase?.capiEvent) return { saved: false, reason: 'supabase_credentials_missing' };
   try {
     const event = purchase.capiEvent;
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/meta_events`, {
+    const response = await supabaseRequest('/rest/v1/meta_events', {
       method: 'POST',
       headers: { ...headers(), Prefer: 'return=minimal' },
       body: JSON.stringify({

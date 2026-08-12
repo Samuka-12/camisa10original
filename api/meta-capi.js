@@ -7,24 +7,21 @@
  */
 
 import { META_PIXEL_ID, META_ACCESS_TOKEN, META_CAPI_URL } from './_meta-config.js';
+import { supabaseConfigured, supabaseRequest } from './_supabase.js';
 
 const PIXEL_ID = META_PIXEL_ID;
 const ACCESS_TOKEN = META_ACCESS_TOKEN;
 const CAPI_URL = META_CAPI_URL;
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://xnadtzeyynoblrbncltt.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
 const BROWSER_EVENTS = new Set(['PageView', 'ViewContent', 'AddToCart', 'InitiateCheckout']);
 
 async function saveEventToSupabase(eventName, payload, capiResponse) {
-  if (!SUPABASE_KEY) return { saved: false, reason: 'supabase_credentials_missing' };
+  if (!supabaseConfigured()) return { saved: false, reason: 'supabase_credentials_missing' };
 
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/meta_events`, {
+    const response = await supabaseRequest('/rest/v1/meta_events', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
         Prefer: 'return=minimal',
       },
       body: JSON.stringify({

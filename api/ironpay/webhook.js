@@ -14,10 +14,9 @@ import {
   normalizeIronpayPayload,
   sendPurchaseToMeta,
 } from '../_meta-purchase.js';
+import { supabaseConfigured, supabaseRequest } from '../_supabase.js';
 
 const LOG = '[ironpay/webhook]';
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://xnadtzeyynoblrbncltt.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
 const xtrackyToken = 'f4d9f616-1acf-4191-bb7c-d03f8a756ce0';
 const xtrackyUrl = 'https://api.xtracky.com/api/integrations/api';
 
@@ -31,8 +30,6 @@ function resolvePublicOrigin(req) {
 
 const supabaseHeaders = () => ({
   'Content-Type': 'application/json',
-  apikey: SUPABASE_KEY,
-  Authorization: `Bearer ${SUPABASE_KEY}`,
   Prefer: 'return=minimal',
 });
 
@@ -47,11 +44,11 @@ function inlineAttribution(payload) {
 }
 
 async function getPersistedAttribution(transactionId) {
-  if (!SUPABASE_KEY || !transactionId) return { metaEventId: '', fbp: '', fbc: '' };
+  if (!supabaseConfigured() || !transactionId) return { metaEventId: '', fbp: '', fbc: '' };
 
   try {
-    const checkoutResponse = await fetch(
-      `${SUPABASE_URL}/rest/v1/checkouts?order_id=eq.${encodeURIComponent(transactionId)}&select=meta_event_id,fbp,fbc&limit=1`,
+    const checkoutResponse = await supabaseRequest(
+      `/rest/v1/checkouts?order_id=eq.${encodeURIComponent(transactionId)}&select=meta_event_id,fbp,fbc&limit=1`,
       { headers: supabaseHeaders() },
     );
     if (checkoutResponse.ok) {
@@ -65,8 +62,8 @@ async function getPersistedAttribution(transactionId) {
       }
     }
 
-    const mappingResponse = await fetch(
-      `${SUPABASE_URL}/rest/v1/meta_events?event_name=eq.Purchase_id_mapping&custom_data->>transaction_id=eq.${encodeURIComponent(transactionId)}&select=event_id,custom_data&order=created_at.desc&limit=1`,
+    const mappingResponse = await supabaseRequest(
+      `/rest/v1/meta_events?event_name=eq.Purchase_id_mapping&custom_data->>transaction_id=eq.${encodeURIComponent(transactionId)}&select=event_id,custom_data&order=created_at.desc&limit=1`,
       { headers: supabaseHeaders() },
     );
     if (mappingResponse.ok) {
@@ -86,10 +83,10 @@ async function getPersistedAttribution(transactionId) {
 }
 
 async function purchaseWasAccepted(eventId) {
-  if (!SUPABASE_KEY || !eventId) return false;
+  if (!supabaseConfigured() || !eventId) return false;
   try {
-    const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/meta_events?event_name=eq.Purchase&event_id=eq.${encodeURIComponent(eventId)}&select=event_id&limit=1`,
+    const response = await supabaseRequest(
+      `/rest/v1/meta_events?event_name=eq.Purchase&event_id=eq.${encodeURIComponent(eventId)}&select=event_id&limit=1`,
       { headers: supabaseHeaders() },
     );
     if (!response.ok) return false;
@@ -102,9 +99,9 @@ async function purchaseWasAccepted(eventId) {
 }
 
 async function saveAcceptedPurchase(capiEvent, capiResponse) {
-  if (!SUPABASE_KEY || !capiEvent) return;
+  if (!supabaseConfigured() || !capiEvent) return;
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/meta_events`, {
+    await supabaseRequest('/rest/v1/meta_events', {
       method: 'POST',
       headers: supabaseHeaders(),
       body: JSON.stringify({
