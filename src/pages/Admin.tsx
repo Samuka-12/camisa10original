@@ -10,6 +10,10 @@ const STORE_CONFIG_ID = '00000000-0000-0000-0000-000000000000';
 import type { CashbackConfig, PromocaoProgressiva, PromoFaixa, PromoTipo } from '../lib/promotions';
 import { DEFAULT_CASHBACK, promotionLabel } from '../lib/promotions';
 import { allProducts } from '../data/products';
+import {
+    cleanDescription, getGalleryImages, getGalleryVideos, parseGalleryMeta, parseMediaList
+} from '../lib/productImages';
+
 import { getTeamPlayers, getTeamsWithPlayers } from '../data/teamPlayers';
 import {
     LayoutDashboard, ShoppingCart, PlusCircle, Eye, RefreshCw, Trash2,
@@ -334,45 +338,68 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
     };
 
     // PRODUCT CREATE / EDIT
-    const handleStartEditProduct = (prod: any) => {
-        setEditingProdId(prod.id);
-        setNomeProd(prod.nome || prod.name || '');
-        setPrecoProd(String(prod.preco || prod.priceNum || ''));
-        setCategoryProd(Array.isArray(prod.category) ? prod.category[0] : (prod.category || 'europeus'));
-        setTeamProd(prod.team || 'Personalizado');
-        setDescProd(prod.description || '');
+    const handleStartEditProduct = (prodRef: any) => {
+        // O card da vitrine é um objeto "resumido" (id, nome, imagem, category...).
+        // Para editar precisamos do REGISTRO COMPLETO — do banco ou do catálogo estático.
+        const refId = prodRef?.id ? String(prodRef.id) : '';
+        const refKey = vitrineKey(prodRef?.nome || prodRef?.name || '');
 
-        let imgs: string[] = ['', '', '', '', '', ''];
-        if (prod.images) {
-            try {
-                const parsed = typeof prod.images === 'string' ? JSON.parse(prod.images) : prod.images;
-                if (Array.isArray(parsed)) {
-                    parsed.forEach((img: string, i: number) => { if (i < 6) imgs[i] = img; });
-                }
-            } catch (_) {
-                imgs[0] = prod.imagem_url || prod.image || '';
-            }
-        } else if (prod.imagem_url || prod.image) {
-            imgs[0] = prod.imagem_url || prod.image;
+        const dbRow =
+            produtos.find((p: any) => String(p.id) === refId) ||
+            produtos.find((p: any) => vitrineKey(p.nome || p.name || '') === refKey && refKey);
+        const staticRow =
+            allProducts.find((p: any) => String(p.id) === refId) ||
+            allProducts.find((p: any) => vitrineKey(p.name || '') === refKey && refKey);
+
+        const source: any = dbRow || staticRow || prodRef;
+
+        setEditingProdId(refId || String(source.id || ''));
+        setNomeProd(source.nome || source.name || prodRef.nome || '');
+
+        const rawPrice = source.preco ?? source.priceNum ?? prodRef.preco ?? '';
+        setPrecoProd(rawPrice === '' ? '' : String(rawPrice));
+
+        const rawCat = source.category ?? prodRef.category;
+        setCategoryProd(Array.isArray(rawCat) ? (rawCat[0] || 'europeus') : (rawCat || 'europeus'));
+        setTeamProd(source.team || prodRef.team || 'Personalizado');
+
+        // DESCRIÇÃO: remove a meta de galeria e extrai o link de vídeo da descrição
+        const rawDesc = String(source.description || '');
+        let descSemMeta = cleanDescription(rawDesc);
+        let videoLink = '';
+        const videoMatch = descSemMeta.match(/\[VÍDEO\]\(([^)]+)\)/i);
+        if (videoMatch) {
+            videoLink = videoMatch[1];
+            descSemMeta = descSemMeta.replace(videoMatch[0], '').trim();
         }
+        setDescProd(descSemMeta);
+        setDescVideoProd(videoLink);
+
+        // IMAGENS: coluna `images`, meta de galeria na descrição, imagem principal
+        // e, por último, a miniatura do card — nesta ordem, sem perder nada.
+        const galleryFromSource = getGalleryImages(source);
+        const fallbackMain = source.imagem_url || source.image || prodRef.imagem || '';
+        const orderedImages = Array.from(
+            new Set([...galleryFromSource, fallbackMain].filter(Boolean))
+        ).slice(0, 6);
+
+        const imgs: string[] = ['', '', '', '', '', ''];
+        orderedImages.forEach((img: string, i: number) => { imgs[i] = img; });
         setProductImages(imgs);
 
-        let vids: string[] = ['', ''];
-        if (prod.videos) {
-            try {
-                const parsed = typeof prod.videos === 'string' ? JSON.parse(prod.videos) : prod.videos;
-                if (Array.isArray(parsed)) {
-                    parsed.forEach((v: string, i: number) => { if (i < 2) vids[i] = v; });
-                }
-            } catch (_) {
-                if (typeof prod.videos === 'string') vids[0] = prod.videos;
-            }
-        }
+        const vids: string[] = ['', ''];
+        getGalleryVideos(source).slice(0, 2).forEach((v: string, i: number) => { vids[i] = v; });
         setProductVideos(vids);
 
-        setSelectedSizes(prod.sizes || ['P', 'M', 'G', 'GG', 'XGG']);
+        const sizesFromRow = parseMediaList(source.sizes);
+        const sizesFromMeta = parseGalleryMeta(rawDesc).sizes || [];
+        const finalSizes = sizesFromRow.length > 0 ? sizesFromRow
+            : sizesFromMeta.length > 0 ? sizesFromMeta
+                : ['P', 'M', 'G', 'GG', 'XGG'];
+        setSelectedSizes(finalSizes);
 
-        const spec = (localConfig.precoGestao?.descontosEspecificos || []).find(d => d.produtoId === prod.id);
+        const editId = refId || String(source.id || '');
+        const spec = (localConfig.precoGestao?.descontosEspecificos || []).find(d => d.produtoId === editId);
         if (spec) {
             setProdDescontoPercent(String(spec.descontoPercent || 0));
             setProdTempoLimitado(!!spec.tempoLimitado);
@@ -388,6 +415,7 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
         }
         setAba('novo');
     };
+
 
     const salvarProduto = async (e: React.FormEvent) => {
         e.preventDefault();
