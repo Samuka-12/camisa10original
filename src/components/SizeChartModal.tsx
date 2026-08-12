@@ -3,9 +3,11 @@ import { X, Ruler } from "lucide-react";
 
 interface SizeChartModalProps {
   defaultTab?: number;
+  /** "bar" = usado sobre fundo primary (barra de categorias) */
+  variant?: "default" | "bar";
 }
 
-const SizeChartModal = ({ defaultTab = 1 }: SizeChartModalProps) => {
+const SizeChartModal = ({ defaultTab = 1, variant = "default" }: SizeChartModalProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<number>(defaultTab);
 
@@ -19,7 +21,11 @@ const SizeChartModal = ({ defaultTab = 1 }: SizeChartModalProps) => {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="px-6 py-3 text-sm font-semibold transition-colors text-primary hover:bg-primary/10 hover:text-primary flex items-center gap-2 rounded-lg"
+        className={`px-6 py-3 text-sm font-semibold transition-colors flex items-center gap-2 rounded-lg whitespace-nowrap ${
+          variant === "bar"
+            ? "text-primary-foreground/80 hover:bg-primary-foreground/10 hover:text-primary-foreground"
+            : "text-primary hover:bg-primary/10 hover:text-primary"
+        }`}
       >
         <Ruler className="h-4 w-4" />
         Consultar Tabela de Medidas
