@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useCart } from '../contexts/CartContext';
 import { useStoreConfig } from '../contexts/StoreConfigContext';
 import { ShoppingCart } from 'lucide-react';
+import { getFbc, getFbp, trackAddToCart } from '@/lib/metaPixel';
 
 interface StickyPurchaseBarProps {
   product: any;
@@ -74,6 +75,14 @@ export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
       customNumber,
       customPhrase,
       itemPrice: basePriceNum
+    });
+
+    void trackAddToCart({
+      productId: product.id,
+      productName: product.name,
+      price: basePriceNum,
+      quantity: 1,
+      userData: { fbc: getFbc(), fbp: getFbp() },
     });
   };
 

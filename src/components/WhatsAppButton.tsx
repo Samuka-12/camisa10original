@@ -1,55 +1,28 @@
-/**
- * WhatsAppButton — Botão flutuante de atendimento via WhatsApp (X1)
- *
- * Estratégia de rastreamento:
- *  - Ao clicar, dispara o evento `Contact` no Meta Pixel (browser) e na
- *    API de Conversões (server-side), registrando a saída do site para o
- *    WhatsApp X1 com o parâmetro source='whatsapp_x1'.
- *  - O evento fica persistido na tabela `meta_events` do Supabase para
- *    análise do funil: Meta Ads → Site → WhatsApp X1.
- */
+/** Botão flutuante de atendimento via WhatsApp. */
 
 import { MessageCircle } from 'lucide-react';
-import { trackWhatsAppContact, getFbc, getFbp } from '@/lib/metaPixel';
 import { useStoreConfig } from '@/contexts/StoreConfigContext';
 
 interface WhatsAppButtonProps {
-  /** Número do WhatsApp (somente dígitos, com DDI). Ex: 5511999999999 */
+  /** Número do WhatsApp (somente dígitos, com DDI). Ex.: 5511999999999 */
   phone?: string;
   /** Mensagem pré-preenchida */
   message?: string;
-  /** Fonte do clique para rastreamento (padrão: 'whatsapp_x1') */
-  source?: string;
 }
 
-const WhatsAppButton = ({
-  phone,
-  message,
-  source = 'whatsapp_x1',
-}: WhatsAppButtonProps) => {
+const WhatsAppButton = ({ phone, message }: WhatsAppButtonProps) => {
   const { config } = useStoreConfig();
   const wa = config.whatsapp;
 
   if (!wa?.ativo) return null;
 
   const finalPhone = phone || wa.numero || '5547983174463';
-  const defaultMsg = 'Olá! Vim pelo site da Camisa10 e gostaria de mais informações sobre os produtos.';
-  const finalMessage = message || encodeURIComponent(defaultMsg);
+  const defaultMessage = 'Olá! Vim pelo site da Camisa10 e gostaria de mais informações sobre os produtos.';
+  const finalMessage = message || encodeURIComponent(defaultMessage);
   const url = `https://wa.me/${finalPhone}?text=${finalMessage}`;
 
-  const handleClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-
-    // Dispara evento Contact no Meta Pixel + CAPI
-    await trackWhatsAppContact({
-      source,
-      userData: {
-        fbc: getFbc(),
-        fbp: getFbp(),
-      },
-    });
-
-    // Abre o WhatsApp após registrar o evento
+  const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
@@ -75,13 +48,13 @@ const WhatsAppButton = ({
         transition: 'transform 0.2s, box-shadow 0.2s',
         textDecoration: 'none',
       }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLAnchorElement).style.transform = 'scale(1.1)';
-        (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 6px 20px rgba(37,211,102,0.7)';
+      onMouseEnter={(event) => {
+        event.currentTarget.style.transform = 'scale(1.1)';
+        event.currentTarget.style.boxShadow = '0 6px 20px rgba(37,211,102,0.7)';
       }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLAnchorElement).style.transform = 'scale(1)';
-        (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 4px 16px rgba(37,211,102,0.5)';
+      onMouseLeave={(event) => {
+        event.currentTarget.style.transform = 'scale(1)';
+        event.currentTarget.style.boxShadow = '0 4px 16px rgba(37,211,102,0.5)';
       }}
     >
       <MessageCircle size={30} color="#fff" fill="#fff" />

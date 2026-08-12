@@ -8,9 +8,6 @@ import { allProducts } from '../data/products';
 import { trackInitiateCheckout, consumeInitiateCheckoutId, generateEventId, getFbc, getFbp } from '../lib/metaPixel';
 import { User, Mail, CreditCard, MapPin, Phone, Calendar, Hash, Lock, ShieldCheck, QrCode, Copy, CheckCheck, Clock, CheckCircle2 } from 'lucide-react';
 
-const IRONPAY_API_URL = 'https://api.ironpayapp.com.br/api/public/v1/transactions';
-const IRONPAY_TOKEN = 'qoVerJe5Jw33aHINratQw4XFdc4gtQrEPFJ9QE7CRz22JyHupjVT0h8IdmIf';
-
 interface PixData {
   qrCode: string;
   qrImage: string;

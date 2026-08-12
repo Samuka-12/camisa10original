@@ -1,49 +1,43 @@
 /**
- * Meta Pixel + Conversions API (CAPI) — Camisa10
- * Pixel ID: 1075822341637086
+ * Meta Pixel + Conversions API (CAPI) — Camisa10.
  *
- * Este módulo centraliza todos os eventos do Meta Pixel (browser) e
- * prepara os payloads para a API de Conversões (server-side via Netlify Function).
- *
- * Estratégia de rastreamento:
- *  - PageView         → toda troca de rota (Index, Categoria, Produto)
- *  - ViewContent      → página de produto visualizada
- *  - AddToCart        → produto adicionado ao carrinho
- *  - InitiateCheckout → entrada na página de checkout
- *  - Purchase         → pagamento confirmado (Pix pago / Cartão aprovado)
- *  - Contact          → clique no botão WhatsApp (X1)
- *  - Lead             → cadastro / registro de usuário
- *
- * Deduplicação:
- *  Cada evento gera um `event_id` único que é enviado tanto para o fbq (Pixel)
- *  quanto para a CAPI. O Meta usa esse ID para deduplicar eventos recebidos
- *  por ambos os canais, evitando dupla contagem nas campanhas.
+ * Eventos permitidos: PageView, ViewContent, AddToCart, InitiateCheckout e
+ * Purchase. Purchase não é emitido pelo navegador: ele é exclusivo do webhook
+ * da IronPay após confirmação efetiva do pagamento.
  */
 
 export const META_PIXEL_ID = '1075822341637086';
 
-// ─── Tipos ────────────────────────────────────────────────────────────────────
+export type MetaBrowserEvent = 'PageView' | 'ViewContent' | 'AddToCart' | 'InitiateCheckout';
+
+const BROWSER_EVENTS = new Set<MetaBrowserEvent>([
+  'PageView',
+  'ViewContent',
+  'AddToCart',
+  'InitiateCheckout',
+]);
 
 export interface MetaEventData {
-  event_name: string;
+  event_name: MetaBrowserEvent;
   event_id?: string;
   event_time?: number;
   event_source_url?: string;
   user_data?: {
-    em?: string;   // email (hash SHA-256)
-    ph?: string;   // phone (hash SHA-256)
-    fn?: string;   // first name (hash SHA-256)
-    ln?: string;   // last name (hash SHA-256)
+    em?: string;
+    ph?: string;
+    fn?: string;
+    ln?: string;
     client_ip_address?: string;
     client_user_agent?: string;
-    fbc?: string;  // fbclid cookie
-    fbp?: string;  // _fbp cookie
+    fbc?: string;
+    fbp?: string;
   };
   custom_data?: {
     currency?: string;
     value?: number;
     content_ids?: string[];
     content_name?: string;
+    content_category?: string;
     content_type?: string;
     contents?: Array<{ id: string; quantity: number; item_price?: number }>;
     num_items?: number;
@@ -53,105 +47,58 @@ export interface MetaEventData {
   action_source?: string;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/**
- * Gera um event_id único para deduplicação entre Pixel (browser) e CAPI (server).
- * Formato: {eventName}_{timestamp}_{random6hex}
- * Exemplo: "ViewContent_1720000000000_a3f9c2"
- */
 export function generateEventId(eventName: string): string {
   const ts = Date.now();
   const rand = Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0');
   return `${eventName}_${ts}_${rand}`;
 }
 
-/** Lê o cookie _fbp gerado pelo Pixel do Meta */
 export function getFbp(): string {
   const match = document.cookie.match(/_fbp=([^;]+)/);
   return match ? match[1] : '';
 }
 
-/** Lê / persiste o fbc a partir do parâmetro fbclid na URL */
 export function getFbc(): string {
   const params = new URLSearchParams(window.location.search);
   const fbclid = params.get('fbclid');
   if (fbclid) {
     const fbc = `fb.1.${Date.now()}.${fbclid}`;
-    try { localStorage.setItem('_fbc', fbc); } catch (_) { /* noop */ }
+    try { localStorage.setItem('_fbc', fbc); } catch (_) { /* unavailable storage */ }
     return fbc;
   }
   try { return localStorage.getItem('_fbc') || ''; } catch (_) { return ''; }
 }
 
-/** Hash SHA-256 simples para dados do usuário (PII) */
 export async function sha256(value: string): Promise<string> {
   if (!value) return '';
   const clean = value.trim().toLowerCase();
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(clean));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  const buffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(clean));
+  return Array.from(new Uint8Array(buffer)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-// ─── Client-side (fbq) ────────────────────────────────────────────────────────
-
-/**
- * Dispara evento via fbq (browser Pixel).
- * O terceiro parâmetro `{ eventID }` é obrigatório para deduplicação com a CAPI.
- */
 export function fbqTrack(
-  eventName: string,
-  params?: Record<string, unknown>,
+  eventName: MetaBrowserEvent,
+  params: Record<string, unknown> = {},
   eventId?: string,
 ): void {
   try {
-    if (typeof window !== 'undefined' && (window as any).fbq) {
-      if (eventId) {
-        (window as any).fbq('track', eventName, params || {}, { eventID: eventId });
-      } else {
-        (window as any).fbq('track', eventName, params || {});
-      }
+    if (typeof window === 'undefined' || !BROWSER_EVENTS.has(eventName) || !(window as any).fbq) return;
+    if (eventId) {
+      (window as any).fbq('track', eventName, params, { eventID: eventId });
+    } else {
+      (window as any).fbq('track', eventName, params);
     }
-  } catch (err) {
-    console.warn('[MetaPixel] fbq error:', err);
+  } catch (error) {
+    console.warn('[MetaPixel] Erro no Pixel:', error);
   }
 }
-
-/** Dispara evento customizado via fbq */
-export function fbqTrackCustom(
-  eventName: string,
-  params?: Record<string, unknown>,
-  eventId?: string,
-): void {
-  try {
-    if (typeof window !== 'undefined' && (window as any).fbq) {
-      if (eventId) {
-        (window as any).fbq('trackCustom', eventName, params || {}, { eventID: eventId });
-      } else {
-        (window as any).fbq('trackCustom', eventName, params || {});
-      }
-    }
-  } catch (err) {
-    console.warn('[MetaPixel] fbq custom error:', err);
-  }
-}
-
-// ─── Server-side (CAPI via Netlify Function) ──────────────────────────────────
 
 /**
- * Envia evento para a API de Conversões do Meta via Netlify Function.
- * A função server-side adiciona o access_token e faz o POST para
- * https://graph.facebook.com/v19.0/{pixel_id}/events
- *
- * O campo `event_id` é obrigatório para deduplicação: deve ser o mesmo
- * valor passado ao fbq no lado cliente.
+ * Envia à CAPI somente os quatro eventos browser-side permitidos. Purchase é
+ * construído e enviado exclusivamente pelo webhook server-side da IronPay.
  */
 export async function sendCapiEvent(payload: MetaEventData): Promise<void> {
-  // Purchase é exclusivo do webhook da IronPay após a confirmação real do pagamento.
-  // Bloquear a rota do navegador evita uma venda antecipada ou duplicada.
-  if (payload.event_name === 'Purchase') {
-    console.warn('[MetaPixel] Purchase bloqueado no navegador; aguardando confirmação da IronPay.');
-    return;
-  }
+  if (!BROWSER_EVENTS.has(payload.event_name)) return;
 
   try {
     const body = {
@@ -167,37 +114,32 @@ export async function sendCapiEvent(payload: MetaEventData): Promise<void> {
       },
     };
 
-    // Tenta primeiro /api/meta-capi (Vercel) e depois /.netlify/functions/meta-capi (Netlify)
-    const apiUrl = '/api/meta-capi';
-    await fetch(apiUrl, {
+    const response = await fetch('/api/meta-capi', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
-    }).catch(async () => {
-       await fetch('/.netlify/functions/meta-capi', {
-         method: 'POST',
-         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify(body),
-       });
     });
-  } catch (err) {
-    console.warn('[MetaPixel] CAPI error:', err);
+
+    if (!response.ok) {
+      console.warn(`[MetaPixel] CAPI recusou ${payload.event_name}: HTTP ${response.status}`);
+    }
+  } catch (error) {
+    console.warn('[MetaPixel] Erro na CAPI:', error);
   }
 }
 
-// ─── Eventos de alto nível ────────────────────────────────────────────────────
-
-/** PageView — dispara em toda troca de rota */
-export async function trackPageView(userData?: MetaEventData['user_data']): Promise<void> {
-  const eventId = generateEventId('PageView');
+export async function trackPageView(
+  userData?: MetaEventData['user_data'],
+  eventId = generateEventId('PageView'),
+): Promise<void> {
   fbqTrack('PageView', {}, eventId);
   await sendCapiEvent({ event_name: 'PageView', event_id: eventId, user_data: userData });
 }
 
-/** ViewContent — produto visualizado */
 export async function trackViewContent(opts: {
   productId: string;
   productName: string;
+  category?: string;
   price: number;
   currency?: string;
   userData?: MetaEventData['user_data'];
@@ -206,20 +148,15 @@ export async function trackViewContent(opts: {
   const params = {
     content_ids: [opts.productId],
     content_name: opts.productName,
+    content_category: opts.category || undefined,
     content_type: 'product',
     value: opts.price,
     currency: opts.currency || 'BRL',
   };
   fbqTrack('ViewContent', params, eventId);
-  await sendCapiEvent({
-    event_name: 'ViewContent',
-    event_id: eventId,
-    user_data: opts.userData,
-    custom_data: params,
-  });
+  await sendCapiEvent({ event_name: 'ViewContent', event_id: eventId, user_data: opts.userData, custom_data: params });
 }
 
-/** AddToCart — produto adicionado ao carrinho */
 export async function trackAddToCart(opts: {
   productId: string;
   productName: string;
@@ -228,55 +165,38 @@ export async function trackAddToCart(opts: {
   currency?: string;
   userData?: MetaEventData['user_data'];
 }): Promise<void> {
+  const quantity = opts.quantity || 1;
   const eventId = generateEventId('AddToCart');
   const params = {
     content_ids: [opts.productId],
     content_name: opts.productName,
     content_type: 'product',
-    value: opts.price * (opts.quantity || 1),
+    value: opts.price * quantity,
     currency: opts.currency || 'BRL',
-    contents: [{ id: opts.productId, quantity: opts.quantity || 1, item_price: opts.price }],
+    contents: [{ id: opts.productId, quantity, item_price: opts.price }],
   };
   fbqTrack('AddToCart', params, eventId);
-  await sendCapiEvent({
-    event_name: 'AddToCart',
-    event_id: eventId,
-    user_data: opts.userData,
-    custom_data: params,
-  });
+  await sendCapiEvent({ event_name: 'AddToCart', event_id: eventId, user_data: opts.userData, custom_data: params });
 }
-
-// ─── InitiateCheckout: ponte entre carrinho e página /checkout ────────────────
-// O botão do carrinho navega com `window.location.href`, o que recarrega a
-// página inteira e pode fazer o evento do fbq se perder antes do envio.
-// Por isso guardamos o event_id em sessionStorage: a página /checkout reenvia
-// o MESMO event_id no mount, e o Meta deduplica automaticamente.
 
 const IC_STORAGE_KEY = '_c10_initiate_checkout';
 
-/** Guarda o event_id de InitiateCheckout antes de uma navegação com reload */
 export function markInitiateCheckout(eventId: string): void {
-  try {
-    sessionStorage.setItem(IC_STORAGE_KEY, JSON.stringify({ id: eventId, t: Date.now() }));
-  } catch (_) { /* noop */ }
+  try { sessionStorage.setItem(IC_STORAGE_KEY, JSON.stringify({ id: eventId, t: Date.now() })); } catch (_) { /* unavailable storage */ }
 }
 
-/** Recupera (e limpa) um event_id de InitiateCheckout recente */
 export function consumeInitiateCheckoutId(maxAgeMs = 5 * 60 * 1000): string | null {
   try {
     const raw = sessionStorage.getItem(IC_STORAGE_KEY);
     if (!raw) return null;
     sessionStorage.removeItem(IC_STORAGE_KEY);
     const parsed = JSON.parse(raw) as { id?: string; t?: number };
-    if (!parsed?.id || !parsed?.t) return null;
-    if (Date.now() - parsed.t > maxAgeMs) return null;
-    return parsed.id;
+    return parsed?.id && parsed?.t && Date.now() - parsed.t <= maxAgeMs ? parsed.id : null;
   } catch (_) {
     return null;
   }
 }
 
-/** InitiateCheckout — entrada no checkout */
 export async function trackInitiateCheckout(opts: {
   value: number;
   numItems: number;
@@ -293,56 +213,5 @@ export async function trackInitiateCheckout(opts: {
     currency: opts.currency || 'BRL',
   };
   fbqTrack('InitiateCheckout', params, eventId);
-  await sendCapiEvent({
-    event_name: 'InitiateCheckout',
-    event_id: eventId,
-    user_data: opts.userData,
-    custom_data: params,
-  });
-}
-
-
-/**
- * Purchase é emitido exclusivamente pelo webhook server-side da IronPay após
- * confirmação efetiva do pagamento. Esta proteção mantém chamadas legadas
- * inofensivas até que sejam removidas pelos consumidores do módulo.
- */
-export async function trackPurchase(_opts: {
-  orderId: string;
-  value: number;
-  contentIds: string[];
-  numItems: number;
-  currency?: string;
-  userData?: MetaEventData['user_data'];
-  eventId?: string;
-}): Promise<void> {
-  console.warn('[MetaPixel] Purchase bloqueado no navegador; aguardando confirmação da IronPay.');
-}
-
-/** Contact — clique no botão WhatsApp (X1) */
-export async function trackWhatsAppContact(opts?: {
-  source?: string;
-  userData?: MetaEventData['user_data'];
-}): Promise<void> {
-  const eventId = generateEventId('Contact');
-  fbqTrack('Contact', { source: opts?.source || 'whatsapp_x1' }, eventId);
-  await sendCapiEvent({
-    event_name: 'Contact',
-    event_id: eventId,
-    user_data: opts?.userData,
-    custom_data: { source: opts?.source || 'whatsapp_x1' },
-  });
-}
-
-/** Lead — cadastro de usuário */
-export async function trackLead(opts?: {
-  userData?: MetaEventData['user_data'];
-}): Promise<void> {
-  const eventId = generateEventId('Lead');
-  fbqTrack('Lead', {}, eventId);
-  await sendCapiEvent({
-    event_name: 'Lead',
-    event_id: eventId,
-    user_data: opts?.userData,
-  });
+  await sendCapiEvent({ event_name: 'InitiateCheckout', event_id: eventId, user_data: opts.userData, custom_data: params });
 }

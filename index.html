@@ -37,7 +37,9 @@
       s.parentNode.insertBefore(t,s)}(window, document,'script',
       'https://connect.facebook.net/en_US/fbevents.js');
       fbq('init', '1075822341637086');
-      fbq('track', 'PageView');
+      var metaInitialPageViewId = 'PageView_' + Date.now() + '_' + Math.random().toString(16).slice(2, 8);
+      window.__c10_meta_initial_pageview_id = metaInitialPageViewId;
+      fbq('track', 'PageView', {}, { eventID: metaInitialPageViewId });
     </script>
     <!-- End Meta Pixel Code -->
   </head>

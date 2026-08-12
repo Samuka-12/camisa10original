@@ -104,6 +104,7 @@ const Product = () => {
       trackViewContent({
         productId: product.id,
         productName: product.name,
+        category: Array.isArray(product.category) ? product.category[0] : product.category,
         price: product.priceNum,
         userData: { fbc: getFbc(), fbp: getFbp() },
       });

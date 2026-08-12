@@ -15,6 +15,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL || 'https://xnadtzeyynoblrbncltt.s
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuYWR0emV5eW5vYmxyYm5jbHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2NjUxNjksImV4cCI6MjEwMTI0MTE2OX0.rRFwNQn_AjcY48QmaDczfww0ND3R5MC0_6UzumAJhzM';
 
 const CAPI_URL     = META_CAPI_URL;
+const BROWSER_EVENTS = new Set(['PageView', 'ViewContent', 'AddToCart', 'InitiateCheckout']);
 
 async function saveEventToSupabase(eventName, payload, capiResponse) {
   if (!SUPABASE_KEY) return;
@@ -66,13 +67,16 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'event_name required' });
   }
 
-  // Purchase deve vir exclusivamente da confirmação de pagamento recebida da
-  // IronPay em /api/ironpay/webhook. Assim, Pix gerado ou checkout iniciado
-  // jamais é contabilizado como venda pela CAPI.
-  if (eventName === 'Purchase') {
+  // O navegador só pode encaminhar os quatro eventos de comportamento. Purchase
+  // é exclusivo do webhook da IronPay após a confirmação do pagamento.
+  if (!BROWSER_EVENTS.has(eventName)) {
     return res.status(403).json({
-      error: 'Purchase must be sent by the IronPay payment-confirmation webhook.',
+      error: 'Only PageView, ViewContent, AddToCart and InitiateCheckout are accepted here.',
     });
+  }
+
+  if (!PIXEL_ID || !ACCESS_TOKEN || !CAPI_URL) {
+    return res.status(503).json({ error: 'Meta CAPI environment variables are not configured.' });
   }
 
   const capiEvent = {
@@ -105,8 +109,7 @@ export default async function handler(req, res) {
 
   let capiResult = null;
 
-  if (ACCESS_TOKEN) {
-    try {
+  try {
       // Timeout de 10s para evitar serverless timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -124,9 +127,8 @@ export default async function handler(req, res) {
 
       capiResult = await fbRes.json();
       console.log(`[api/meta-capi] ${eventName} (event_id: ${capiEvent.event_id || 'none'}) ->`, JSON.stringify(capiResult));
-    } catch (err) {
-      console.error('[api/meta-capi] CAPI error:', err.message);
-    }
+  } catch (err) {
+    console.error('[api/meta-capi] CAPI error:', err.message);
   }
 
   await saveEventToSupabase(eventName, capiEvent, capiResult);

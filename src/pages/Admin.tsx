@@ -1130,9 +1130,7 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
         toast.success('✅ Categoria removida!');
     };
 
-    // VENDA MANUAL — endpoint dedicado de disparo do Purchase ao Meta
-    const META_PURCHASE_ENDPOINT = 'https://camisa10original.vercel.app/api/meta-purchase-debug';
-    const META_PURCHASE_SECRET = 'qoVerJe5Jw33aHINratQw4XFdc4gtQrEPFJ9QE7CRz22JyHupjVT0h8IdmIf';
+    // Purchase não é emitido por venda manual; somente o webhook confirmado da IronPay pode enviá-lo.
 
     // VENDA MANUAL STATES
     const [manualNome, setManualNome] = useState('');
@@ -1180,43 +1178,8 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
 
             toast.success(`✅ Venda registrada! Order ID: ${data.order_id}`);
 
-            // Disparo manual do Purchase ao Meta (endpoint dedicado)
             const orderId = data.order_id || `MANUAL-${Date.now()}`;
-            const eventId = `Purchase_${orderId}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
-            let purchaseMsg = '';
-            try {
-                const capiRes = await fetch(`${META_PURCHASE_ENDPOINT}?send=1&secret=${META_PURCHASE_SECRET}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        send: 1,
-                        secret: META_PURCHASE_SECRET,
-                        order_id: orderId,
-                        event_id: eventId,
-                        value: valorNum,
-                        currency: 'BRL',
-                        quantity: 1,
-                        product_name: manualProduto,
-                        content_ids: [manualProduto],
-                        payment_method: 'manual',
-                        name: manualNome,
-                        email: manualEmail,
-                        phone: manualTelefone,
-                        event_source_url: 'https://camisa10original.com.br/checkout',
-                    }),
-                });
-                const capiData = await capiRes.json().catch(() => null);
-                const okCapi = capiData?.test_purchase?.ok;
-                purchaseMsg = okCapi
-                    ? ` | Purchase enviado ao Meta (event_id: ${eventId})`
-                    : ` | ⚠️ Meta não confirmou o Purchase: ${capiData?.test_purchase?.error || 'erro desconhecido'}`;
-                if (okCapi) toast.success('🎯 Purchase enviado ao Meta!');
-                else toast.error('⚠️ Purchase não confirmado pelo Meta. Veja os detalhes abaixo.');
-            } catch (e: any) {
-                purchaseMsg = ` | ⚠️ Falha ao enviar Purchase: ${e.message}`;
-                toast.error('⚠️ Falha ao enviar Purchase ao Meta');
-            }
-
+            const purchaseMsg = ' | Purchase será enviado somente pelo webhook confirmado da IronPay.';
             setManualSuccess(`Venda registrada com sucesso! Order ID: ${orderId}${purchaseMsg}`);
 
             // Limpa formulário
