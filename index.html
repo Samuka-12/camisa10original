@@ -40,6 +40,15 @@
       var metaInitialPageViewId = 'PageView_' + Date.now() + '_' + Math.random().toString(16).slice(2, 8);
       window.__c10_meta_initial_pageview_id = metaInitialPageViewId;
       fbq('track', 'PageView', {}, { eventID: metaInitialPageViewId });
+      // Fallback: se o fbevents.js não executar em 3s, envia PageView via img beacon
+      setTimeout(function() {
+        if (!window.fbq._fbq) {
+          var img = document.createElement('img');
+          img.width = 1; img.height = 1; img.style.display = 'none';
+          img.src = 'https://www.facebook.com/tr?id=1075822341637086&ev=PageView&cd%5Bevent_id%5D=' + encodeURIComponent(metaInitialPageViewId) + '&noscript=1';
+          document.body.appendChild(img);
+        }
+      }, 3000);
     </script>
     <!-- End Meta Pixel Code -->
   </head>
