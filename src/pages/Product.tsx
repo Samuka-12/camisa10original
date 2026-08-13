@@ -100,13 +100,24 @@ const Product = () => {
     window.scrollTo(0, 0);
     if (!product?.id) return;
     
+    // Delay de 500ms para garantir que o produto carregou e o fbq está pronto
     const timer = setTimeout(() => {
+      console.log('[MetaPixel] Disparando ViewContent:', {
+        productId: product.id,
+        productName: product.name,
+        price: product.priceNum,
+        hasFbq: !!(window as any).fbq,
+      });
       trackViewContent({
         productId: product.id,
         productName: product.name,
         category: Array.isArray(product.category) ? product.category[0] : product.category,
         price: product.priceNum,
         userData: { fbc: getFbc(), fbp: getFbp() },
+      }).then(() => {
+        console.log('[MetaPixel] ViewContent enviado com sucesso');
+      }).catch(err => {
+        console.error('[MetaPixel] Erro ao enviar ViewContent:', err);
       });
     }, 500);
 
@@ -159,12 +170,22 @@ const Product = () => {
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
+    console.log('[MetaPixel] Disparando AddToCart:', {
+      productId: product.id,
+      productName: product.name,
+      price: adjustedPrice,
+      hasFbq: !!(window as any).fbq,
+    });
     trackAddToCart({
       productId: product.id,
       productName: product.name,
       price: adjustedPrice,
       quantity: 1,
       userData: { fbc: getFbc(), fbp: getFbp() },
+    }).then(() => {
+      console.log('[MetaPixel] AddToCart enviado com sucesso');
+    }).catch(err => {
+      console.error('[MetaPixel] Erro ao enviar AddToCart:', err);
     });
   };
 
