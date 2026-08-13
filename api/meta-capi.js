@@ -12,7 +12,7 @@ import { supabaseConfigured, supabaseRequest } from './_supabase.js';
 const PIXEL_ID = META_PIXEL_ID;
 const ACCESS_TOKEN = META_ACCESS_TOKEN;
 const CAPI_URL = META_CAPI_URL;
-const BROWSER_EVENTS = new Set(['PageView', 'ViewContent', 'AddToCart', 'InitiateCheckout']);
+const BROWSER_EVENTS = new Set(['PageView', 'ViewContent', 'AddToCart', 'InitiateCheckout', 'Contact']);
 
 async function saveEventToSupabase(eventName, payload, capiResponse) {
   if (!supabaseConfigured()) return { saved: false, reason: 'supabase_credentials_missing' };
