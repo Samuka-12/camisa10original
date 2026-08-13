@@ -2,6 +2,7 @@
 
 import { MessageCircle } from 'lucide-react';
 import { useStoreConfig } from '@/contexts/StoreConfigContext';
+import { trackContact } from '@/lib/metaPixel';
 
 interface WhatsAppButtonProps {
   /** Número do WhatsApp (somente dígitos, com DDI). Ex.: 5511999999999 */
@@ -23,6 +24,8 @@ const WhatsAppButton = ({ phone, message }: WhatsAppButtonProps) => {
 
   const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
+    // Dispara evento Contact para o Meta Pixel
+    trackContact();
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 

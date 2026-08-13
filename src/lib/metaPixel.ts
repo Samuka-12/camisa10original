@@ -8,13 +8,14 @@
 
 export const META_PIXEL_ID = '1075822341637086';
 
-export type MetaBrowserEvent = 'PageView' | 'ViewContent' | 'AddToCart' | 'InitiateCheckout';
+export type MetaBrowserEvent = 'PageView' | 'ViewContent' | 'AddToCart' | 'InitiateCheckout' | 'Contact';
 
 const BROWSER_EVENTS = new Set<MetaBrowserEvent>([
   'PageView',
   'ViewContent',
   'AddToCart',
   'InitiateCheckout',
+  'Contact',
 ]);
 
 export interface MetaEventData {
@@ -220,4 +221,15 @@ export async function trackInitiateCheckout(opts: {
   };
   fbqTrack('InitiateCheckout', params, eventId);
   await sendCapiEvent({ event_name: 'InitiateCheckout', event_id: eventId, user_data: opts.userData, custom_data: params });
+}
+
+/**
+ * Evento Contact — disparado quando o usuário clica no botão de WhatsApp.
+ */
+export async function trackContact(
+  userData?: MetaEventData['user_data'],
+  eventId = generateEventId('Contact'),
+): Promise<void> {
+  fbqTrack('Contact', {}, eventId);
+  await sendCapiEvent({ event_name: 'Contact', event_id: eventId, user_data: userData });
 }
