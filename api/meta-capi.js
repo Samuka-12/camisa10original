@@ -104,6 +104,11 @@ export default async function handler(req, res) {
     if (!capiEvent.user_data[key]) delete capiEvent.user_data[key];
   });
 
+  // Test event code for real-time debugging in Events Manager
+  if (process.env.META_TEST_EVENT_CODE) {
+    capiEvent.test_event_code = process.env.META_TEST_EVENT_CODE;
+  }
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000);
   let metaResponse;
