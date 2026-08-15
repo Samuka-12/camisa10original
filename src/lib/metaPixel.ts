@@ -6,7 +6,7 @@
  * da IronPay após confirmação efetiva do pagamento.
  */
 
-export const META_PIXEL_ID = '1075822341637086';
+export const META_PIXEL_ID = '1600126648494401';
 
 export type MetaBrowserEvent = 'PageView' | 'ViewContent' | 'AddToCart' | 'InitiateCheckout' | 'Contact';
 
@@ -230,6 +230,9 @@ export async function trackContact(
   userData?: MetaEventData['user_data'],
   eventId = generateEventId('Contact'),
 ): Promise<void> {
+  // Contact + Lead: clique no WhatsApp conta como lead gerado
   fbqTrack('Contact', {}, eventId);
+  fbqTrack('Lead', {}, generateEventId('Lead'));
   await sendCapiEvent({ event_name: 'Contact', event_id: eventId, user_data: userData });
+  await sendCapiEvent({ event_name: 'Lead', event_id: generateEventId('Lead'), user_data: userData });
 }
