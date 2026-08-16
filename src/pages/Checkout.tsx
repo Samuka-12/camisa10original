@@ -143,7 +143,7 @@ export default function Checkout() {
       if (isPlayer) addon += 20;
       if (isCustom) addon += 20;
 
-      const initialBasePrice = overridePreco ? parsePrice(overridePreco) : (localProd ? localProd.priceNum : 109.93);
+      const initialBasePrice = overridePreco ? parsePrice(overridePreco) : (localProd ? localProd.priceNum : 70.00);
       const finalPrice = (initialBasePrice + addon) * qty;
       const precoComDesconto = discount > 0 ? finalPrice * (1 - discount) : finalPrice;
 
@@ -162,7 +162,7 @@ export default function Checkout() {
         .single()
         .then(({ data }) => {
           if (data) {
-            const dbBasePrice = overridePreco ? parsePrice(overridePreco) : (data.preco ? parsePrice(data.preco) : 109.93);
+            const dbBasePrice = overridePreco ? parsePrice(overridePreco) : (data.preco ? parsePrice(data.preco) : 70.00);
             const dbFinalPrice = (dbBasePrice + addon) * qty;
             const dbPrecoComDesconto = discount > 0 ? dbFinalPrice * (1 - discount) : dbFinalPrice;
 

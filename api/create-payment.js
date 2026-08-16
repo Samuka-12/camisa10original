@@ -38,9 +38,9 @@ export default async function handler(req, res) {
             { hash: 'le2c9v07wt_gybcv5o9me', price: 9093 }, // R$ 90.93
             { hash: 'le2c9v07wt_v070c04aaj', price: 9093 }, // R$ 90.93
             { hash: 'camisa10_test_offer', price: 9990 }, // R$ 99.90
-            { hash: '0d2e2638-9c47-4637-b278-5bef856687fa', price: 10993 }, // R$ 109.93
-            { hash: '28774c5c-6fe1-439d-b4d2-2d1c274e9df4', price: 10993 }, // R$ 109.93
-            { hash: 'da698fa3-abd8-44ee-afba-b4da0ca4f6a5', price: 10993 }, // R$ 109.93
+            { hash: '0d2e2638-9c47-4637-b278-5bef856687fa', price: 7000 }, // R$ 70.00
+            { hash: '28774c5c-6fe1-439d-b4d2-2d1c274e9df4', price: 7000 }, // R$ 70.00
+            { hash: 'da698fa3-abd8-44ee-afba-b4da0ca4f6a5', price: 7000 }, // R$ 70.00
             { hash: 'le2c9v07wt_qhiquzl8s5', price: 12493 }, // R$ 124.93
             { hash: 'fbb34d6e-519e-4c4c-9961-063302e0a361', price: 12923 }, // R$ 129.23
             { hash: 'ada92365-5b50-486b-b401-c06b1d166905', price: 12993 }, // R$ 129.93

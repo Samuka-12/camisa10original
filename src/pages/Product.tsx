@@ -140,10 +140,10 @@ const Product = () => {
   }, [product]);
 
   // Price calculations:
-  // Base = 109,93 (or custom base) + 20 for Jogador + 20 for Personalizada
+  // Base = 70,00 (or custom base) + 20 for Jogador + 20 for Personalizada
   const adjustedPrice = useMemo(() => {
     if (!product) return 0;
-    const rawBasePrice = product.priceNum || 109.93;
+    const rawBasePrice = product.priceNum || 70.00;
     let base = getAdjustedPrice(rawBasePrice, product.category, product.id);
     if (selectedVersion === 'Jogador') {
       base += 20;

@@ -477,7 +477,7 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
 
     const salvarProduto = async (e: React.FormEvent) => {
         e.preventDefault();
-        const precoNumerico = parseFloat(precoProd.replace(',', '.')) || 109.93;
+        const precoNumerico = parseFloat(precoProd.replace(',', '.')) || 70.00;
         const allImgs = productImages.filter(i => i);
         const mainImg = allImgs[0] || '';
         const allVids = productVideos.filter(v => v);
@@ -1302,7 +1302,7 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
         )
     ];
 
-    // VITRINE PRODUCTS (Strictly price 109.93 or standard vitrine, excluding custom payment dynamic links)
+    // VITRINE PRODUCTS (Strictly price 70.00 or standard vitrine, excluding custom payment dynamic links)
     const produtosOcultos = localConfig.produtosOcultos || [];
 
     const realDbProducts = produtos.filter(p => {
@@ -1311,7 +1311,7 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
         if (p.tipo === 'dinamico' || p.category === 'dinamico' || p.team === 'Link Dinâmico') return false;
         const pNum = parseFloat(String(p.preco || 0));
         // Strict: custom price dynamic links (e.g. 250, 300, etc.) are excluded from vitrine
-        if (pNum > 0 && Math.abs(pNum - 109.93) > 0.01) return false;
+        if (pNum > 0 && Math.abs(pNum - 70.00) > 0.01) return false;
         return true;
     });
 
@@ -1325,7 +1325,7 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
             return {
                 id: p.id,
                 nome: p.nome,
-                preco: 109.93,
+                preco: 70.00,
                 imagem: p.imagem_url || p.image,
                 category: catObj.id,
                 categoryLabel: catObj.label,
@@ -1340,7 +1340,7 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
                 return {
                     id: p.id,
                     nome: p.name,
-                    preco: p.priceNum || 109.93,
+                    preco: p.priceNum || 70.00,
                     imagem: p.image,
                     category: catObj.id,
                     categoryLabel: catObj.label,
@@ -1380,7 +1380,7 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
         if (p.id === 'store_config' || p.id === STORE_CONFIG_ID) return false;
         if (p.tipo === 'dinamico' || p.category === 'dinamico' || p.team === 'Link Dinâmico') return true;
         const pNum = parseFloat(String(p.preco || 0));
-        if (pNum > 0 && Math.abs(pNum - 109.93) > 0.01) return true;
+        if (pNum > 0 && Math.abs(pNum - 70.00) > 0.01) return true;
         return false;
     });
     const allDynLinks = [
@@ -1677,11 +1677,11 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-900/40 p-4 rounded-2xl border border-white/5">
                                 <div>
                                     <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                                        🏪 Vitrine Oficial da Loja (Preço Padrão R$ 109,93)
+                                        🏪 Vitrine Oficial da Loja (Preço Padrão R$ 70,00)
                                     </h3>
                                     <p className="text-xs text-gray-400">Produtos organizados por categoria na mesma ordem da loja real ({allVitrineProducts.length} itens ativos).</p>
                                 </div>
-                                <button onClick={() => { setEditingProdId(null); setNomeProd(''); setPrecoProd('109.93'); setProductImages(['', '', '', '', '', '']); setAba('novo'); }} style={btnSave} className="w-auto px-4 py-2 text-xs">
+                                <button onClick={() => { setEditingProdId(null); setNomeProd(''); setPrecoProd('70.00'); setProductImages(['', '', '', '', '', '']); setAba('novo'); }} style={btnSave} className="w-auto px-4 py-2 text-xs">
                                     + ADICIONAR PRODUTO NA VITRINE
                                 </button>
                             </div>
@@ -1740,7 +1740,7 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
                                                                 {prod.team}
                                                             </span>
                                                             <span className="absolute top-2 right-2 bg-emerald-950/90 border border-emerald-500/40 px-2 py-0.5 rounded text-[10px] font-black text-emerald-400">
-                                                                R$ 109,93
+                                                                R$ 70,00
                                                             </span>
                                                         </div>
                                                         <div className="p-3 flex-1 flex flex-col justify-between space-y-2">
