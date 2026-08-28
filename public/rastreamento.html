@@ -133,7 +133,7 @@
     .demo-hint {
       margin-top: 14px;
       font-size: 0.8rem;
-      color: rgba(255,255,255,0.55);
+      color: rgba(255,255,255,0.65);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -321,20 +321,6 @@
       margin-top: 4px;
     }
 
-    .sim-badge {
-      display: inline-block;
-      background: var(--gray-100);
-      color: var(--gray-500);
-      font-size: 0.68rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      padding: 2px 7px;
-      border-radius: 6px;
-      margin-left: 6px;
-      vertical-align: middle;
-    }
-
     .address-card {
       background: var(--gray-50);
       border: 1px solid var(--gray-200);
@@ -342,20 +328,6 @@
       padding: 16px;
       margin-top: 16px;
       position: relative;
-    }
-
-    .test-badge {
-      position: absolute;
-      top: -10px;
-      left: 14px;
-      background: var(--yellow);
-      color: #1e293b;
-      font-size: 0.68rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      padding: 3px 9px;
-      border-radius: 20px;
     }
 
     .address-card p { font-size: 0.88rem; color: var(--gray-600); line-height: 1.7; }
@@ -505,21 +477,6 @@
       .status-card { flex-direction: column; gap: 14px; }
       main { padding: 24px 12px 48px; }
     }
-
-    /* ── DEMO MODE BANNER ── */
-    .demo-banner {
-      background: rgba(245,158,11,0.12);
-      border: 1px solid rgba(245,158,11,0.35);
-      border-radius: var(--radius-sm);
-      padding: 10px 16px;
-      font-size: 0.8rem;
-      color: var(--yellow-dark);
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 20px;
-    }
   </style>
 </head>
 <body>
@@ -539,7 +496,7 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-        <input type="text" id="trackingInput" placeholder="Digite seu código de rastreio" value="JDL-TESTE-280826" autocomplete="off" spellcheck="false" />
+        <input type="text" id="trackingInput" placeholder="Digite seu código de rastreio" value="JDL-829104721-BR" autocomplete="off" spellcheck="false" />
         <button class="btn-rastrear" onclick="rastrear()">🔍 Rastrear pedido</button>
       </div>
 
@@ -547,7 +504,7 @@
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
         </svg>
-        Modo demonstração &mdash; rastreamento fictício para testes. Código de exemplo: <strong>JDL-TESTE-280826</strong>
+        Exemplo de código: <strong>JDL-829104721-BR</strong>
       </p>
     </div>
   </div>
@@ -555,14 +512,6 @@
   <!-- RESULTADO -->
   <main>
     <div id="resultSection" class="hidden">
-
-      <!-- Banner demo -->
-      <div class="demo-banner">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-        Modo demonstração — rastreamento fictício para testes. Nenhuma informação abaixo é real.
-      </div>
 
       <!-- Status principal -->
       <div class="status-card">
@@ -591,7 +540,7 @@
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
                 <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
               </svg>
-              Cód: <strong id="trackingCode">JDL-TESTE-280826</strong>
+              Cód: <strong id="trackingCode">JDL-829104721-BR</strong>
             </div>
           </div>
         </div>
@@ -629,21 +578,20 @@
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
                   <rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
                 </svg>
-                Jadlog
+                Jadlog Express
               </span>
-              <span class="sim-badge">simulação</span>
             </div>
           </div>
           <div class="detail-item">
             <small>Serviço</small>
-            <strong>Entrega Padrão (teste)</strong>
+            <strong>Entrega Expressa</strong>
           </div>
         </div>
 
         <!-- Endereço -->
         <div class="address-card" style="margin-top:20px;">
-          <span class="test-badge">Dados de Teste</span>
-          <p style="margin-top:6px;">
+          <small style="display:block;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--gray-400);margin-bottom:6px;">Endereço de Entrega</small>
+          <p>
             <strong>Rua das Safiras, nº 17</strong><br>
             Residencial Casa 4<br>
             CEP: 24937-640<br>
@@ -745,8 +693,8 @@
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round">
         <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
       </svg>
-      <h3 style="margin-top:10px;color:#1e293b">Código não encontrado</h3>
-      <p>Verifique o código e tente novamente. O código de demonstração é <strong>JDL-TESTE-280826</strong>.</p>
+      <h3 style="margin-top:10px;color:#1e293b">Por favor, insira um código válido</h3>
+      <p>Digite seu código de rastreio no campo acima para acompanhar a entrega.</p>
     </div>
 
   </main>
@@ -754,11 +702,11 @@
   <!-- FOOTER -->
   <footer>
     <strong>CAMISA10</strong> &nbsp;|&nbsp; Sua loja de camisetas favorita<br>
-    <span style="margin-top:6px;display:block;">Página demonstrativa — informações de rastreamento exibidas apenas para fins de teste.</span>
+    <span style="margin-top:6px;display:block;">Página de rastreamento de pedidos — CAMISA10</span>
   </footer>
 
   <script>
-    const DEMO_CODE = 'JDL-TESTE-280826';
+    const DEFAULT_CODE = 'JDL-829104721-BR';
 
     function rastrear() {
       const input = document.getElementById('trackingInput');
@@ -773,24 +721,29 @@
       errorState.classList.add('hidden');
       loadingState.classList.remove('hidden');
 
-      // Simula uma consulta assíncrona (800ms)
+      // Simula consulta rápida (600ms)
       setTimeout(() => {
         loadingState.classList.add('hidden');
 
-        if (code === DEMO_CODE || code === '') {
-          document.getElementById('trackingCode').textContent = code || DEMO_CODE;
+        if (code.length > 0) {
+          document.getElementById('trackingCode').textContent = code;
           resultSection.classList.remove('hidden');
           resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } else {
           errorState.classList.remove('hidden');
           errorState.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-      }, 900);
+      }, 600);
     }
 
     // Permitir rastrear com Enter
     document.getElementById('trackingInput').addEventListener('keydown', function(e) {
       if (e.key === 'Enter') rastrear();
+    });
+
+    // Abre com resultado pronto se tiver código inicial
+    window.addEventListener('DOMContentLoaded', () => {
+      rastrear();
     });
   </script>
 
