@@ -2019,6 +2019,31 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
                                 </button>
                             </div>
 
+                            {/* ── Gateway de Pagamento (IronPay) ── */}
+                            <div className="bg-slate-900/40 border border-emerald-500/20 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-sm sm:text-md font-bold text-emerald-400 flex items-center gap-2">
+                                        💳 Gateway de Pagamento (IronPay)
+                                    </h3>
+                                </div>
+                                <div>
+                                    <label className="block text-xs text-gray-300 font-bold mb-1">Token de API da IronPay (Token Público)</label>
+                                    <input 
+                                        type="text"
+                                        placeholder="Cole aqui o Token da API da IronPay (ex: token_123...)" 
+                                        value={localConfig.ironpayToken || ''} 
+                                        onChange={e => setLocalConfig({ ...localConfig, ironpayToken: e.target.value })} 
+                                        className="w-full bg-slate-800 text-white rounded-lg border border-white/10 p-2.5 focus:outline-none text-xs font-mono" 
+                                    />
+                                    <p className="text-[11px] text-gray-400 mt-1">
+                                        Insira aqui o Token de API gerado no seu painel da IronPay para resolver o erro "Unauthenticated" na geração do PIX.
+                                    </p>
+                                </div>
+                                <button onClick={() => handleSaveAll()} disabled={saving} style={btnSave}>
+                                    {saving ? '⏳ Salvando...' : '💾 SALVAR TOKEN DA IRONPAY'}
+                                </button>
+                            </div>
+
                             {/* ── Selo Verificado ── */}
                             <div className="bg-slate-900/40 border border-white/5 p-4 sm:p-6 rounded-xl sm:rounded-2xl space-y-4">
                                 <div className="flex items-center justify-between">

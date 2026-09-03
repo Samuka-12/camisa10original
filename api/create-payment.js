@@ -9,6 +9,41 @@ function resolveIronpayWebhookUrl(req) {
     return `${forwardedProto}://${forwardedHost}/api/ironpay/webhook`;
 }
 
+async function resolveIronpayToken() {
+    const envToken = process.env.IRONPAY_TOKEN ? String(process.env.IRONPAY_TOKEN).trim() : '';
+    const oldToken = 'qoVerJe5Jw33aHINratQw4XFdc4gtQrEPFJ9QE7CRz22JyHupjVT0h8IdmIf';
+    if (envToken && envToken !== oldToken) {
+        return envToken;
+    }
+
+    try {
+        const SUPABASE_URL = process.env.SUPABASE_URL || 'https://xnadtzeyynoblrbncltt.supabase.co';
+        const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuYWR0emV5eW5vYmxyYm5jbHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2NjUxNjksImV4cCI6MjEwMTI0MTE2OX0.rRFwNQn_AjcY48QmaDczfww0ND3R5MC0_6UzumAJhzM';
+        const CONFIG_UUID = '00000000-0000-0000-0000-000000000000';
+
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/produtos?id=eq.${CONFIG_UUID}&select=description&limit=1`, {
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`
+            }
+        });
+        if (res.ok) {
+            const data = await res.json();
+            if (data && data[0] && data[0].description) {
+                const parsed = JSON.parse(data[0].description);
+                const dbToken = parsed.ironpayToken || parsed.ironpay_token;
+                if (dbToken && typeof dbToken === 'string' && dbToken.trim() && dbToken.trim() !== oldToken) {
+                    return dbToken.trim();
+                }
+            }
+        }
+    } catch (err) {
+        console.error('[resolveIronpayToken] Erro ao carregar token do Supabase:', err.message);
+    }
+
+    return envToken || oldToken;
+}
+
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
@@ -18,7 +53,7 @@ export default async function handler(req, res) {
         const body = req.body;
 
         const IRONPAY_API_URL = 'https://api.ironpayapp.com.br/api/public/v1/transactions';
-        const IRONPAY_TOKEN = process.env.IRONPAY_TOKEN || 'qoVerJe5Jw33aHINratQw4XFdc4gtQrEPFJ9QE7CRz22JyHupjVT0h8IdmIf';
+        const IRONPAY_TOKEN = await resolveIronpayToken();
 
         // Validação do valor mínimo antes de chamar a API IronPay
         const amountRaw = Number(body.amount);
@@ -152,9 +187,12 @@ export default async function handler(req, res) {
         const data = await response.json();
         console.log('[create-payment] Resposta IronPay:', JSON.stringify(data));
 
-        if (!response.ok) {
-            const errMsg = data?.message || data?.error || data?.errorDescription || `Erro HTTP ${response.status}`;
-            return res.status(response.status).json({ error: errMsg, _raw: data });
+        if (!response.ok || data.status === 401 || data.message === 'Unauthenticated.') {
+            const isUnauth = response.status === 401 || data.message === 'Unauthenticated.';
+            const errMsg = isUnauth
+                ? 'Token da IronPay inválido ou desativado. Atualize o Token API da IronPay no Painel Admin em Configurações de Pagamento.'
+                : (data?.message || data?.error || data?.errorDescription || `Erro HTTP ${response.status}`);
+            return res.status(response.status || 400).json({ error: errMsg, _raw: data });
         }
 
         // Construir resposta normalizada

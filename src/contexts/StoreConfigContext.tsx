@@ -127,6 +127,7 @@ export interface Categoria {
 export interface StoreConfig {
   dashboardResetTime?: string;
   produtosOcultos?: string[];
+  ironpayToken?: string;
   categorias?: Categoria[]; // Dynamic categories
   timesOficiais?: string[]; // Times oficiais cadastrados no admin
 
@@ -233,6 +234,7 @@ const DEFAULT_CATEGORIAS: Categoria[] = [
 ];
 
 const DEFAULT_CONFIG: StoreConfig = {
+  ironpayToken: '',
   categorias: DEFAULT_CATEGORIAS,
   timesOficiais: [],
 
