@@ -23,6 +23,7 @@ import {
     MessageSquare, Truck, Clock, Percent, ListFilter, CheckCircle, Smartphone,
     Zap, FolderPlus, List
 } from 'lucide-react';
+import DadosCheckoutTab from '../components/admin/DadosCheckoutTab';
 import { ImageUploader } from '@/components/admin/ImageUploader';
 import { TeamCombobox, normalizeTeamName } from '@/components/admin/TeamCombobox';
 
@@ -63,7 +64,7 @@ export default function Admin() {
     const [password, setPassword] = useState('');
     const [loginError, setLoginError] = useState('');
 
-    type ActiveTab = 'dashboard' | 'vitrine' | 'novo' | 'dinamicos' | 'configuracoes' | 'stories' | 'pulse' | 'precos' | 'imagens' | 'calculadora' | 'integracoes' | 'frontend' | 'categorias' | 'venda-manual';
+    type ActiveTab = 'dashboard' | 'dados-checkout' | 'vitrine' | 'novo' | 'dinamicos' | 'configuracoes' | 'stories' | 'pulse' | 'precos' | 'imagens' | 'calculadora' | 'integracoes' | 'frontend' | 'categorias' | 'venda-manual';
     const [aba, setAba] = useState<ActiveTab>('dashboard');
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [pedidos, setPedidos] = useState<any[]>([]);
@@ -1456,6 +1457,7 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
 
     const tabsList: Array<[ActiveTab, React.ReactNode, string]> = [
         ['dashboard', <LayoutDashboard size={16} />, 'Dashboard'],
+        ['dados-checkout', <ShoppingCart size={16} />, '📋 Dados do Checkout'],
         ['vitrine', <ShoppingCart size={16} />, 'Vitrine da Loja'],
         ['novo', <PlusCircle size={16} />, editingProdId ? 'Editar Produto' : 'Novo Produto'],
         ['dinamicos', <Link2 size={16} />, 'Produtos Dinâmicos'],
@@ -1544,6 +1546,7 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
                         <div>
                             <h1 className="text-lg sm:text-xl font-black text-white flex items-center gap-2">
                                 {aba === 'dashboard' && '📊 Dashboard de Vendas'}
+                                {aba === 'dados-checkout' && '📋 Dados do Checkout em Tempo Real'}
                                 {aba === 'vitrine' && '🏪 Vitrine da Loja'}
                                 {aba === 'novo' && (editingProdId ? '✏️ Editar Produto' : '➕ Novo Produto')}
                                 {aba === 'dinamicos' && '🔗 Produtos Dinâmicos'}
@@ -1667,6 +1670,13 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
                                 </div>
                             </div>
                         </div>
+                    )}
+
+                    {/* ═══════════════════════════════════════════════ */}
+                    {/* DADOS DO CHECKOUT EM TEMPO REAL */}
+                    {/* ═══════════════════════════════════════════════ */}
+                    {aba === 'dados-checkout' && (
+                        <DadosCheckoutTab pedidos={pedidos} refreshAll={refreshAll} />
                     )}
 
                     {/* ═══════════════════════════════════════════════ */}

