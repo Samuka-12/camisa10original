@@ -11,6 +11,7 @@ function resolveIronpayWebhookUrl(req) {
 
 async function resolveIronpayToken() {
     const envToken = process.env.IRONPAY_TOKEN ? String(process.env.IRONPAY_TOKEN).trim() : '';
+    const newToken = 'SG1i5iZayj5nfQ33zVUqUAH3B3OhfWHRziDpSsiPfrAcIgKfQiIAihdMGpOL';
     const oldToken = 'qoVerJe5Jw33aHINratQw4XFdc4gtQrEPFJ9QE7CRz22JyHupjVT0h8IdmIf';
     if (envToken && envToken !== oldToken) {
         return envToken;
@@ -41,7 +42,7 @@ async function resolveIronpayToken() {
         console.error('[resolveIronpayToken] Erro ao carregar token do Supabase:', err.message);
     }
 
-    return envToken || oldToken;
+    return envToken || newToken;
 }
 
 export default async function handler(req, res) {
