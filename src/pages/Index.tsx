@@ -172,25 +172,7 @@ const Index = () => {
         </div>
       </section>
 
-      {!dbReady ? (
-        <section className="py-14">
-          <div className="container mx-auto px-4">
-            <div className="mb-10 h-9 w-48 animate-pulse rounded bg-muted" />
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-7">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="overflow-hidden rounded-xl border border-border bg-card">
-                  <div className="aspect-square animate-pulse bg-muted" />
-                  <div className="space-y-3 p-4">
-                    <div className="h-3 w-2/5 animate-pulse rounded bg-muted" />
-                    <div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
-                    <div className="h-5 w-1/2 animate-pulse rounded bg-muted" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      ) : sections.map((section, idx) => (
+      {sections.map((section, idx) => (
         <div key={section.id}>
           {idx > 0 && <div className="border-t border-border" />}
           <ProductSection

@@ -26,6 +26,9 @@ export const FloatingStories: React.FC = () => {
   const stories = config.stories?.lista || [];
 
   useEffect(() => {
+    if (!activeStory || activeStory.tipoViculo !== 'produto' || !activeStory.produtoId) return;
+    if (dbProducts.length > 0) return;
+
     const fetchDbProducts = async () => {
       try {
         const { data } = await supabase.from('produtos').select('*');
@@ -33,7 +36,7 @@ export const FloatingStories: React.FC = () => {
       } catch (err) {}
     };
     fetchDbProducts();
-  }, [activeStory]);
+  }, [activeStory, dbProducts.length]);
 
   const pathParts = location.pathname.split('/');
   const isProductPage = pathParts[1] === 'produto';
@@ -72,7 +75,6 @@ export const FloatingStories: React.FC = () => {
   };
 
   const handleMouseDown = (e: React.MouseEvent, id: string) => {
-    e.preventDefault();
     const currentPos = positions[id] || { x: window.innerWidth - 90, y: 150 + visibleStories.indexOf(visibleStories.find(s => s.id === id)!) * 90 };
     dragInfo.current = {
       id,
@@ -93,17 +95,19 @@ export const FloatingStories: React.FC = () => {
     const deltaX = e.clientX - startX;
     const deltaY = e.clientY - startY;
 
-    if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+    if (Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8) {
       dragInfo.current.hasMoved = true;
     }
 
-    const newX = Math.max(10, Math.min(window.innerWidth - 85, posX + deltaX));
-    const newY = Math.max(10, Math.min(window.innerHeight - 85, posY + deltaY));
+    if (dragInfo.current.hasMoved) {
+      const newX = Math.max(10, Math.min(window.innerWidth - 85, posX + deltaX));
+      const newY = Math.max(10, Math.min(window.innerHeight - 85, posY + deltaY));
 
-    setPositions(prev => ({
-      ...prev,
-      [id]: { x: newX, y: newY }
-    }));
+      setPositions(prev => ({
+        ...prev,
+        [id]: { x: newX, y: newY }
+      }));
+    }
   };
 
   const handleMouseUp = () => {
@@ -123,29 +127,30 @@ export const FloatingStories: React.FC = () => {
       hasMoved: false
     };
 
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
     document.addEventListener('touchend', handleTouchEnd);
   };
 
   const handleTouchMove = (e: TouchEvent) => {
     if (!dragInfo.current) return;
-    e.preventDefault();
     const touch = e.touches[0];
     const { id, startX, startY, posX, posY } = dragInfo.current;
     const deltaX = touch.clientX - startX;
     const deltaY = touch.clientY - startY;
 
-    if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+    if (Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8) {
       dragInfo.current.hasMoved = true;
     }
 
-    const newX = Math.max(10, Math.min(window.innerWidth - 85, posX + deltaX));
-    const newY = Math.max(10, Math.min(window.innerHeight - 85, posY + deltaY));
+    if (dragInfo.current.hasMoved) {
+      const newX = Math.max(10, Math.min(window.innerWidth - 85, posX + deltaX));
+      const newY = Math.max(10, Math.min(window.innerHeight - 85, posY + deltaY));
 
-    setPositions(prev => ({
-      ...prev,
-      [id]: { x: newX, y: newY }
-    }));
+      setPositions(prev => ({
+        ...prev,
+        [id]: { x: newX, y: newY }
+      }));
+    }
   };
 
   const handleTouchEnd = () => {
@@ -160,13 +165,6 @@ export const FloatingStories: React.FC = () => {
 
   return (
     <>
-      {/* Pulse animation style block */}
-      <style>{`
-        @keyframes storyPulseAnim {
-          0%, 100% { box-shadow: 0 0 0 0 var(--story-pulse-color, rgba(124,58,237,0.6)); transform: scale(1); }
-          50% { box-shadow: 0 0 0 calc(var(--story-pulse-size, 8) * 1px) transparent; transform: scale(var(--story-pulse-scale, 1.06)); }
-        }
-      `}</style>
 
       {/* Floating story bubbles */}
       {visibleStories.map((story, index) => {

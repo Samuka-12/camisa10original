@@ -34,8 +34,9 @@ const Product = () => {
   const { addItem } = useCart();
   const { config, getAdjustedPrice } = useStoreConfig();
 
-  const [dbProduct, setDbProduct] = useState<any>(null);
-  const [dbLoading, setDbLoading] = useState(true);
+  const initialProduct = useMemo(() => getProductById(id || ""), [id]);
+  const [dbProduct, setDbProduct] = useState<any>(() => initialProduct || null);
+  const [dbLoading, setDbLoading] = useState<boolean>(() => !initialProduct);
 
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedImage, setSelectedImage] = useState(0);
@@ -47,13 +48,20 @@ const Product = () => {
   const [customNumber, setCustomNumber] = useState("");
   const [customPhrase, setCustomPhrase] = useState("");
 
-  // Load product: o BANCO é sempre a fonte de verdade (mesma fonte da vitrine).
-  // O catálogo estático é apenas fallback quando não existe registro no banco.
+  // Sync state if id changes
+  useEffect(() => {
+    const local = getProductById(id || "");
+    if (local) {
+      setDbProduct(local);
+      setDbLoading(false);
+    }
+  }, [id]);
+
+  // Load product: o BANCO é a fonte de verdade; atualiza em segundo plano sem travar a tela
   useEffect(() => {
     let cancelled = false;
 
     const loadProduct = async () => {
-      setDbLoading(true);
       const local = getProductById(id || "");
 
       try {
@@ -76,8 +84,6 @@ const Product = () => {
           });
         } else if (local) {
           setDbProduct(local);
-        } else {
-          setDbProduct(null);
         }
       } catch (err) {
         console.error("Erro ao carregar produto:", err);
