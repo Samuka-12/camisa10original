@@ -12,9 +12,11 @@
     <!-- Preconnect para Supabase Storage (acelera carregamento de imagens) -->
     <link rel="preconnect" href="https://xnadtzeyynoblrbncltt.supabase.co" crossorigin />
     <link rel="dns-prefetch" href="https://xnadtzeyynoblrbncltt.supabase.co" />
+    <link rel="preconnect" href="https://connect.facebook.net" crossorigin />
+    <link rel="dns-prefetch" href="https://connect.facebook.net" />
     <title>Camisa 10 - as camisetas mais faladas no precinho.</title>
-    <meta name="description" content="Lovable Generated Project">
-    <meta name="author" content="Lovable" />
+    <meta name="description" content="Camisetas de futebol originais, retrô e lançamentos 2026/27 a partir de R$ 70. Pagamento via Pix e envio para todo o Brasil.">
+    <meta name="author" content="Camisa 10" />
 
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1356c167-b593-4f2b-a5f6-cc2e5fb1d89e/id-preview-d155f07f--20341844-4248-4592-acd3-17fae79c6287.lovable.app-1775182931617.png">
@@ -24,32 +26,29 @@
     <meta name="twitter:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1356c167-b593-4f2b-a5f6-cc2e5fb1d89e/id-preview-d155f07f--20341844-4248-4592-acd3-17fae79c6287.lovable.app-1775182931617.png">
     <meta property="og:title" content="Camisa 10 - as camisetas mais faladas no precinho.">
     <meta name="twitter:title" content="Camisa 10 - as camisetas mais faladas no precinho.">
-    <meta property="og:description" content="Lovable Generated Project">
-    <meta name="twitter:description" content="Lovable Generated Project">
+    <meta property="og:description" content="Camisetas de futebol originais, retrô e lançamentos 2026/27 a partir de R$ 70. Pagamento via Pix e envio para todo o Brasil.">
+    <meta name="twitter:description" content="Camisetas de futebol originais, retrô e lançamentos 2026/27 a partir de R$ 70. Pagamento via Pix e envio para todo o Brasil.">
 
-    <!-- Meta Pixel Code -->
+    <!-- Meta Pixel Code (inicializacao unica) -->
     <script>
-      !function(f,b,e,v,n,t,s)
-      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-      n.queue=[];t=b.createElement(e);t.async=!0;
-      t.src=v;s=b.getElementsByTagName(e)[0];
-      s.parentNode.insertBefore(t,s)}(window, document,'script',
-      'https://connect.facebook.net/en_US/fbevents.js');
-      fbq('init', '1600126648494401');
-      var metaInitialPageViewId = 'PageView_' + Date.now() + '_' + Math.random().toString(16).slice(2, 8);
-      window.__c10_meta_initial_pageview_id = metaInitialPageViewId;
-      fbq('track', 'PageView', {}, { eventID: metaInitialPageViewId });
-      // Fallback: se o fbevents.js não executar em 3s, envia PageView via img beacon
-      setTimeout(function() {
-        if (!window.fbq._fbq) {
-          var img = document.createElement('img');
-          img.width = 1; img.height = 1; img.style.display = 'none';
-          img.src = 'https://www.facebook.com/tr?id=1600126648494401&ev=PageView&cd%5Bevent_id%5D=' + encodeURIComponent(metaInitialPageViewId) + '&noscript=1';
-          document.body.appendChild(img);
-        }
-      }, 3000);
+      (function () {
+        if (window.__c10_pixel_bootstrapped) return;
+        window.__c10_pixel_bootstrapped = true;
+
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+
+        fbq('init', '1600126648494401');
+        var metaInitialPageViewId = 'PageView_' + Date.now() + '_' + Math.random().toString(16).slice(2, 8);
+        window.__c10_meta_initial_pageview_id = metaInitialPageViewId;
+        fbq('track', 'PageView', {}, { eventID: metaInitialPageViewId });
+      })();
     </script>
     <!-- End Meta Pixel Code -->
   </head>
