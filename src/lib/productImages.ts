@@ -113,6 +113,8 @@ export function isVitrineRow(row: any): boolean {
   if (isHiddenFromVitrine(row.id)) return false;
   if (row.nome === "store_config" || row.tipo === "config") return false;
   if (row.tipo === "dinamico" || row.category === "dinamico" || row.team === "Link Dinâmico") return false;
+  const img = getMainImage(row);
+  if (!img || img.trim() === "") return false;
   return true;
 }
 
