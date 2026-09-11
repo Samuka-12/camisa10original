@@ -3,7 +3,7 @@ import { supabase } from "./supabase";
 const PRODUCTS_CACHE_KEY = "c10_products_cache_v2";
 const PRODUCTS_CACHE_TTL_MS = 60_000;
 const PRODUCTS_REQUEST_TIMEOUT_MS = 7_000;
-const PRODUCT_FIELDS = "id,nome,name,team,preco,price,category,imagem_url,image,images,description,sizes,videos,tipo";
+const PRODUCT_FIELDS = "id,nome,team,preco,category,imagem_url,image,images,description,sizes,videos,tipo";
 
 type ProductRow = Record<string, any>;
 
