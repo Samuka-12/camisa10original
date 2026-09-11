@@ -5,7 +5,7 @@ import { useCart } from '../contexts/CartContext';
 import { registerUsedDiscountsFromOrder } from '../lib/customerDiscounts';
 import { computeCashback, readStoreConfigCache } from '../lib/promotions';
 import { allProducts } from '../data/products';
-import { trackInitiateCheckout, consumeInitiateCheckoutId, generateEventId, getFbc, getFbp } from '../lib/metaPixel';
+import { trackInitiateCheckout, trackAddPaymentInfo, consumeInitiateCheckoutId, generateEventId, getFbc, getFbp } from '../lib/metaPixel';
 import { User, Mail, CreditCard, MapPin, Phone, Calendar, Hash, Lock, ShieldCheck, QrCode, Copy, CheckCheck, Clock, CheckCircle2 } from 'lucide-react';
 
 interface PixData {
@@ -332,6 +332,13 @@ export default function Checkout() {
       
       await salvarDadosNoPainel('pix_generated');
       await persistPurchaseContext(json.transaction_id, json.meta_event_id || metaEventId, fbp, fbc);
+
+      trackAddPaymentInfo({
+        value: Number(produto.preco) || 0,
+        contentIds: cartItems.length > 0 ? cartItems.map(i => i.product.id) : [searchParams.get('id') || 'checkout'],
+        paymentCategory: 'pix',
+        userData: { fbc, fbp }
+      }).catch(err => console.warn('[Checkout] AddPaymentInfo falhou:', err));
     } catch (err: any) {
       setPixErro(err?.message || 'Erro ao conectar com IronPay.');
     } finally {
@@ -386,6 +393,13 @@ export default function Checkout() {
           }
         ]
       };
+
+      trackAddPaymentInfo({
+        value: Number(produto.preco) || 0,
+        contentIds: cartItems.length > 0 ? cartItems.map(i => i.product.id) : [searchParams.get('id') || 'checkout'],
+        paymentCategory: 'credit_card',
+        userData: { fbc, fbp }
+      }).catch(err => console.warn('[Checkout] AddPaymentInfo falhou:', err));
 
       const res = await fetch('/api/create-payment', {
         method: 'POST',

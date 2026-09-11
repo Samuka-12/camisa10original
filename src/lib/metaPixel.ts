@@ -8,13 +8,15 @@
 
 export const META_PIXEL_ID = '1600126648494401';
 
-export type MetaBrowserEvent = 'PageView' | 'ViewContent' | 'AddToCart' | 'InitiateCheckout' | 'Contact';
+export type MetaBrowserEvent = 'PageView' | 'ViewContent' | 'Search' | 'AddToCart' | 'InitiateCheckout' | 'AddPaymentInfo' | 'Contact';
 
 const BROWSER_EVENTS = new Set<MetaBrowserEvent>([
   'PageView',
   'ViewContent',
+  'Search',
   'AddToCart',
   'InitiateCheckout',
+  'AddPaymentInfo',
   'Contact',
 ]);
 
@@ -223,6 +225,38 @@ export async function trackInitiateCheckout(opts: {
   await sendCapiEvent({ event_name: 'InitiateCheckout', event_id: eventId, user_data: opts.userData, custom_data: params });
 }
 
+export async function trackSearch(opts: {
+  searchString: string;
+  userData?: MetaEventData['user_data'];
+}): Promise<void> {
+  if (!opts.searchString || !opts.searchString.trim()) return;
+  const eventId = generateEventId('Search');
+  const params = {
+    search_string: opts.searchString.trim(),
+  };
+  fbqTrack('Search', params, eventId);
+  await sendCapiEvent({ event_name: 'Search', event_id: eventId, user_data: opts.userData, custom_data: params });
+}
+
+export async function trackAddPaymentInfo(opts: {
+  value: number;
+  contentIds: string[];
+  paymentCategory?: string;
+  currency?: string;
+  userData?: MetaEventData['user_data'];
+  eventId?: string;
+}): Promise<void> {
+  const eventId = opts.eventId || generateEventId('AddPaymentInfo');
+  const params = {
+    value: opts.value,
+    content_ids: opts.contentIds,
+    currency: opts.currency || 'BRL',
+    payment_category: opts.paymentCategory || 'pix',
+  };
+  fbqTrack('AddPaymentInfo', params, eventId);
+  await sendCapiEvent({ event_name: 'AddPaymentInfo', event_id: eventId, user_data: opts.userData, custom_data: params });
+}
+
 /**
  * Evento Contact — disparado quando o usuário clica no botão de WhatsApp.
  */
@@ -236,3 +270,4 @@ export async function trackContact(
   await sendCapiEvent({ event_name: 'Contact', event_id: eventId, user_data: userData });
   await sendCapiEvent({ event_name: 'Lead', event_id: generateEventId('Lead'), user_data: userData });
 }
+

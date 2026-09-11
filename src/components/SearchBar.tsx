@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { searchProducts, type Product } from "@/data/products";
 import { getUrlWithUtm } from "@/utils/utm";
+import { trackSearch, getFbc, getFbp } from "@/lib/metaPixel";
 
 const SearchBar = () => {
   const [query, setQuery] = useState("");
@@ -15,6 +16,15 @@ const SearchBar = () => {
     if (query.length >= 2) {
       setResults(searchProducts(query).slice(0, 6));
       setOpen(true);
+
+      const timer = setTimeout(() => {
+        trackSearch({
+          searchString: query,
+          userData: { fbc: getFbc(), fbp: getFbp() }
+        }).catch(err => console.warn('[SearchBar] Error tracking Search event:', err));
+      }, 600);
+
+      return () => clearTimeout(timer);
     } else {
       setResults([]);
       setOpen(false);

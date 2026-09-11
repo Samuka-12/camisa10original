@@ -89,6 +89,45 @@ const events = [
       },
     },
   },
+  {
+    name: 'Search',
+    payload: {
+      event_name: 'Search',
+      event_id: `Search_${Date.now()}_${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0')}`,
+      event_time: Math.floor(Date.now() / 1000),
+      event_source_url: 'https://camisa10original.com.br/',
+      action_source: 'website',
+      user_data: {
+        fbc: '',
+        fbp: 'fb.1.1234567890.AbCdEfGhIjKlMnOpQrStUvWxYz',
+        client_user_agent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      },
+      custom_data: {
+        search_string: 'Brasil',
+      },
+    },
+  },
+  {
+    name: 'AddPaymentInfo',
+    payload: {
+      event_name: 'AddPaymentInfo',
+      event_id: `AddPaymentInfo_${Date.now()}_${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0')}`,
+      event_time: Math.floor(Date.now() / 1000),
+      event_source_url: 'https://camisa10original.com.br/checkout?id=abc123&qty=1',
+      action_source: 'website',
+      user_data: {
+        fbc: '',
+        fbp: 'fb.1.1234567890.AbCdEfGhIjKlMnOpQrStUvWxYz',
+        client_user_agent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      },
+      custom_data: {
+        value: 135.83,
+        content_ids: ['abc123'],
+        currency: 'BRL',
+        payment_category: 'pix',
+      },
+    },
+  },
 ];
 
 async function testEvent(event) {
