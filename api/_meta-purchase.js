@@ -18,6 +18,13 @@ const PAID_STATUSES = new Set([
   'succeeded',
   'pago',
   'aprovado',
+  'confirmado',
+  'confirmed',
+  'settled',
+  'realizado',
+  'sucesso',
+  'pix_paid',
+  'paid_pix',
 ]);
 
 export function sha256(value) {

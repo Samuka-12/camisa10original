@@ -11,6 +11,9 @@ export const SUPABASE_URL = 'https://xnadtzeyynoblrbncltt.supabase.co';
 const candidateKeys = [
   process.env.SUPABASE_SERVICE_ROLE_KEY,
   process.env.SUPABASE_SERVICE_KEY,
+  process.env.VITE_SUPABASE_ANON_KEY,
+  process.env.SUPABASE_ANON_KEY,
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuYWR0emV5eW5vYmxyYm5jbHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2NjUxNjksImV4cCI6MjEwMTI0MTE2OX0.rRFwNQn_AjcY48QmaDczfww0ND3R5MC0_6UzumAJhzM',
 ].filter((value) => typeof value === 'string' && value.trim());
 
 const keys = [...new Set(candidateKeys.map((value) => value.trim()))];
