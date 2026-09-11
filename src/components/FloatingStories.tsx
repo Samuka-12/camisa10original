@@ -26,6 +26,8 @@ export const FloatingStories: React.FC = () => {
   const stories = config.stories?.lista || [];
 
   useEffect(() => {
+    if (stories.length === 0) return;
+
     const fetchDbProducts = async () => {
       try {
         const data = await getCatalogProducts();
@@ -33,7 +35,7 @@ export const FloatingStories: React.FC = () => {
       } catch (err) {}
     };
     fetchDbProducts();
-  }, []);
+  }, [stories.length]);
 
   const pathParts = location.pathname.split('/');
   const isProductPage = pathParts[1] === 'produto';

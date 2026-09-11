@@ -2,6 +2,7 @@ import { supabase } from "./supabase";
 
 const PRODUCTS_CACHE_KEY = "c10_products_cache_v2";
 const PRODUCTS_CACHE_TTL_MS = 60_000;
+const PRODUCTS_REQUEST_TIMEOUT_MS = 7_000;
 const PRODUCT_FIELDS = "id,nome,name,team,preco,price,category,imagem_url,image,images,description,sizes,videos,tipo";
 
 type ProductRow = Record<string, any>;
@@ -9,6 +10,25 @@ type ProductRow = Record<string, any>;
 let memoryProducts: ProductRow[] | null = null;
 let memoryProductsAt = 0;
 let productsRequest: Promise<ProductRow[]> | null = null;
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = window.setTimeout(() => {
+      reject(new Error(`Catálogo indisponível após ${timeoutMs}ms`));
+    }, timeoutMs);
+
+    promise.then(
+      (value) => {
+        window.clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        window.clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
 
 function readSessionCache(): ProductRow[] | null {
   try {
@@ -41,7 +61,7 @@ export async function getCatalogProducts(): Promise<ProductRow[]> {
   }
 
   if (!productsRequest) {
-    productsRequest = supabase
+    productsRequest = withTimeout(supabase
       .from("produtos")
       .select(PRODUCT_FIELDS)
       .then(({ data, error }) => {
@@ -54,7 +74,7 @@ export async function getCatalogProducts(): Promise<ProductRow[]> {
       })
       .finally(() => {
         productsRequest = null;
-      });
+      }), PRODUCTS_REQUEST_TIMEOUT_MS);
   }
 
   return productsRequest;

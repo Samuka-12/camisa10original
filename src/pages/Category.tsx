@@ -117,7 +117,7 @@ const Category = () => {
             <ShieldCheck className="w-6 h-6 text-green-500 fill-green-500/20 animate-pulse" title="Loja Verificada e Segura" />
           )}
         </div>
-        {!dbReady ? (
+        {!dbReady && allProducts.length === 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-7">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="overflow-hidden rounded-xl border border-border bg-card">

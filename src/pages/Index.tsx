@@ -172,7 +172,7 @@ const Index = () => {
         </div>
       </section>
 
-      {!dbReady ? (
+      {!dbReady && sections.every((section) => section.products.length === 0) ? (
         <section className="py-14">
           <div className="container mx-auto px-4">
             <div className="mb-10 h-9 w-48 animate-pulse rounded bg-muted" />
