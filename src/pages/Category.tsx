@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getProductsByCategory, type Product } from "@/data/products";
-import { supabase } from "@/lib/supabase";
+import { getCatalogProducts } from "@/lib/catalog";
 import { isVitrineRow, normalizeDbProduct, mergePreferDb } from "@/lib/productImages";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { useStoreConfig } from "@/contexts/StoreConfigContext";
@@ -56,7 +56,7 @@ const Category = () => {
   useEffect(() => {
     const fetchCategoryProducts = async () => {
       try {
-        const { data } = await supabase.from('produtos').select('*');
+        const data = await getCatalogProducts();
         if (data) {
           const filtered = data.filter(p => {
             if (!isVitrineRow(p)) return false;

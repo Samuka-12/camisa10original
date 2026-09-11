@@ -4,8 +4,8 @@ import CategoryBar from "@/components/CategoryBar";
 import ProductSection from "@/components/ProductSection";
 import Footer from "@/components/Footer";
 import { selecoes, retro, europeus, brasileirao, getProductsByCategory } from "@/data/products";
-import heroBannerAsset from "@/assets/hero-banner.jpg";
-import { supabase } from "@/lib/supabase";
+import heroBannerAsset from "@/assets/hero-banner.webp";
+import { getCatalogProducts } from "@/lib/catalog";
 import { isVitrineRow, normalizeDbProduct, mergePreferDb } from "@/lib/productImages";
 import { useStoreConfig } from "@/contexts/StoreConfigContext";
 
@@ -49,7 +49,7 @@ const Index = () => {
   useEffect(() => {
     const fetchDbProducts = async () => {
       try {
-        const { data } = await supabase.from('produtos').select('*');
+        const data = await getCatalogProducts();
         if (data) {
           // Apenas produtos de vitrine (exclui config da loja e links dinâmicos).
           // Obs: o preço NÃO é mais usado como filtro — produtos com preço

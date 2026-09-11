@@ -6,6 +6,21 @@
 [build.environment]
   NODE_VERSION = "20"
 
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public,max-age=31536000,immutable"
+
+[[headers]]
+  for = "/produtos/*"
+  [headers.values]
+    Cache-Control = "public,max-age=604800,stale-while-revalidate=86400"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public,max-age=0,must-revalidate"
+
 [[redirects]]
   from = "/api/ironpay/webhook"
   to = "/.netlify/functions/ironpay/webhook"

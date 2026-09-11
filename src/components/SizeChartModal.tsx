@@ -66,6 +66,8 @@ const SizeChartModal = ({ defaultTab = 1, variant = "default" }: SizeChartModalP
               
               <div className="relative w-full overflow-hidden rounded-lg border border-border bg-black/5 flex justify-center items-center">
                 <img
+                  loading="lazy"
+                  decoding="async"
                   src={tabs.find(t => t.id === activeTab)?.img}
                   alt="Tabela de Medidas"
                   className="max-h-[60vh] w-auto object-contain"

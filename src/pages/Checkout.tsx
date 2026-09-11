@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { getProductById } from '@/lib/catalog';
 import { useCart } from '../contexts/CartContext';
 import { registerUsedDiscountsFromOrder } from '../lib/customerDiscounts';
 import { computeCashback, readStoreConfigCache } from '../lib/promotions';
@@ -155,12 +155,8 @@ export default function Checkout() {
         });
       }
 
-      supabase
-        .from('produtos')
-        .select('*')
-        .eq('id', id)
-        .single()
-        .then(({ data }) => {
+      getProductById(id)
+        .then((data) => {
           if (data) {
             const dbBasePrice = overridePreco ? parsePrice(overridePreco) : (data.preco ? parsePrice(data.preco) : 70.00);
             const dbFinalPrice = (dbBasePrice + addon) * qty;
@@ -585,6 +581,8 @@ export default function Checkout() {
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 {produto.imagens.map((img, idx) => (
                   <img 
+                    loading="lazy"
+                    decoding="async"
                     key={idx}
                     src={img} 
                     alt={produto.nome} 
@@ -690,7 +688,7 @@ export default function Checkout() {
                   </div>
                 ) : pixData ? (
                   <div style={{ textAlign: 'center' }}>
-                    <img src={pixData.qrImage} alt="QR Code PIX" style={{ width: '180px', height: '180px', margin: '0 auto', display: 'block' }} />
+                    <img loading="eager" decoding="async" src={pixData.qrImage} alt="QR Code PIX" style={{ width: '180px', height: '180px', margin: '0 auto', display: 'block' }} />
                     <div style={{ background: '#f8f9fa', padding: '10px', borderRadius: '8px', marginTop: '15px', border: '1px dashed #ccc' }}>
                       <div style={{ fontSize: '10px', color: '#666', marginBottom: '5px', fontWeight: 'bold' }}>CÓDIGO PIX (COPIA E COLA)</div>
                       <div style={{ fontSize: '11px', wordBreak: 'break-all', color: '#333', maxHeight: '60px', overflow: 'hidden', marginBottom: '10px' }}>{pixData.qrCode}</div>

@@ -6,6 +6,10 @@ const retryDelays = [700, 1800];
 function getOptimizedImageUrl(src: string, width: number): string {
   if (!src) return "";
 
+  if (src.startsWith("/") && /\.(jpe?g|png)$/i.test(src)) {
+    return src.replace(/\.(jpe?g|png)$/i, ".webp");
+  }
+
   try {
     const url = new URL(src);
     const publicPrefix = "/storage/v1/object/public/";
@@ -15,6 +19,12 @@ function getOptimizedImageUrl(src: string, width: number): string {
       url.searchParams.set("quality", "85");
       url.searchParams.set("resize", "contain");
       return url.toString();
+    }
+
+    if (url.protocol === "http:" || url.protocol === "https:") {
+      const source = encodeURIComponent(src);
+      const targetWidth = Math.min(Math.max(width, 160), 720);
+      return `https://wsrv.nl/?url=${source}&w=${targetWidth}&output=webp&q=80&fit=contain`;
     }
   } catch {
     return src;

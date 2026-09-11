@@ -130,6 +130,8 @@ export const ImageUploader = ({
           />
         ) : (
           <img
+            loading="lazy"
+            decoding="async"
             src={displayUrl}
             alt="Preview"
             className="max-h-[300px] w-auto object-contain rounded-xl"

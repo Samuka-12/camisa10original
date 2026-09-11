@@ -1,3 +1,12 @@
+let ironpayTokenCache = { value: '', expiresAt: 0 };
+let ironpayTokenPromise = null;
+
+function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
 async function resolveIronpayToken() {
     const envToken = process.env.IRONPAY_TOKEN ? String(process.env.IRONPAY_TOKEN).trim() : '';
     const newToken = 'SG1i5iZayj5nfQ33zVUqUAH3B3OhfWHRziDpSsiPfrAcIgKfQiIAihdMGpOL';
@@ -6,12 +15,16 @@ async function resolveIronpayToken() {
         return envToken;
     }
 
-    try {
+    if (ironpayTokenCache.value && ironpayTokenCache.expiresAt > Date.now()) return ironpayTokenCache.value;
+    if (ironpayTokenPromise) return ironpayTokenPromise;
+
+    ironpayTokenPromise = (async () => {
+      try {
         const SUPABASE_URL = process.env.SUPABASE_URL || 'https://xnadtzeyynoblrbncltt.supabase.co';
         const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuYWR0emV5eW5vYmxyYm5jbHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2NjUxNjksImV4cCI6MjEwMTI0MTE2OX0.rRFwNQn_AjcY48QmaDczfww0ND3R5MC0_6UzumAJhzM';
         const CONFIG_UUID = '00000000-0000-0000-0000-000000000000';
 
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/produtos?id=eq.${CONFIG_UUID}&select=description&limit=1`, {
+        const res = await fetchWithTimeout(`${SUPABASE_URL}/rest/v1/produtos?id=eq.${CONFIG_UUID}&select=description&limit=1`, {
             headers: {
                 'apikey': SUPABASE_KEY,
                 'Authorization': `Bearer ${SUPABASE_KEY}`
@@ -23,15 +36,22 @@ async function resolveIronpayToken() {
                 const parsed = JSON.parse(data[0].description);
                 const dbToken = parsed.ironpayToken || parsed.ironpay_token;
                 if (dbToken && typeof dbToken === 'string' && dbToken.trim() && dbToken.trim() !== oldToken) {
-                    return dbToken.trim();
+                    ironpayTokenCache = { value: dbToken.trim(), expiresAt: Date.now() + 5 * 60_000 };
+                    return ironpayTokenCache.value;
                 }
             }
         }
-    } catch (err) {
+      } catch (err) {
         console.error('[resolveIronpayToken] Erro ao carregar token do Supabase:', err.message);
     }
 
-    return envToken || newToken;
+      return envToken || newToken;
+    })();
+    try {
+      return await ironpayTokenPromise;
+    } finally {
+      ironpayTokenPromise = null;
+    }
 }
 
 exports.handler = async (event, context) => {
@@ -173,7 +193,7 @@ exports.handler = async (event, context) => {
             card: payload.card ? { ...payload.card, number: '****', cvv: '***' } : undefined
         }));
 
-        const response = await fetch(`${IRONPAY_API_URL}?api_token=${IRONPAY_TOKEN}`, {
+        const response = await fetchWithTimeout(`${IRONPAY_API_URL}?api_token=${IRONPAY_TOKEN}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

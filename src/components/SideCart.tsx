@@ -262,6 +262,8 @@ const SideCart = () => {
                   >
                     <div style={{ position: "relative" }}>
                       <img
+                        loading="lazy"
+                        decoding="async"
                         src={item.product.image || "/placeholder.svg"}
                         alt={item.product.name}
                         className="w-16 h-16 object-cover rounded-md"
