@@ -1,20 +1,29 @@
 import { useEffect, useMemo, useState } from "react";
 
 const loadedImages = new Set<string>();
-const retryDelays = [700, 1800];
 
 function getOptimizedImageUrl(src: string, width: number): string {
   if (!src) return "";
+
+  if (src.startsWith("/") && /\.(jpe?g|png)$/i.test(src)) {
+    return src.replace(/\.(jpe?g|png)$/i, ".webp");
+  }
 
   try {
     const url = new URL(src);
     const publicPrefix = "/storage/v1/object/public/";
     if (url.hostname.endsWith(".supabase.co") && url.pathname.startsWith(publicPrefix)) {
       url.pathname = url.pathname.replace(publicPrefix, "/storage/v1/render/image/public/");
-      url.searchParams.set("width", String(width));
-      url.searchParams.set("quality", "85");
+      url.searchParams.set("width", String(Math.min(Math.max(width, 160), 720)));
+      url.searchParams.set("quality", "80");
       url.searchParams.set("resize", "contain");
       return url.toString();
+    }
+
+    if (url.protocol === "http:" || url.protocol === "https:") {
+      const source = encodeURIComponent(src);
+      const targetWidth = Math.min(Math.max(width, 160), 720);
+      return `https://wsrv.nl/?url=${source}&w=${targetWidth}&output=webp&q=80&fit=contain`;
     }
   } catch {
     return src;
@@ -43,41 +52,38 @@ const ProductImage = ({
   sizes,
 }: ProductImageProps) => {
   const optimizedSrc = useMemo(() => getOptimizedImageUrl(src?.trim() || "", width), [src, width]);
-  const [attempt, setAttempt] = useState(0);
+  const [fallbackSrc, setFallbackSrc] = useState<string | null>(null);
+  const renderedSrc = fallbackSrc || optimizedSrc;
   const [status, setStatus] = useState<"loading" | "loaded" | "error">(
-    optimizedSrc && loadedImages.has(optimizedSrc) ? "loaded" : "loading",
+    renderedSrc && loadedImages.has(renderedSrc) ? "loaded" : "loading",
   );
 
   useEffect(() => {
-    setAttempt(0);
+    setFallbackSrc(null);
     setStatus(optimizedSrc && loadedImages.has(optimizedSrc) ? "loaded" : "loading");
   }, [optimizedSrc]);
 
   const handleError = () => {
-    const delay = retryDelays[attempt];
-    if (!optimizedSrc || delay === undefined) {
-      setStatus("error");
+    if (fallbackSrc !== "/placeholder.svg") {
+      setFallbackSrc("/placeholder.svg");
+      setStatus("loading");
       return;
     }
-
-    window.setTimeout(() => {
-      setAttempt((current) => current + 1);
-      setStatus("loading");
-    }, delay);
+    setStatus("error");
   };
 
   return (
     <>
-      {status !== "loaded" && (
+      {status === "loading" && (
         <span
           aria-hidden="true"
-          className={`absolute inset-0 bg-muted ${status === "loading" ? "animate-pulse" : ""}`}
+          className="absolute inset-0 animate-pulse bg-muted"
         />
       )}
-      {optimizedSrc && (
+      {renderedSrc && (
         <img
-          key={`${optimizedSrc}-${attempt}`}
-          src={optimizedSrc}
+          key={renderedSrc}
+          src={renderedSrc}
           alt={alt}
           loading={priority ? "eager" : "lazy"}
           fetchPriority={priority ? "high" : "auto"}
@@ -87,7 +93,7 @@ const ProductImage = ({
           sizes={sizes}
           className={`${className} transition-opacity duration-200 ${status === "loaded" ? "opacity-100" : "opacity-0"}`}
           onLoad={() => {
-            loadedImages.add(optimizedSrc);
+            loadedImages.add(renderedSrc);
             setStatus("loaded");
           }}
           onError={handleError}

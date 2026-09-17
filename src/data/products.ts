@@ -162,10 +162,10 @@ export const allProducts: Product[] = [
   },
   {
     id: "paraguai-2026-home",
-    image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663805848653/FNXNEZyIaTYMgjdh.png",
+    image: "/placeholder.svg",
     images: [
-      "https://files.manuscdn.com/user_upload_by_module/session_file/310519663805848653/FNXNEZyIaTYMgjdh.png",
-      "https://files.manuscdn.com/user_upload_by_module/session_file/310519663805848653/xwKYKKzElSbJpQAa.png"
+      "/placeholder.svg",
+      "/placeholder.svg"
     ],
     name: "Camiseta Seleção Paraguaia Home 2026/27",
     team: "Seleção Paraguaia",
@@ -641,8 +641,8 @@ export const allProducts: Product[] = [
   },
   {
     id: "d4e5f6a7-eeee-ffff-0000-555566667777",
-    image: `https://files.manuscdn.com/user_upload_by_module/session_file/310519663835790628/UHxvkgPwaQcCYZay.jpg`,
-    images: [`https://files.manuscdn.com/user_upload_by_module/session_file/310519663835790628/UHxvkgPwaQcCYZay.jpg`],
+    image: "/placeholder.svg",
+    images: ["/placeholder.svg"],
     name: "Camiseta Fluminense 2026/27",
     team: "Fluminense",
     price: "R$ 70,00",
@@ -680,8 +680,8 @@ export const allProducts: Product[] = [
   },
   {
     id: "e8f9a0b1-1111-2222-3333-999900001111",
-    image: `https://files.manuscdn.com/user_upload_by_module/session_file/310519663835790628/qrSMHMZhxnxuFoto.png`,
-    images: [`https://files.manuscdn.com/user_upload_by_module/session_file/310519663835790628/qrSMHMZhxnxuFoto.png`, `https://files.manuscdn.com/user_upload_by_module/session_file/310519663835790628/rffYFUGaIcpKltwy.png`],
+    image: "/placeholder.svg",
+    images: ["/placeholder.svg", "/placeholder.svg"],
     name: "Camiseta Cruzeiro 2026/27 Edicao Especial",
     team: "Cruzeiro",
     price: "R$ 70,00",

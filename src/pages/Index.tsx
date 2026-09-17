@@ -4,8 +4,8 @@ import CategoryBar from "@/components/CategoryBar";
 import ProductSection from "@/components/ProductSection";
 import Footer from "@/components/Footer";
 import { selecoes, retro, europeus, brasileirao, getProductsByCategory } from "@/data/products";
-import heroBannerAsset from "@/assets/hero-banner.jpg";
-import { supabase } from "@/lib/supabase";
+import heroBannerAsset from "@/assets/hero-banner.webp";
+import { getCatalogProducts } from "@/lib/catalog";
 import { isVitrineRow, normalizeDbProduct, mergePreferDb } from "@/lib/productImages";
 import { useStoreConfig } from "@/contexts/StoreConfigContext";
 
@@ -49,7 +49,7 @@ const Index = () => {
   useEffect(() => {
     const fetchDbProducts = async () => {
       try {
-        const { data } = await supabase.from('produtos').select('*');
+        const data = await getCatalogProducts();
         if (data) {
           // Apenas produtos de vitrine (exclui config da loja e links dinâmicos).
           // Obs: o preço NÃO é mais usado como filtro — produtos com preço
@@ -160,6 +160,10 @@ const Index = () => {
           className="w-full h-[450px] md:h-[600px] object-cover object-top"
           width={1920}
           height={1080}
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
+          sizes="100vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
         <div className="absolute inset-0 flex flex-col items-center justify-end pb-10 md:pb-14 text-center px-4">
@@ -172,7 +176,25 @@ const Index = () => {
         </div>
       </section>
 
-      {sections.map((section, idx) => (
+      {!dbReady && sections.every((section) => section.products.length === 0) ? (
+        <section className="py-14">
+          <div className="container mx-auto px-4">
+            <div className="mb-10 h-9 w-48 animate-pulse rounded bg-muted" />
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-7">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="overflow-hidden rounded-xl border border-border bg-card">
+                  <div className="aspect-square animate-pulse bg-muted" />
+                  <div className="space-y-3 p-4">
+                    <div className="h-3 w-2/5 animate-pulse rounded bg-muted" />
+                    <div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
+                    <div className="h-5 w-1/2 animate-pulse rounded bg-muted" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : sections.map((section, idx) => (
         <div key={section.id}>
           {idx > 0 && <div className="border-t border-border" />}
           <ProductSection

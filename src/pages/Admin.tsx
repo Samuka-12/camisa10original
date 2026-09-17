@@ -34,7 +34,7 @@ function AnimatedBackground() {
     return (
         <div aria-hidden="true" style={{ position: "fixed", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none", backgroundColor: "#050505" }}>
             <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.15 }}>
-                <img src="/gatuno.jpg" alt="Gatuno" style={{ width: "100%", height: "100%", objectFit: "contain", animation: "gatunoExtasia 4s cubic-bezier(0.4, 0, 0.2, 1) infinite", transformOrigin: "center bottom" }} />
+                <img loading="lazy" decoding="async" src="/gatuno.jpg" alt="Gatuno" style={{ width: "100%", height: "100%", objectFit: "contain", animation: "gatunoExtasia 4s cubic-bezier(0.4, 0, 0.2, 1) infinite", transformOrigin: "center bottom" }} />
             </div>
             {moneyItems.map((_, i) => {
                 const randomLeft = Math.random() * 100;
@@ -1742,7 +1742,7 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
                                                     <div key={prod.id} className="bg-slate-900/80 border border-white/10 rounded-xl overflow-hidden flex flex-col hover:border-purple-500/40 transition-all">
                                                         <div className="h-44 bg-slate-950 relative overflow-hidden">
                                                             {prod.imagem ? (
-                                                                <img src={prod.imagem} alt={prod.nome} className="w-full h-full object-cover" />
+                                                                <img loading="lazy" decoding="async" src={prod.imagem} alt={prod.nome} className="w-full h-full object-cover" />
                                                             ) : (
                                                                 <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs">Sem foto</div>
                                                             )}
@@ -2999,7 +2999,7 @@ GARANTA JÁ O SEU MANTO COM FRETE RÁPIDO E GARANTIA DE SATISFAÇÃO TOTAL!`;
                                 <div className={`grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-${imageCols}`}>
                                     {filteredBankImages.map(img => (
                                         <div key={img.id} className="bg-slate-950 border border-white/10 rounded-xl overflow-hidden group relative">
-                                            <img src={img.url} alt={img.nome} className="w-full h-36 object-cover" />
+                                            <img loading="lazy" decoding="async" src={img.url} alt={img.nome} className="w-full h-36 object-cover" />
                                             <div className="p-2 flex justify-between items-center bg-slate-900/90">
                                                 <span className="text-[10px] text-gray-400 truncate">{img.album}</span>
                                                 <div className="flex gap-1">

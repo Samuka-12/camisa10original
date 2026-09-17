@@ -131,6 +131,8 @@ export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
       <div className="container mx-auto flex items-center justify-between gap-4 max-w-5xl">
         <div className="hidden sm:flex items-center gap-3 min-w-0">
           <img 
+            loading="lazy"
+            decoding="async"
             src={product.image || product.imagem_url || "/placeholder.svg"} 
             alt={product.name}
             className="w-10 h-10 object-contain bg-white/5 rounded-lg border border-white/10"

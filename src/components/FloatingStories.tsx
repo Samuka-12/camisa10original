@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useStoreConfig, FloatingStory } from '../contexts/StoreConfigContext';
 import { getProductById, allProducts } from '../data/products';
-import { supabase } from '../lib/supabase';
+import { getCatalogProducts } from '@/lib/catalog';
 import { X, Play, ShoppingCart } from 'lucide-react';
 
 // Helper: returns CSS animation duration string based on velocity
@@ -26,17 +26,16 @@ export const FloatingStories: React.FC = () => {
   const stories = config.stories?.lista || [];
 
   useEffect(() => {
-    if (!activeStory || activeStory.tipoViculo !== 'produto' || !activeStory.produtoId) return;
-    if (dbProducts.length > 0) return;
+    if (stories.length === 0) return;
 
     const fetchDbProducts = async () => {
       try {
-        const { data } = await supabase.from('produtos').select('*');
+        const data = await getCatalogProducts();
         if (data) setDbProducts(data);
       } catch (err) {}
     };
     fetchDbProducts();
-  }, [activeStory, dbProducts.length]);
+  }, [stories.length]);
 
   const pathParts = location.pathname.split('/');
   const isProductPage = pathParts[1] === 'produto';
@@ -306,6 +305,8 @@ export const FloatingStories: React.FC = () => {
                 return (
                   <div className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5">
                     <img
+                      loading="lazy"
+                      decoding="async"
                       src={prod.image || "/placeholder.svg"}
                       alt={prod.name}
                       className="w-14 h-14 object-contain bg-white/10 rounded-xl"

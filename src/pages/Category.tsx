@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getProductsByCategory, type Product } from "@/data/products";
-import { supabase } from "@/lib/supabase";
+import { getCatalogProducts } from "@/lib/catalog";
 import { isVitrineRow, normalizeDbProduct, mergePreferDb } from "@/lib/productImages";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { useStoreConfig } from "@/contexts/StoreConfigContext";
@@ -56,7 +56,7 @@ const Category = () => {
   useEffect(() => {
     const fetchCategoryProducts = async () => {
       try {
-        const { data } = await supabase.from('produtos').select('*');
+        const data = await getCatalogProducts();
         if (data) {
           const filtered = data.filter(p => {
             if (!isVitrineRow(p)) return false;
@@ -117,7 +117,20 @@ const Category = () => {
             <ShieldCheck className="w-6 h-6 text-green-500 fill-green-500/20 animate-pulse" title="Loja Verificada e Segura" />
           )}
         </div>
-        {allProducts.length === 0 ? (
+        {!dbReady && allProducts.length === 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-7">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="overflow-hidden rounded-xl border border-border bg-card">
+                <div className="aspect-square animate-pulse bg-muted" />
+                <div className="space-y-3 p-4">
+                  <div className="h-3 w-2/5 animate-pulse rounded bg-muted" />
+                  <div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
+                  <div className="h-5 w-1/2 animate-pulse rounded bg-muted" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : allProducts.length === 0 ? (
           <p className="text-muted-foreground">Nenhum produto encontrado nesta categoria.</p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-7">

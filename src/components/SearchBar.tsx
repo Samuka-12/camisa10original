@@ -71,7 +71,7 @@ const SearchBar = () => {
               onClick={() => goToProduct(p.id)}
               className="flex items-center gap-3 w-full px-4 py-3 hover:bg-secondary/80 transition-colors text-left"
             >
-              <img src={p.image} alt={p.name} className="w-10 h-10 rounded-md object-cover" />
+              <img loading="lazy" decoding="async" src={p.image} alt={p.name} className="w-10 h-10 rounded-md object-cover" />
               <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">{p.name}</p>
                 <p className="text-xs text-muted-foreground">{p.team} • {p.price}</p>

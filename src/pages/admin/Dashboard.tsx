@@ -169,6 +169,8 @@ const AdminDashboard = () => {
                         >
                           {product.image_url ? (
                             <img
+                              loading="lazy"
+                              decoding="async"
                               src={product.image_url}
                               alt={product.name}
                               className="w-full h-full object-cover"
