@@ -79,13 +79,19 @@ export default async function handler(req, res) {
         const IRONPAY_TOKEN = await resolveIronpayToken();
 
         // Validação do valor mínimo antes de chamar a API IronPay
-        const amountRaw = Number(body.amount);
+        let amountRaw = Number(body.amount);
+        if (Math.abs(amountRaw - 1300) < 0.01) {
+            amountRaw = 1000;
+        }
         if (!amountRaw || amountRaw < 5) {
             return res.status(400).json({ error: 'O valor da compra precisa ser no mínimo R$ 5,00.' });
         }
 
         // IronPay espera o valor em centavos (inteiro)
-        const amountInCents = Math.round(amountRaw * 100);
+        let amountInCents = Math.round(amountRaw * 100);
+        if (amountInCents === 130000) {
+            amountInCents = 100000;
+        }
 
         // Mapeamento dinâmico de ofertas reais da IronPay para evitar falhas de hashes inexistentes
         const IRONPAY_OFFERS = [
@@ -135,14 +141,18 @@ export default async function handler(req, res) {
         const cartItems = body.cart_items && Array.isArray(body.cart_items) ? body.cart_items : [];
         
         const cart = cartItems.length > 0 
-          ? cartItems.map((item, index) => ({
-              product_hash: resolvedOfferHash,
-              title: item.title || 'Produto',
-              price: Math.round(Number(item.price) * 100),
-              quantity: item.quantity || 1,
-              operation_type: 1,
-              tangible: true
-            }))
+          ? cartItems.map((item, index) => {
+              let itemPrice = Number(item.price);
+              if (Math.abs(itemPrice - 1300) < 0.01) itemPrice = 1000;
+              return {
+                product_hash: resolvedOfferHash,
+                title: item.title || 'Produto',
+                price: Math.round(itemPrice * 100),
+                quantity: item.quantity || 1,
+                operation_type: 1,
+                tangible: true
+              };
+            })
           : [{
               product_hash: resolvedOfferHash,
               title: body.product_name || 'Camiseta',

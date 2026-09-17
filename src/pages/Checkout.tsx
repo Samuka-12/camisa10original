@@ -129,10 +129,11 @@ export default function Checkout() {
       // Carregamento flexível: aceita qualquer preço e aplica o desconto sobre o total
       const localProd = allProducts.find(p => p.id === id);
       const parsePrice = (val: any) => {
-        if (typeof val === 'number') return val;
+        if (typeof val === 'number') return val === 1300 ? 1000 : val;
         if (typeof val === 'string') {
           const clean = val.replace(/[^\d,.]/g, '').replace(',', '.');
-          return parseFloat(clean) || 0;
+          const num = parseFloat(clean) || 0;
+          return num === 1300 ? 1000 : num;
         }
         return 0;
       };
@@ -144,7 +145,8 @@ export default function Checkout() {
       if (isCustom) addon += 20;
 
       const initialBasePrice = overridePreco ? parsePrice(overridePreco) : (localProd ? localProd.priceNum : 70.00);
-      const finalPrice = (initialBasePrice + addon) * qty;
+      let finalPrice = (initialBasePrice + addon) * qty;
+      if (Math.abs(finalPrice - 1300) < 0.01) finalPrice = 1000;
       const precoComDesconto = discount > 0 ? finalPrice * (1 - discount) : finalPrice;
 
       if (localProd) {
@@ -159,7 +161,8 @@ export default function Checkout() {
         .then((data) => {
           if (data) {
             const dbBasePrice = overridePreco ? parsePrice(overridePreco) : (data.preco ? parsePrice(data.preco) : 70.00);
-            const dbFinalPrice = (dbBasePrice + addon) * qty;
+            let dbFinalPrice = (dbBasePrice + addon) * qty;
+            if (Math.abs(dbFinalPrice - 1300) < 0.01) dbFinalPrice = 1000;
             const dbPrecoComDesconto = discount > 0 ? dbFinalPrice * (1 - discount) : dbFinalPrice;
 
             setProduto(prev => ({
@@ -172,25 +175,29 @@ export default function Checkout() {
         });
     } else if (overrideNome && overridePreco) {
       const parsePrice = (val: any) => {
-        if (typeof val === 'number') return val;
+        if (typeof val === 'number') return val === 1300 ? 1000 : val;
         if (typeof val === 'string') {
           const clean = val.replace(/[^\d,.]/g, '').replace(',', '.');
-          return parseFloat(clean) || 0;
+          const num = parseFloat(clean) || 0;
+          return num === 1300 ? 1000 : num;
         }
         return 0;
       };
       // Usa o preço vindo via parâmetro (&preco=...) ao invés de forçar 90.93
       const basePrice = parsePrice(overridePreco);
-      const finalPrice = basePrice * qty;
+      let finalPrice = basePrice * qty;
+      if (Math.abs(finalPrice - 1300) < 0.01) finalPrice = 1000;
       setProduto({
         nome: overrideNome,
         preco: discount > 0 ? finalPrice * (1 - discount) : finalPrice,
         imagens: (overrideNome.includes('Carrinho') || overrideNome.includes('CARRINHO')) ? [] : (overrideImg ? [overrideImg] : [])
       });
     } else if (cartItems.length > 0) {
+      let totalCart = Number(cartTotal) || 0;
+      if (Math.abs(totalCart - 1300) < 0.01) totalCart = 1000;
       setProduto({
         nome: `CARRINHO (${totalItems} ITENS)`,
-        preco: Number(cartTotal) || 0,
+        preco: totalCart,
         imagens: cartItems.map(item => item.product.image || item.product.imagem_url).filter(img => img) as string[]
       });
     }
@@ -285,8 +292,10 @@ export default function Checkout() {
       const metaEventId = generateEventId('Purchase');
       const fbp = getFbp();
       const fbc = getFbc();
+      let valorCobrar = Number(produto.preco) || 0;
+      if (Math.abs(valorCobrar - 1300) < 0.01) valorCobrar = 1000;
       const payload = {
-        amount: produto.preco,
+        amount: valorCobrar,
         payment_method: 'pix',
         meta_event_id: metaEventId,
         tracking: { fbp, fbc },
@@ -300,7 +309,7 @@ export default function Checkout() {
           {
             product_hash: 'le2c9v07wt_gybcv5o9me',
             title: produto.nome,
-            price: produto.preco,
+            price: valorCobrar,
             quantity: 1
           }
         ]
@@ -361,8 +370,10 @@ export default function Checkout() {
       const metaEventId = generateEventId('Purchase');
       const fbp = getFbp();
       const fbc = getFbc();
+      let valorCobrar = Number(produto.preco) || 0;
+      if (Math.abs(valorCobrar - 1300) < 0.01) valorCobrar = 1000;
       const payload = {
-        amount: produto.preco,
+        amount: valorCobrar,
         payment_method: 'credit_card',
         installments: parseInt(parcelas),
         meta_event_id: metaEventId,
@@ -384,7 +395,7 @@ export default function Checkout() {
           {
             product_hash: 'le2c9v07wt_gybcv5o9me',
             title: produto.nome,
-            price: produto.preco,
+            price: valorCobrar,
             quantity: 1
           }
         ]
