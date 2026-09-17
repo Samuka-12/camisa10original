@@ -6,7 +6,7 @@
  * da IronPay após confirmação efetiva do pagamento.
  */
 
-export const META_PIXEL_ID = '1600126648494401';
+export const META_PIXEL_ID = '1849061053135385';
 
 export type MetaBrowserEvent = 'PageView' | 'ViewContent' | 'Search' | 'AddToCart' | 'InitiateCheckout' | 'AddPaymentInfo' | 'Contact';
 

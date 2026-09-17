@@ -20,8 +20,8 @@
  *     6. Meta deduplica: Pixel + CAPI com mesmo event_id = 1 evento contabilizado
  */
 
-const PIXEL_ID     = process.env.META_PIXEL_ID     || '1075822341637086';
-const ACCESS_TOKEN = process.env.META_ACCESS_TOKEN || 'EAAShZBr3MwJsBR1DcfngA17838taRRTl67baJJdapxJARjZBrdFMYxZCVBGo4v8KxZAfSG6GwZAPWb98fJyG7O9a4ZB7MZCw1lotpZBsn6U6e9zGypWy6bOa1TReh6fNaa5NBHz10ZBXGZCzmZBLZCb7AITZB7wZCiOfSbQNPZC1RHm17ZAHxGsFDckbVOhM1QvIFUAj6gZDZD';
+const PIXEL_ID     = process.env.META_PIXEL_ID     || '1849061053135385';
+const ACCESS_TOKEN = process.env.META_ACCESS_TOKEN || 'EAAShZBao6WZCUBSvisOPGbh3AAJX6uUKMHikodDrgvyaCsXKaF6NV7FfTJBIVE8Xe8piNU3TZBYVilhbtgoZAmcG9rWixu7iezeswXDDciZB8JLOFWaoO3e0JkvWICS5BafczhmedvVlW4rHShY8q637XUQgb2hfJZCJwQ8vwgPFxwUAwh03LWMIUZA0VGfrwZDZD';
 const SUPABASE_URL = process.env.SUPABASE_URL      || 'https://xnadtzeyynoblrbncltt.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
 const CAPI_URL     = `https://graph.facebook.com/v21.0/${PIXEL_ID}/events`;

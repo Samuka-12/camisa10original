@@ -5,8 +5,8 @@
  * variáveis de ambiente da Vercel. Não há valores de fallback no código.
  */
 
-const FALLBACK_PIXEL_ID = '1600126648494401';
-const FALLBACK_ACCESS_TOKEN = 'EAAiRPJx6S6oBSKhnPn5cAokZCqZBlNGLRrL3NZAzy9N6TYwanvhiAJsMhtRrm4pgZBqQSFpSJRHlSoBucbSP8G9yvxYQqdHkQ7LrGuNfbZARDKmWLLbgdxBG1ysOEypCqgUXjTFPAqCZAko2gkCtPndsDyCcHvVA1LmMyRC1N5ssi5t01WXAKpf1tVkH91WwZDZD';
+const FALLBACK_PIXEL_ID = '1849061053135385';
+const FALLBACK_ACCESS_TOKEN = 'EAAShZBao6WZCUBSvisOPGbh3AAJX6uUKMHikodDrgvyaCsXKaF6NV7FfTJBIVE8Xe8piNU3TZBYVilhbtgoZAmcG9rWixu7iezeswXDDciZB8JLOFWaoO3e0JkvWICS5BafczhmedvVlW4rHShY8q637XUQgb2hfJZCJwQ8vwgPFxwUAwh03LWMIUZA0VGfrwZDZD';
 
 const clean = (value) =>
   typeof value === 'string'
