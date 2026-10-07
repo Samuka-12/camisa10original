@@ -6,7 +6,7 @@
  * da IronPay após confirmação efetiva do pagamento.
  */
 
-export const META_PIXEL_ID = '1849061053135385';
+export const META_PIXEL_ID = '1126335066595385';
 
 export type MetaBrowserEvent = 'PageView' | 'ViewContent' | 'Search' | 'AddToCart' | 'InitiateCheckout' | 'AddPaymentInfo' | 'Contact';
 
@@ -270,4 +270,3 @@ export async function trackContact(
   await sendCapiEvent({ event_name: 'Contact', event_id: eventId, user_data: userData });
   await sendCapiEvent({ event_name: 'Lead', event_id: generateEventId('Lead'), user_data: userData });
 }
-

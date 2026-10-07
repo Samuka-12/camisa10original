@@ -93,7 +93,7 @@ export function readMetaCredentials(logPrefix = '[meta-purchase]') {
 
   console.log(
     `${logPrefix} credenciais -> pixel_id=${pixelId || 'AUSENTE'} | ` +
-      `access_token=${accessToken ? `presente/${accessToken.length}chars/…${accessToken.slice(-6)}` : 'AUSENTE'}`,
+      `access_token=${accessToken ? 'configurado' : 'AUSENTE'}`,
   );
 
   return { pixelId, accessToken };

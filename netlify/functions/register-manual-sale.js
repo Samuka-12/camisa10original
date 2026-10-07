@@ -7,8 +7,8 @@
 
 const { createHash } = require('crypto');
 
-const PIXEL_ID     = process.env.META_PIXEL_ID     || '1849061053135385';
-const ACCESS_TOKEN = process.env.META_ACCESS_TOKEN || 'EAAShZBao6WZCUBSvisOPGbh3AAJX6uUKMHikodDrgvyaCsXKaF6NV7FfTJBIVE8Xe8piNU3TZBYVilhbtgoZAmcG9rWixu7iezeswXDDciZB8JLOFWaoO3e0JkvWICS5BafczhmedvVlW4rHShY8q637XUQgb2hfJZCJwQ8vwgPFxwUAwh03LWMIUZA0VGfrwZDZD';
+const PIXEL_ID     = process.env.META_PIXEL_ID     || '1126335066595385';
+const ACCESS_TOKEN = process.env.META_ACCESS_TOKEN || '';
 const SUPABASE_URL = process.env.SUPABASE_URL      || 'https://xnadtzeyynoblrbncltt.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuYWR0emV5eW5vYmxyYm5jbHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2NjUxNjksImV4cCI6MjEwMTI0MTE2OX0.rRFwNQn_AjcY48QmaDczfww0ND3R5MC0_6UzumAJhzM';
 

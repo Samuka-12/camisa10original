@@ -20,8 +20,8 @@
  *     6. Meta deduplica: Pixel + CAPI com mesmo event_id = 1 evento contabilizado
  */
 
-const PIXEL_ID     = process.env.META_PIXEL_ID     || '1849061053135385';
-const ACCESS_TOKEN = process.env.META_ACCESS_TOKEN || 'EAAShZBao6WZCUBSvisOPGbh3AAJX6uUKMHikodDrgvyaCsXKaF6NV7FfTJBIVE8Xe8piNU3TZBYVilhbtgoZAmcG9rWixu7iezeswXDDciZB8JLOFWaoO3e0JkvWICS5BafczhmedvVlW4rHShY8q637XUQgb2hfJZCJwQ8vwgPFxwUAwh03LWMIUZA0VGfrwZDZD';
+const PIXEL_ID     = process.env.META_PIXEL_ID     || '1126335066595385';
+const ACCESS_TOKEN = process.env.META_ACCESS_TOKEN || '';
 const SUPABASE_URL = process.env.SUPABASE_URL      || 'https://xnadtzeyynoblrbncltt.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
 const CAPI_URL     = `https://graph.facebook.com/v21.0/${PIXEL_ID}/events`;
@@ -109,7 +109,7 @@ async function sendCapiPurchase(rawPayload, isPaid, metaEventId, options) {
   const pixelId = process.env.META_PIXEL_ID || PIXEL_ID;
   const accessToken = process.env.META_ACCESS_TOKEN || ACCESS_TOKEN;
 
-  console.log(`${LOG} credenciais -> pixel_id=${pixelId || 'AUSENTE'} | access_token=${accessToken ? 'presente/' + accessToken.length + 'chars/…' + accessToken.slice(-6) : 'AUSENTE'}`);
+  console.log(`${LOG} credenciais -> pixel_id=${pixelId || 'AUSENTE'} | access_token=${accessToken ? 'configurado' : 'AUSENTE'}`);
 
   if (!pixelId || !accessToken) {
     const error = !pixelId ? 'META_PIXEL_ID ausente — Purchase NAO enviado.' : 'META_ACCESS_TOKEN ausente — Purchase NAO enviado.';
