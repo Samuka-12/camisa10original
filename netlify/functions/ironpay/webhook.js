@@ -19,7 +19,7 @@
  */
 
 const IRONPAY_TOKEN = process.env.IRONPAY_TOKEN        || 'SG1i5iZayj5nfQ33zVUqUAH3B3OhfWHRziDpSsiPfrAcIgKfQiIAihdMGpOL';
-const PIXEL_ID      = process.env.META_PIXEL_ID        || '1126335066595385';
+const PIXEL_ID      = process.env.META_PIXEL_ID        || '1631563528565287';
 const ACCESS_TOKEN  = process.env.META_ACCESS_TOKEN    || '';
 const SUPABASE_URL  = process.env.SUPABASE_URL         || 'https://xnadtzeyynoblrbncltt.supabase.co';
 const SUPABASE_KEY  = process.env.SUPABASE_SERVICE_KEY || '';

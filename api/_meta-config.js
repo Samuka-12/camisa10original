@@ -5,7 +5,7 @@
  * Nunca coloque tokens de acesso no repositório ou em valores de fallback.
  */
 
-const FALLBACK_PIXEL_ID = '1126335066595385';
+const FALLBACK_PIXEL_ID = '1631563528565287';
 
 const clean = (value) =>
   typeof value === 'string'
